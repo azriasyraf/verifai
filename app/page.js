@@ -175,6 +175,14 @@ export default function Verifai() {
             </div>
           </div>
 
+          {/* Framework */}
+          {auditProgram.framework && (
+            <div className="bg-gradient-to-r from-[#0d9488] to-[#0f766e] rounded-lg shadow-sm p-6 mb-6 text-white">
+              <h2 className="text-2xl font-semibold mb-2">📋 Framework: {auditProgram.framework.name}</h2>
+              <p className="text-white/90 leading-relaxed">{auditProgram.framework.description}</p>
+            </div>
+          )}
+
           {/* Process Overview */}
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
             <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Process Overview</h2>
@@ -200,7 +208,12 @@ export default function Verifai() {
             <div className="space-y-4">
               {auditProgram.risks.map((risk, index) => (
                 <div key={index} className="border-l-4 border-[#0d9488] pl-4 py-2">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
+                    {risk.id && (
+                      <span className="font-mono text-sm bg-[#f8fafc] px-2 py-1 rounded border border-[#e2e8f0]">
+                        {risk.id}
+                      </span>
+                    )}
                     <span className="font-semibold text-[#1e3a8a]">{risk.category}</span>
                     <span className={`px-3 py-1 rounded text-sm font-medium ${
                       risk.rating === 'High' ? 'bg-red-100 text-red-700' :
@@ -209,8 +222,19 @@ export default function Verifai() {
                     }`}>
                       {risk.rating}
                     </span>
+                    {risk.assertion && (
+                      <span className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                        {risk.assertion}
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[#475569]">{risk.description}</p>
+                  <p className="text-[#475569] mb-2">{risk.description}</p>
+                  {risk.relatedControls && risk.relatedControls.length > 0 && (
+                    <div className="text-sm text-[#64748b] mt-2">
+                      <span className="font-medium">Mitigated by controls: </span>
+                      {risk.relatedControls.join(', ')}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -222,12 +246,23 @@ export default function Verifai() {
             <div className="grid gap-4">
               {auditProgram.controls.map((control, index) => (
                 <div key={index} className="border border-[#e2e8f0] rounded-lg p-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="font-mono text-sm bg-[#f8fafc] px-2 py-1 rounded">{control.id}</span>
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
+                    <span className="font-mono text-sm bg-[#f8fafc] px-2 py-1 rounded border border-[#e2e8f0]">{control.id}</span>
                     <span className="text-sm text-[#0d9488] font-medium">{control.type}</span>
+                    {control.frequency && (
+                      <span className="text-sm bg-purple-50 text-purple-700 px-2 py-1 rounded">
+                        {control.frequency}
+                      </span>
+                    )}
                     <span className="text-sm text-[#64748b]">Owner: {control.owner}</span>
                   </div>
-                  <p className="text-[#475569]">{control.description}</p>
+                  <p className="text-[#475569] mb-2">{control.description}</p>
+                  {control.mitigatesRisks && control.mitigatesRisks.length > 0 && (
+                    <div className="text-sm text-[#64748b] mt-2">
+                      <span className="font-medium">Mitigates risks: </span>
+                      {control.mitigatesRisks.join(', ')}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -244,8 +279,35 @@ export default function Verifai() {
                       Procedure {index + 1}
                     </span>
                     <span className="text-sm text-[#64748b]">Control: {proc.controlId}</span>
+                    {proc.testingMethod === 'Data Analytics' && (
+                      <span className="text-sm bg-orange-100 text-orange-700 px-2 py-1 rounded font-medium">
+                        📊 Analytics
+                      </span>
+                    )}
                   </div>
                   <p className="text-[#475569] mb-4 font-medium">{proc.procedure}</p>
+
+                  {/* Analytics Test Details */}
+                  {proc.analyticsTest && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                      <h4 className="text-sm font-semibold text-orange-900 mb-2">📊 Analytics Test Details</h4>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="text-orange-700 font-medium">Type: </span>
+                          <span className="text-[#475569]">{proc.analyticsTest.type}</span>
+                        </div>
+                        <div>
+                          <span className="text-orange-700 font-medium">Description: </span>
+                          <span className="text-[#475569]">{proc.analyticsTest.description}</span>
+                        </div>
+                        <div>
+                          <span className="text-orange-700 font-medium">Population: </span>
+                          <span className="text-[#475569]">{proc.analyticsTest.population}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
                       <span className="text-[#64748b]">Testing Method:</span>
