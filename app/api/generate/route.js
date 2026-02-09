@@ -78,6 +78,8 @@ AUDIT METHODOLOGY: Follow IIA International Professional Practices Framework (IP
 
 CONTROL FRAMEWORK: ${controlFrameworkGuidance}
 
+RISK MANAGEMENT & GOVERNANCE: Assess the maturity and effectiveness of the organization's risk management process and governance structure before evaluating specific controls. Reference COSO ERM (Enterprise Risk Management), IIA Three Lines Model, and ISO 31000 risk management principles.
+
 ${samplingGuidance}
 
 Return your response as valid JSON with this exact structure:
@@ -89,6 +91,30 @@ Return your response as valid JSON with this exact structure:
     "description": "Brief explanation of how IIA IPPF guides the audit approach and how ${controlFramework} is used for risk identification and control design"
   },
   "processOverview": "A 2-3 paragraph description of this process in this industry, including typical workflow and key characteristics",
+  "riskManagementAssessment": {
+    "maturityLevel": "Assessment of risk management maturity (Initial/Developing/Defined/Managed/Optimized based on industry norms)",
+    "maturityDescription": "Brief explanation of what this maturity level means for this organization",
+    "governanceStructure": "Assessment of governance framework, board oversight, three lines model, and management accountability for this process",
+    "assessmentProcedures": [
+      "Procedure 1 to evaluate risk management process",
+      "Procedure 2 to assess governance structure",
+      "Procedure 3 to test risk identification completeness"
+    ],
+    "keyQuestions": [
+      "Question 1 to ask management/board about risk management",
+      "Question 2 about governance oversight",
+      "Question 3 about risk appetite and tolerance"
+    ],
+    "redFlags": [
+      "Warning sign 1 indicating weak risk management",
+      "Warning sign 2 indicating governance gaps",
+      "Warning sign 3 indicating incomplete risk identification"
+    ],
+    "recommendations": [
+      "Recommendation 1 if risk management is weak",
+      "Recommendation 2 if governance needs improvement"
+    ]
+  },
   "auditObjectives": [
     "Objective 1 (linked to financial statement assertion or IT objective)",
     "Objective 2",
@@ -131,6 +157,17 @@ Return your response as valid JSON with this exact structure:
 }
 
 Requirements:
+
+RISK MANAGEMENT & GOVERNANCE ASSESSMENT:
+- Evaluate the maturity of risk management process (use industry benchmarks for this sector)
+- Assess whether the organization likely has formal risk management in place
+- Consider typical governance structures for ${industryNames[industry]} companies
+- Include 4-6 assessment procedures to evaluate risk management and governance
+- Include 5-8 key questions to ask management, board, or risk owners
+- Identify 3-5 red flags that would indicate weak or absent risk management/governance
+- Provide 2-4 recommendations if risk management needs improvement
+- Consider: Does this org have a CRO? Risk committee? Risk register? Three lines model?
+
 COMPLETENESS & COVERAGE:
 - Cover ALL relevant financial statement assertions (Completeness, Existence, Accuracy, Valuation, Rights, Presentation) or IT objectives
 - Include comprehensive risks covering all major risk categories for this process

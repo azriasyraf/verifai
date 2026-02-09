@@ -199,6 +199,88 @@ export default function Verifai() {
             <p className="text-[#475569] leading-relaxed">{auditProgram.processOverview}</p>
           </div>
 
+          {/* Risk Management & Governance Assessment */}
+          {auditProgram.riskManagementAssessment && (
+            <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
+              <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">
+                🎯 Risk Management & Governance Assessment
+              </h2>
+
+              {/* Maturity Level */}
+              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="font-semibold text-blue-900">Risk Management Maturity:</span>
+                  <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded font-medium text-sm">
+                    {auditProgram.riskManagementAssessment.maturityLevel}
+                  </span>
+                </div>
+                <p className="text-blue-800 text-sm">{auditProgram.riskManagementAssessment.maturityDescription}</p>
+              </div>
+
+              {/* Governance Structure */}
+              <div className="mb-4">
+                <h3 className="font-semibold text-[#1e3a8a] mb-2">Governance Structure</h3>
+                <p className="text-[#475569] text-sm leading-relaxed">{auditProgram.riskManagementAssessment.governanceStructure}</p>
+              </div>
+
+              {/* Assessment Procedures */}
+              <div className="mb-4">
+                <h3 className="font-semibold text-[#1e3a8a] mb-2">Assessment Procedures</h3>
+                <ul className="space-y-2">
+                  {auditProgram.riskManagementAssessment.assessmentProcedures.map((proc, index) => (
+                    <li key={index} className="flex items-start text-sm">
+                      <span className="text-[#0d9488] mr-2">▸</span>
+                      <span className="text-[#475569]">{proc}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Key Questions */}
+              <div className="mb-4">
+                <h3 className="font-semibold text-[#1e3a8a] mb-2">Key Questions for Management</h3>
+                <ul className="space-y-2">
+                  {auditProgram.riskManagementAssessment.keyQuestions.map((question, index) => (
+                    <li key={index} className="flex items-start text-sm">
+                      <span className="text-purple-500 mr-2">?</span>
+                      <span className="text-[#475569]">{question}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Red Flags */}
+              <div className="mb-4">
+                <h3 className="font-semibold text-red-700 mb-2">🚩 Red Flags to Watch For</h3>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <ul className="space-y-2">
+                    {auditProgram.riskManagementAssessment.redFlags.map((flag, index) => (
+                      <li key={index} className="flex items-start text-sm">
+                        <span className="text-red-500 mr-2">⚠</span>
+                        <span className="text-red-800">{flag}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* Recommendations */}
+              {auditProgram.riskManagementAssessment.recommendations && auditProgram.riskManagementAssessment.recommendations.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-[#0d9488] mb-2">💡 Recommendations</h3>
+                  <ul className="space-y-2">
+                    {auditProgram.riskManagementAssessment.recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-start text-sm">
+                        <span className="text-[#0d9488] mr-2">→</span>
+                        <span className="text-[#475569]">{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Audit Objectives */}
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
             <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Audit Objectives</h2>
