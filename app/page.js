@@ -178,8 +178,18 @@ export default function Verifai() {
           {/* Framework */}
           {auditProgram.framework && (
             <div className="bg-gradient-to-r from-[#0d9488] to-[#0f766e] rounded-lg shadow-sm p-6 mb-6 text-white">
-              <h2 className="text-2xl font-semibold mb-2">📋 Framework: {auditProgram.framework.name}</h2>
-              <p className="text-white/90 leading-relaxed">{auditProgram.framework.description}</p>
+              <h2 className="text-2xl font-semibold mb-3">📋 Frameworks</h2>
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <div>
+                  <span className="text-white/70 text-sm">Audit Methodology:</span>
+                  <p className="font-semibold">{auditProgram.framework.auditMethodology || auditProgram.framework.name}</p>
+                </div>
+                <div>
+                  <span className="text-white/70 text-sm">Control Framework:</span>
+                  <p className="font-semibold">{auditProgram.framework.controlFramework || 'COSO 2013'}</p>
+                </div>
+              </div>
+              <p className="text-white/90 leading-relaxed text-sm">{auditProgram.framework.description}</p>
             </div>
           )}
 

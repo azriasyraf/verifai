@@ -57,11 +57,11 @@ function buildPrompt(industry, process, sampleMethod, sampleData) {
     it: 'IT/Cybersecurity'
   };
 
-  // Determine framework based on process
-  const framework = process === 'it' ? 'COBIT 2019' : 'COSO 2013';
-  const frameworkGuidance = process === 'it'
-    ? 'Use COBIT 2019 framework focusing on IT governance and management objectives (EDM, APO, BAI, DSS, MEA domains)'
-    : 'Use COSO 2013 Internal Control Framework focusing on the five components: Control Environment, Risk Assessment, Control Activities, Information & Communication, and Monitoring Activities';
+  // Determine control framework based on process
+  const controlFramework = process === 'it' ? 'COBIT 2019' : 'COSO 2013';
+  const controlFrameworkGuidance = process === 'it'
+    ? 'Use COBIT 2019 framework for IT governance and management objectives (EDM, APO, BAI, DSS, MEA domains) to identify risks and design controls'
+    : 'Use COSO 2013 Internal Control Framework (Control Environment, Risk Assessment, Control Activities, Information & Communication, Monitoring Activities) to identify risks and design controls';
 
   let samplingGuidance = '';
   if (sampleMethod === 'rule-of-thumb') {
@@ -74,7 +74,9 @@ function buildPrompt(industry, process, sampleMethod, sampleData) {
 
   return `You are an expert internal auditor. Generate a comprehensive audit program for the ${processNames[process]} process in the ${industryNames[industry]} industry.
 
-FRAMEWORK: ${frameworkGuidance}
+AUDIT METHODOLOGY: Follow IIA International Professional Practices Framework (IPPF) Standards for conducting internal audits, including proper planning, risk assessment, testing, documentation, and reporting.
+
+CONTROL FRAMEWORK: ${controlFrameworkGuidance}
 
 ${samplingGuidance}
 
@@ -82,8 +84,9 @@ Return your response as valid JSON with this exact structure:
 
 {
   "framework": {
-    "name": "${framework}",
-    "description": "Brief explanation of why this framework applies to this process"
+    "auditMethodology": "IIA IPPF (International Professional Practices Framework)",
+    "controlFramework": "${controlFramework}",
+    "description": "Brief explanation of how IIA IPPF guides the audit approach and how ${controlFramework} is used for risk identification and control design"
   },
   "processOverview": "A 2-3 paragraph description of this process in this industry, including typical workflow and key characteristics",
   "auditObjectives": [
