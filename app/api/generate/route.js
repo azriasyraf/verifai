@@ -7,10 +7,10 @@ const groq = new Groq({
 
 export async function POST(request) {
   try {
-    const { industry, process, sampleMethod, sampleData } = await request.json();
+    const { industry, process, sampleMethod, sampleData, assessmentType } = await request.json();
 
     // Build the prompt based on inputs
-    const prompt = buildPrompt(industry, process, sampleMethod, sampleData);
+    const prompt = buildPrompt(industry, process, sampleMethod, sampleData, assessmentType);
 
     // Call Groq API with Llama model
     const completion = await groq.chat.completions.create({
@@ -41,7 +41,7 @@ export async function POST(request) {
   }
 }
 
-function buildPrompt(industry, process, sampleMethod, sampleData) {
+function buildPrompt(industry, process, sampleMethod, sampleData, assessmentType = 'program-only') {
   const industryNames = {
     distribution: 'Distribution & Sales (Import/Export)',
     manufacturing: 'Manufacturing',
@@ -72,17 +72,31 @@ function buildPrompt(industry, process, sampleMethod, sampleData) {
     samplingGuidance = `Use custom sampling: Sample size: ${sampleData.customSampleSize}, Methodology: ${sampleData.customMethodology}, Justification: ${sampleData.customJustification}`;
   }
 
+  // Define what to generate based on assessment type
+  const assessmentScope = assessmentType === 'governance-only'
+    ? 'ONLY generate the Risk Management & Governance Assessment. Do NOT include audit objectives, risks, controls, or procedures.'
+    : assessmentType === 'program-only'
+    ? 'Generate the Process Audit Program (audit objectives, risks, controls, procedures). Do NOT include the riskManagementAssessment section - assume governance has already been assessed.'
+    : 'Generate a COMPREHENSIVE assessment including both Risk Management & Governance Assessment AND the full Process Audit Program.';
+
   return `You are an expert internal auditor. Generate a comprehensive audit program for the ${processNames[process]} process in the ${industryNames[industry]} industry.
+
+ASSESSMENT SCOPE: ${assessmentScope}
 
 AUDIT METHODOLOGY: Follow IIA International Professional Practices Framework (IPPF) Standards for conducting internal audits, including proper planning, risk assessment, testing, documentation, and reporting.
 
 CONTROL FRAMEWORK: ${controlFrameworkGuidance}
 
-RISK MANAGEMENT & GOVERNANCE: Assess the maturity and effectiveness of the organization's risk management process and governance structure before evaluating specific controls. Reference COSO ERM (Enterprise Risk Management), IIA Three Lines Model, and ISO 31000 risk management principles.
+RISK MANAGEMENT & GOVERNANCE: ${assessmentType !== 'program-only' ? 'Assess the maturity and effectiveness of the organization\'s risk management process and governance structure before evaluating specific controls. Reference COSO ERM (Enterprise Risk Management), IIA Three Lines Model, and ISO 31000 risk management principles.' : 'Assume risk management and governance have already been assessed.'}
 
-${samplingGuidance}
+${assessmentType !== 'governance-only' ? samplingGuidance : ''}
 
-Return your response as valid JSON with this exact structure:
+Return your response as valid JSON. Structure depends on assessment type:
+- If governance-only: Include ONLY framework, processOverview, and riskManagementAssessment
+- If program-only: Include framework, processOverview, auditObjectives, risks, controls, auditProcedures (SKIP riskManagementAssessment)
+- If comprehensive: Include ALL sections
+
+Full structure:
 
 {
   "framework": {
@@ -127,7 +141,8 @@ Return your response as valid JSON with this exact structure:
       "description": "Detailed risk description",
       "rating": "High/Medium/Low",
       "assertion": "Financial assertion affected (Completeness/Existence/Accuracy/Valuation/Rights/Presentation) or IT objective",
-      "relatedControls": ["C001", "C002"]
+      "relatedControls": ["C001", "C002"],
+      "frameworkReference": "Specific framework principle (e.g., 'COSO - Risk Assessment Component' or 'COBIT APO12.01')"
     }
   ],
   "controls": [
@@ -137,7 +152,8 @@ Return your response as valid JSON with this exact structure:
       "type": "Preventive/Detective/Corrective",
       "frequency": "Continuous/Daily/Weekly/Monthly/Quarterly/Annual",
       "owner": "Typical role responsible",
-      "mitigatesRisks": ["R001"]
+      "mitigatesRisks": ["R001"],
+      "frameworkReference": "Specific framework principle (e.g., 'COSO - Control Activities: Segregation of Duties' or 'COBIT DSS05.02')"
     }
   ],
   "auditProcedures": [
@@ -147,6 +163,7 @@ Return your response as valid JSON with this exact structure:
       "testingMethod": "Inquiry/Observation/Inspection/Reperformance/Data Analytics",
       "sampleSize": "Specific sample size based on the sampling method provided",
       "expectedEvidence": "What documentation/evidence to expect",
+      "frameworkReference": "IIA Standard reference (e.g., 'IIA Standard 2310: Identifying Information' or 'IIA Standard 2320: Analysis and Evaluation')",
       "analyticsTest": {
         "type": "Type of analytics (Duplicate Detection/Cut-off Testing/Outlier Analysis/Trend Analysis/etc.)",
         "description": "Specific analytics to perform (e.g., 'Identify duplicate invoices by vendor, amount, date')",
@@ -157,6 +174,12 @@ Return your response as valid JSON with this exact structure:
 }
 
 Requirements:
+
+FRAMEWORK REFERENCES:
+- Every risk must include a frameworkReference citing the specific ${controlFramework} component or principle
+- Every control must include a frameworkReference citing the specific ${controlFramework} control activity or principle
+- Every audit procedure must include a frameworkReference citing the specific IIA IPPF Standard (e.g., Standard 2310, 2320, 2330)
+- Framework references should be specific and educational, helping auditors understand WHY each element is included
 
 RISK MANAGEMENT & GOVERNANCE ASSESSMENT:
 - Evaluate the maturity of risk management process (use industry benchmarks for this sector)

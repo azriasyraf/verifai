@@ -41,6 +41,7 @@ export default function Verifai() {
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedProcess, setSelectedProcess] = useState('');
   const [selectedMethod, setSelectedMethod] = useState('');
+  const [assessmentType, setAssessmentType] = useState('program-only');
   const [showResults, setShowResults] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [auditProgram, setAuditProgram] = useState(null);
@@ -78,7 +79,8 @@ export default function Verifai() {
           industry: selectedIndustry,
           process: selectedProcess,
           sampleMethod: selectedMethod,
-          sampleData
+          sampleData,
+          assessmentType
         })
       });
 
@@ -321,6 +323,11 @@ export default function Verifai() {
                     )}
                   </div>
                   <p className="text-[#475569] mb-2">{risk.description}</p>
+                  {risk.frameworkReference && (
+                    <div className="text-xs text-purple-600 mb-2 italic">
+                      📚 {risk.frameworkReference}
+                    </div>
+                  )}
                   {risk.relatedControls && risk.relatedControls.length > 0 && (
                     <div className="text-sm text-[#64748b] mt-2">
                       <span className="font-medium">Mitigated by controls: </span>
@@ -349,6 +356,11 @@ export default function Verifai() {
                     <span className="text-sm text-[#64748b]">Owner: {control.owner}</span>
                   </div>
                   <p className="text-[#475569] mb-2">{control.description}</p>
+                  {control.frameworkReference && (
+                    <div className="text-xs text-purple-600 mb-2 italic">
+                      📚 {control.frameworkReference}
+                    </div>
+                  )}
                   {control.mitigatesRisks && control.mitigatesRisks.length > 0 && (
                     <div className="text-sm text-[#64748b] mt-2">
                       <span className="font-medium">Mitigates risks: </span>
@@ -377,7 +389,12 @@ export default function Verifai() {
                       </span>
                     )}
                   </div>
-                  <p className="text-[#475569] mb-4 font-medium">{proc.procedure}</p>
+                  <p className="text-[#475569] mb-2 font-medium">{proc.procedure}</p>
+                  {proc.frameworkReference && (
+                    <div className="text-xs text-purple-600 mb-4 italic">
+                      📚 {proc.frameworkReference}
+                    </div>
+                  )}
 
                   {/* Analytics Test Details */}
                   {proc.analyticsTest && (
@@ -511,6 +528,27 @@ export default function Verifai() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Assessment Type */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-[#475569] mb-2">
+              Assessment Type
+            </label>
+            <select
+              value={assessmentType}
+              onChange={(e) => setAssessmentType(e.target.value)}
+              className="w-full px-4 py-3 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488] bg-white text-[#475569]"
+            >
+              <option value="program-only">Process Audit Program Only (Most Common)</option>
+              <option value="governance-only">Risk Management & Governance Assessment Only</option>
+              <option value="comprehensive">Comprehensive Assessment (Both)</option>
+            </select>
+            <p className="text-xs text-[#64748b] mt-2">
+              {assessmentType === 'program-only' && '✓ Generates audit program for the selected process (assumes governance already assessed)'}
+              {assessmentType === 'governance-only' && '✓ Entity-level assessment of risk management and governance structures'}
+              {assessmentType === 'comprehensive' && '✓ Includes both governance assessment and process audit program (for initial engagements)'}
+            </p>
           </div>
 
           {/* Sample Size Method */}
