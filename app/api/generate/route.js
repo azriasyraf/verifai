@@ -1,7 +1,9 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY
+});
 
 export async function POST(request) {
   try {
@@ -10,15 +12,23 @@ export async function POST(request) {
     // Build the prompt based on inputs
     const prompt = buildPrompt(industry, process, sampleMethod, sampleData);
 
-    // Call Gemini API - using the free tier model
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-1.5-flash' });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    // Call Groq API with Llama model
+    const completion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      model: 'llama-3.1-70b-versatile',
+      temperature: 0.7,
+      max_tokens: 4000,
+    });
+
+    const responseText = completion.choices[0].message.content;
 
     // Parse the JSON response
-    // Gemini sometimes wraps JSON in markdown code blocks, so clean it
-    const cleanedText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const auditProgram = JSON.parse(cleanedText);
 
     return NextResponse.json({ success: true, data: auditProgram });
