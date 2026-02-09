@@ -284,6 +284,7 @@ export default function Verifai() {
           )}
 
           {/* Audit Objectives */}
+          {auditProgram.auditObjectives && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
             <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Audit Objectives</h2>
             <ul className="space-y-2">
@@ -295,8 +296,10 @@ export default function Verifai() {
               ))}
             </ul>
           </div>
+          )}
 
           {/* Risks */}
+          {auditProgram.risks && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
             <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Risk Assessment</h2>
             <div className="space-y-4">
@@ -338,8 +341,10 @@ export default function Verifai() {
               ))}
             </div>
           </div>
+          )}
 
           {/* Controls */}
+          {auditProgram.controls && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
             <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Control Activities</h2>
             <div className="grid gap-4">
@@ -371,8 +376,10 @@ export default function Verifai() {
               ))}
             </div>
           </div>
+          )}
 
           {/* Audit Procedures */}
+          {auditProgram.auditProcedures && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
             <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Audit Procedures</h2>
             <div className="space-y-6">
@@ -435,6 +442,7 @@ export default function Verifai() {
               ))}
             </div>
           </div>
+          )}
         </div>
       </div>
     );
