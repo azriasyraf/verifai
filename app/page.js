@@ -345,7 +345,7 @@ export default function Verifai() {
     <div className="min-h-screen bg-[#f8fafc] p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="text-5xl font-bold text-[#1e3a8a] mb-3">
             Verif<span className="text-[#0d9488]">ai</span>
           </h1>
@@ -354,6 +354,29 @@ export default function Verifai() {
           </p>
           <p className="text-sm text-[#64748b] mt-2">
             Generate comprehensive audit programs in minutes, not hours
+          </p>
+        </div>
+
+        {/* Framework & Methodology Info */}
+        <div className="bg-gradient-to-r from-[#0d9488] to-[#0f766e] rounded-lg shadow-sm p-6 mb-8 text-white">
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            <span>🎯</span> Built on Professional Standards
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div className="bg-white/10 rounded-lg p-4">
+              <p className="font-semibold mb-1">Audit Methodology</p>
+              <p className="text-white/90">IIA IPPF (International Professional Practices Framework)</p>
+              <p className="text-white/70 text-xs mt-2">Defines how to plan, execute, and report on internal audits</p>
+            </div>
+            <div className="bg-white/10 rounded-lg p-4">
+              <p className="font-semibold mb-1">Control Frameworks</p>
+              <p className="text-white/90">COSO 2013 for financial/operational processes</p>
+              <p className="text-white/90">COBIT 2019 for IT/cybersecurity processes</p>
+              <p className="text-white/70 text-xs mt-2">Guides risk identification and control design</p>
+            </div>
+          </div>
+          <p className="text-white/80 text-xs mt-4 text-center">
+            All audit programs include risk-control linkage, financial statement assertions, and data analytics procedures
           </p>
         </div>
 
