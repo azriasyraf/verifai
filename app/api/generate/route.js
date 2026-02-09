@@ -195,6 +195,6 @@ TECHNICAL REQUIREMENTS:
 - Sample sizes must align with the sampling method specified
 - Each control should have clear frequency (how often it operates)
 - Each risk should be rated based on likelihood and impact
-- Use the ${framework} framework to structure control categories
+- Use the ${controlFramework} framework to structure control categories
 - Return ONLY valid JSON, no additional text or markdown formatting`;
 }
