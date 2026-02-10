@@ -47,6 +47,11 @@ export default function Verifai() {
   const [auditProgram, setAuditProgram] = useState(null);
   const [error, setError] = useState(null);
 
+  // Edit mode states
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedProgram, setEditedProgram] = useState(null);
+  const [originalProgram, setOriginalProgram] = useState(null);
+
   // Statistical sampling fields
   const [populationSize, setPopulationSize] = useState('');
   const [confidenceLevel, setConfidenceLevel] = useState('95');
@@ -88,7 +93,10 @@ export default function Verifai() {
 
       if (result.success) {
         setAuditProgram(result.data);
+        setOriginalProgram(JSON.parse(JSON.stringify(result.data))); // Deep copy
+        setEditedProgram(JSON.parse(JSON.stringify(result.data))); // Deep copy
         setShowResults(true);
+        setIsEditMode(false);
       } else {
         setError(result.error || 'Failed to generate audit program');
       }
@@ -100,8 +108,79 @@ export default function Verifai() {
     }
   };
 
+  const enterEditMode = () => {
+    setIsEditMode(true);
+  };
+
+  const cancelEdit = () => {
+    setEditedProgram(JSON.parse(JSON.stringify(originalProgram)));
+    setIsEditMode(false);
+  };
+
+  const resetToAI = () => {
+    if (confirm('Reset all changes to AI-generated version?')) {
+      setEditedProgram(JSON.parse(JSON.stringify(originalProgram)));
+    }
+  };
+
+  const saveEdits = () => {
+    setAuditProgram(editedProgram);
+    setIsEditMode(false);
+  };
+
+  // Helper functions for editing
+  const updateObjective = (index, value) => {
+    const updated = [...editedProgram.auditObjectives];
+    updated[index] = value;
+    setEditedProgram({...editedProgram, auditObjectives: updated});
+  };
+
+  const deleteObjective = (index) => {
+    const updated = editedProgram.auditObjectives.filter((_, i) => i !== index);
+    setEditedProgram({...editedProgram, auditObjectives: updated});
+  };
+
+  const addObjective = () => {
+    const updated = [...(editedProgram.auditObjectives || []), 'New objective'];
+    setEditedProgram({...editedProgram, auditObjectives: updated});
+  };
+
+  const updateRisk = (index, field, value) => {
+    const updated = [...editedProgram.risks];
+    updated[index] = {...updated[index], [field]: value};
+    setEditedProgram({...editedProgram, risks: updated});
+  };
+
+  const deleteRisk = (index) => {
+    const updated = editedProgram.risks.filter((_, i) => i !== index);
+    setEditedProgram({...editedProgram, risks: updated});
+  };
+
+  const updateControl = (index, field, value) => {
+    const updated = [...editedProgram.controls];
+    updated[index] = {...updated[index], [field]: value};
+    setEditedProgram({...editedProgram, controls: updated});
+  };
+
+  const deleteControl = (index) => {
+    const updated = editedProgram.controls.filter((_, i) => i !== index);
+    setEditedProgram({...editedProgram, controls: updated});
+  };
+
+  const updateProcedure = (index, field, value) => {
+    const updated = [...editedProgram.auditProcedures];
+    updated[index] = {...updated[index], [field]: value};
+    setEditedProgram({...editedProgram, auditProcedures: updated});
+  };
+
+  const deleteProcedure = (index) => {
+    const updated = editedProgram.auditProcedures.filter((_, i) => i !== index);
+    setEditedProgram({...editedProgram, auditProcedures: updated});
+  };
+
   const exportToExcel = () => {
-    if (!auditProgram) return;
+    const programToExport = isEditMode ? editedProgram : auditProgram;
+    if (!programToExport) return;
 
     const workbook = XLSX.utils.book_new();
     const industryName = industries.find(i => i.id === selectedIndustry)?.name || selectedIndustry;
@@ -121,29 +200,29 @@ export default function Verifai() {
     summaryData.push([]);
 
     // Framework info
-    if (auditProgram.framework) {
+    if (programToExport.framework) {
       summaryData.push(['FRAMEWORK']);
-      summaryData.push(['Audit Methodology:', auditProgram.framework.auditMethodology]);
-      summaryData.push(['Control Framework:', auditProgram.framework.controlFramework]);
+      summaryData.push(['Audit Methodology:', programToExport.framework.auditMethodology]);
+      summaryData.push(['Control Framework:', programToExport.framework.controlFramework]);
       summaryData.push([]);
     }
 
     // Audit Objectives
-    if (auditProgram.auditObjectives) {
+    if (programToExport.auditObjectives) {
       summaryData.push(['AUDIT OBJECTIVES']);
-      auditProgram.auditObjectives.forEach((obj, i) => {
+      programToExport.auditObjectives.forEach((obj, i) => {
         summaryData.push([`${i + 1}.`, obj]);
       });
       summaryData.push([]);
     }
 
     // Risk Overview
-    if (auditProgram.risks) {
+    if (programToExport.risks) {
       summaryData.push(['RISK OVERVIEW']);
-      summaryData.push(['Total Risks:', auditProgram.risks.length]);
-      const highRisks = auditProgram.risks.filter(r => r.rating === 'High').length;
-      const medRisks = auditProgram.risks.filter(r => r.rating === 'Medium').length;
-      const lowRisks = auditProgram.risks.filter(r => r.rating === 'Low').length;
+      summaryData.push(['Total Risks:', programToExport.risks.length]);
+      const highRisks = programToExport.risks.filter(r => r.rating === 'High').length;
+      const medRisks = programToExport.risks.filter(r => r.rating === 'Medium').length;
+      const lowRisks = programToExport.risks.filter(r => r.rating === 'Low').length;
       summaryData.push(['High Risk:', highRisks]);
       summaryData.push(['Medium Risk:', medRisks]);
       summaryData.push(['Low Risk:', lowRisks]);
@@ -151,11 +230,11 @@ export default function Verifai() {
     }
 
     // Dashboard Table
-    if (auditProgram.controls && auditProgram.auditProcedures) {
+    if (programToExport.controls && programToExport.auditProcedures) {
       summaryData.push(['DASHBOARD - CONTROL STATUS']);
       summaryData.push(['Control ID', 'Description', 'Type', 'Owner', 'Assigned To', 'Status', 'Findings?', 'Conclusion']);
 
-      auditProgram.controls.forEach(control => {
+      programToExport.controls.forEach(control => {
         summaryData.push([
           control.id,
           control.description.substring(0, 50) + '...',
@@ -183,8 +262,8 @@ export default function Verifai() {
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
     // TAB 2-N: CONTROL WORKPAPERS (One per control)
-    if (auditProgram.controls && auditProgram.auditProcedures) {
-      auditProgram.controls.forEach((control, controlIndex) => {
+    if (programToExport.controls && programToExport.auditProcedures) {
+      programToExport.controls.forEach((control, controlIndex) => {
         const controlData = [];
 
         // Section A: Control Details
@@ -200,10 +279,10 @@ export default function Verifai() {
         controlData.push([]);
 
         // Associated Risks (full details)
-        if (control.mitigatesRisks && control.mitigatesRisks.length > 0 && auditProgram.risks) {
+        if (control.mitigatesRisks && control.mitigatesRisks.length > 0 && programToExport.risks) {
           controlData.push(['ASSOCIATED RISKS']);
           control.mitigatesRisks.forEach(riskId => {
-            const risk = auditProgram.risks.find(r => r.id === riskId);
+            const risk = programToExport.risks.find(r => r.id === riskId);
             if (risk) {
               controlData.push([`${risk.id}:`, risk.description]);
               controlData.push(['Risk Category:', risk.category]);
@@ -220,7 +299,7 @@ export default function Verifai() {
         }
 
         // Section B: Testing Plan
-        const procedures = auditProgram.auditProcedures.filter(p => p.controlId === control.id);
+        const procedures = programToExport.auditProcedures.filter(p => p.controlId === control.id);
         if (procedures.length > 0) {
           controlData.push(['TESTING PLAN']);
           procedures.forEach((proc, i) => {
@@ -309,12 +388,49 @@ export default function Verifai() {
                 </p>
               </div>
               <div className="flex gap-3">
-                <button
-                  onClick={exportToExcel}
-                  className="bg-[#0d9488] text-white px-6 py-3 rounded-lg hover:bg-[#0f766e] transition-colors font-semibold"
-                >
-                  📊 Export to Excel
-                </button>
+                {!isEditMode ? (
+                  <>
+                    <button
+                      onClick={enterEditMode}
+                      className="bg-[#3b82f6] text-white px-6 py-3 rounded-lg hover:bg-[#2563eb] transition-colors font-semibold"
+                    >
+                      ✏️ Edit Program
+                    </button>
+                    <button
+                      onClick={exportToExcel}
+                      className="bg-[#0d9488] text-white px-6 py-3 rounded-lg hover:bg-[#0f766e] transition-colors font-semibold"
+                    >
+                      📊 Export to Excel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={saveEdits}
+                      className="bg-[#10b981] text-white px-6 py-3 rounded-lg hover:bg-[#059669] transition-colors font-semibold"
+                    >
+                      ✓ Save Changes
+                    </button>
+                    <button
+                      onClick={cancelEdit}
+                      className="bg-[#6b7280] text-white px-6 py-3 rounded-lg hover:bg-[#4b5563] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={resetToAI}
+                      className="bg-[#ef4444] text-white px-6 py-3 rounded-lg hover:bg-[#dc2626] transition-colors"
+                    >
+                      ↺ Reset to AI
+                    </button>
+                    <button
+                      onClick={exportToExcel}
+                      className="bg-[#0d9488] text-white px-6 py-3 rounded-lg hover:bg-[#0f766e] transition-colors font-semibold"
+                    >
+                      📊 Export
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={resetForm}
                   className="bg-[#475569] text-white px-6 py-3 rounded-lg hover:bg-[#334155] transition-colors"
@@ -432,14 +548,44 @@ export default function Verifai() {
           )}
 
           {/* Audit Objectives */}
-          {auditProgram.auditObjectives && (
+          {(isEditMode ? editedProgram?.auditObjectives : auditProgram?.auditObjectives) && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
-            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Audit Objectives</h2>
-            <ul className="space-y-2">
-              {auditProgram.auditObjectives.map((obj, index) => (
-                <li key={index} className="flex items-start">
-                  <span className="text-[#0d9488] mr-2">•</span>
-                  <span className="text-[#475569]">{obj}</span>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-[#1e3a8a]">
+                Audit Objectives {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+              </h2>
+              {isEditMode && (
+                <button
+                  onClick={addObjective}
+                  className="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600"
+                >
+                  + Add Objective
+                </button>
+              )}
+            </div>
+            <ul className="space-y-3">
+              {(isEditMode ? editedProgram.auditObjectives : auditProgram.auditObjectives).map((obj, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <span className="text-[#0d9488] mr-2 mt-2">•</span>
+                  {isEditMode ? (
+                    <>
+                      <input
+                        type="text"
+                        value={obj}
+                        onChange={(e) => updateObjective(index, e.target.value)}
+                        className="flex-1 px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        onClick={() => deleteObjective(index)}
+                        className="text-red-600 hover:text-red-800 px-3 py-2"
+                        title="Delete"
+                      >
+                        🗑️
+                      </button>
+                    </>
+                  ) : (
+                    <span className="text-[#475569]">{obj}</span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -447,11 +593,13 @@ export default function Verifai() {
           )}
 
           {/* Risks */}
-          {auditProgram.risks && (
+          {(isEditMode ? editedProgram?.risks : auditProgram?.risks) && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
-            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Risk Assessment</h2>
+            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">
+              Risk Assessment {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+            </h2>
             <div className="space-y-4">
-              {auditProgram.risks.map((risk, index) => (
+              {(isEditMode ? editedProgram.risks : auditProgram.risks).map((risk, index) => (
                 <div key={index} className="border-l-4 border-[#0d9488] pl-4 py-2">
                   <div className="flex items-center gap-3 mb-2 flex-wrap">
                     {risk.id && (
@@ -472,8 +620,26 @@ export default function Verifai() {
                         {risk.assertion}
                       </span>
                     )}
+                    {isEditMode && (
+                      <button
+                        onClick={() => deleteRisk(index)}
+                        className="text-red-600 hover:text-red-800"
+                        title="Delete Risk"
+                      >
+                        🗑️
+                      </button>
+                    )}
                   </div>
-                  <p className="text-[#475569] mb-2">{risk.description}</p>
+                  {isEditMode ? (
+                    <textarea
+                      value={risk.description}
+                      onChange={(e) => updateRisk(index, 'description', e.target.value)}
+                      className="w-full px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                      rows="2"
+                    />
+                  ) : (
+                    <p className="text-[#475569] mb-2">{risk.description}</p>
+                  )}
                   {risk.frameworkReference && (
                     <div className="text-xs text-purple-600 mb-2 italic">
                       📚 {risk.frameworkReference}
@@ -492,11 +658,13 @@ export default function Verifai() {
           )}
 
           {/* Controls */}
-          {auditProgram.controls && (
+          {(isEditMode ? editedProgram?.controls : auditProgram?.controls) && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
-            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Control Activities</h2>
+            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">
+              Control Activities {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+            </h2>
             <div className="grid gap-4">
-              {auditProgram.controls.map((control, index) => (
+              {(isEditMode ? editedProgram.controls : auditProgram.controls).map((control, index) => (
                 <div key={index} className="border border-[#e2e8f0] rounded-lg p-4">
                   <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <span className="font-mono text-sm bg-[#f8fafc] px-2 py-1 rounded border border-[#e2e8f0]">{control.id}</span>
@@ -507,8 +675,26 @@ export default function Verifai() {
                       </span>
                     )}
                     <span className="text-sm text-[#64748b]">Owner: {control.owner}</span>
+                    {isEditMode && (
+                      <button
+                        onClick={() => deleteControl(index)}
+                        className="text-red-600 hover:text-red-800 ml-auto"
+                        title="Delete Control"
+                      >
+                        🗑️
+                      </button>
+                    )}
                   </div>
-                  <p className="text-[#475569] mb-2">{control.description}</p>
+                  {isEditMode ? (
+                    <textarea
+                      value={control.description}
+                      onChange={(e) => updateControl(index, 'description', e.target.value)}
+                      className="w-full px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                      rows="2"
+                    />
+                  ) : (
+                    <p className="text-[#475569] mb-2">{control.description}</p>
+                  )}
                   {control.frameworkReference && (
                     <div className="text-xs text-purple-600 mb-2 italic">
                       📚 {control.frameworkReference}
@@ -527,11 +713,13 @@ export default function Verifai() {
           )}
 
           {/* Audit Procedures */}
-          {auditProgram.auditProcedures && (
+          {(isEditMode ? editedProgram?.auditProcedures : auditProgram?.auditProcedures) && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
-            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">Audit Procedures</h2>
+            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">
+              Audit Procedures {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+            </h2>
             <div className="space-y-6">
-              {auditProgram.auditProcedures.map((proc, index) => (
+              {(isEditMode ? editedProgram.auditProcedures : auditProgram.auditProcedures).map((proc, index) => (
                 <div key={index} className="border border-[#e2e8f0] rounded-lg p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="font-mono text-sm bg-[#1e3a8a] text-white px-3 py-1 rounded">
@@ -543,8 +731,26 @@ export default function Verifai() {
                         📊 Analytics
                       </span>
                     )}
+                    {isEditMode && (
+                      <button
+                        onClick={() => deleteProcedure(index)}
+                        className="text-red-600 hover:text-red-800 ml-auto"
+                        title="Delete Procedure"
+                      >
+                        🗑️
+                      </button>
+                    )}
                   </div>
-                  <p className="text-[#475569] mb-2 font-medium">{proc.procedure}</p>
+                  {isEditMode ? (
+                    <textarea
+                      value={proc.procedure}
+                      onChange={(e) => updateProcedure(index, 'procedure', e.target.value)}
+                      className="w-full px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                      rows="3"
+                    />
+                  ) : (
+                    <p className="text-[#475569] mb-2 font-medium">{proc.procedure}</p>
+                  )}
                   {proc.frameworkReference && (
                     <div className="text-xs text-purple-600 mb-4 italic">
                       📚 {proc.frameworkReference}
