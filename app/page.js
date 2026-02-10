@@ -103,32 +103,163 @@ export default function Verifai() {
   const exportToExcel = () => {
     if (!auditProgram) return;
 
-    const data = auditProgram.auditProcedures.map((proc, index) => {
-      const control = auditProgram.controls.find(c => c.id === proc.controlId);
-      const risk = auditProgram.risks[index % auditProgram.risks.length];
-
-      return {
-        'Control ID': proc.controlId,
-        'Risk Category': risk.category,
-        'Risk Description': risk.description,
-        'Control Description': control?.description || '',
-        'Control Type': control?.type || '',
-        'Audit Procedure': proc.procedure,
-        'Testing Method': proc.testingMethod,
-        'Sample Size': proc.sampleSize,
-        'Expected Evidence': proc.expectedEvidence
-      };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Audit Program');
-
-    const industryName = industries.find(i => i.id === selectedIndustry)?.name;
-    const processName = processes.find(p => p.id === selectedProcess)?.name;
+    const industryName = industries.find(i => i.id === selectedIndustry)?.name || selectedIndustry;
+    const processName = processes.find(p => p.id === selectedProcess)?.name || selectedProcess;
     const date = new Date().toISOString().split('T')[0];
-    const filename = `Audit_Program_${industryName}_${processName}_${date}.xlsx`.replace(/[^a-zA-Z0-9_.-]/g, '_');
 
+    // TAB 1: SUMMARY & DASHBOARD
+    const summaryData = [];
+
+    // Header section
+    summaryData.push(['AUDIT PROGRAM']);
+    summaryData.push([`${processName} - ${industryName}`]);
+    summaryData.push(['Date Generated:', date]);
+    summaryData.push(['Version:', '1.0']);
+    summaryData.push(['Prepared By:', '']);
+    summaryData.push(['Reviewed By:', '']);
+    summaryData.push([]);
+
+    // Framework info
+    if (auditProgram.framework) {
+      summaryData.push(['FRAMEWORK']);
+      summaryData.push(['Audit Methodology:', auditProgram.framework.auditMethodology]);
+      summaryData.push(['Control Framework:', auditProgram.framework.controlFramework]);
+      summaryData.push([]);
+    }
+
+    // Audit Objectives
+    if (auditProgram.auditObjectives) {
+      summaryData.push(['AUDIT OBJECTIVES']);
+      auditProgram.auditObjectives.forEach((obj, i) => {
+        summaryData.push([`${i + 1}.`, obj]);
+      });
+      summaryData.push([]);
+    }
+
+    // Risk Overview
+    if (auditProgram.risks) {
+      summaryData.push(['RISK OVERVIEW']);
+      summaryData.push(['Total Risks:', auditProgram.risks.length]);
+      const highRisks = auditProgram.risks.filter(r => r.rating === 'High').length;
+      const medRisks = auditProgram.risks.filter(r => r.rating === 'Medium').length;
+      const lowRisks = auditProgram.risks.filter(r => r.rating === 'Low').length;
+      summaryData.push(['High Risk:', highRisks]);
+      summaryData.push(['Medium Risk:', medRisks]);
+      summaryData.push(['Low Risk:', lowRisks]);
+      summaryData.push([]);
+    }
+
+    // Dashboard Table
+    if (auditProgram.controls && auditProgram.auditProcedures) {
+      summaryData.push(['DASHBOARD - CONTROL STATUS']);
+      summaryData.push(['Control ID', 'Description', 'Type', 'Owner', 'Assigned To', 'Status', 'Findings?', 'Conclusion']);
+
+      auditProgram.controls.forEach(control => {
+        summaryData.push([
+          control.id,
+          control.description.substring(0, 50) + '...',
+          control.type,
+          control.owner,
+          '', // Assigned To - to be filled
+          'Not Started', // Status - to be filled
+          'TBD', // Findings - to be filled
+          'TBD'  // Conclusion - to be filled
+        ]);
+      });
+      summaryData.push([]);
+    }
+
+    // Overall Conclusion section
+    summaryData.push(['OVERALL AUDIT CONCLUSION']);
+    summaryData.push(['(To be completed after testing)']);
+    summaryData.push(['']);
+    summaryData.push(['REVIEW NOTES']);
+    summaryData.push(['Manager Comments:', '']);
+    summaryData.push(['Reviewer Signature:', '']);
+    summaryData.push(['Date:', '']);
+
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+
+    // TAB 2-N: CONTROL WORKPAPERS (One per control)
+    if (auditProgram.controls && auditProgram.auditProcedures) {
+      auditProgram.controls.forEach((control, controlIndex) => {
+        const controlData = [];
+
+        // Section A: Control Details
+        controlData.push(['CONTROL DETAILS']);
+        controlData.push(['Control ID:', control.id]);
+        controlData.push(['Control Description:', control.description]);
+        controlData.push(['Control Type:', control.type]);
+        controlData.push(['Control Frequency:', control.frequency || 'Not specified']);
+        controlData.push(['Control Owner:', control.owner]);
+        if (control.frameworkReference) {
+          controlData.push(['Framework Reference:', control.frameworkReference]);
+        }
+        if (control.mitigatesRisks && control.mitigatesRisks.length > 0) {
+          controlData.push(['Mitigates Risks:', control.mitigatesRisks.join(', ')]);
+        }
+        controlData.push([]);
+
+        // Section B: Testing Plan
+        const procedures = auditProgram.auditProcedures.filter(p => p.controlId === control.id);
+        if (procedures.length > 0) {
+          controlData.push(['TESTING PLAN']);
+          procedures.forEach((proc, i) => {
+            controlData.push([`Procedure ${i + 1}:`, proc.procedure]);
+            controlData.push(['Testing Method:', proc.testingMethod]);
+            controlData.push(['Sample Size:', proc.sampleSize]);
+            controlData.push(['Expected Evidence:', proc.expectedEvidence]);
+            if (proc.frameworkReference) {
+              controlData.push(['Framework Reference:', proc.frameworkReference]);
+            }
+            if (proc.analyticsTest) {
+              controlData.push(['Analytics Type:', proc.analyticsTest.type]);
+              controlData.push(['Analytics Description:', proc.analyticsTest.description]);
+            }
+            controlData.push([]);
+          });
+        }
+
+        // Section C: Testing Execution (Blank - to be filled)
+        controlData.push(['TESTING EXECUTION']);
+        controlData.push(['Sample Selected:', '']);
+        controlData.push(['Testing Date:', '']);
+        controlData.push(['Performed By:', '']);
+        controlData.push(['Results Observed:', '']);
+        controlData.push(['Exceptions Noted:', '']);
+        controlData.push([]);
+
+        // Section D: Findings & Conclusion (Blank - to be filled)
+        controlData.push(['FINDINGS & CONCLUSION']);
+        controlData.push(['Finding Identified?', 'Yes [ ]  No [ ]']);
+        controlData.push(['Finding Description:', '']);
+        controlData.push(['Root Cause:', '']);
+        controlData.push(['Risk Rating:', 'High [ ]  Medium [ ]  Low [ ]']);
+        controlData.push(['Control Effectiveness:', 'Effective [ ]  Needs Improvement [ ]  Ineffective [ ]']);
+        controlData.push(['Auditor Notes:', '']);
+
+        const controlSheet = XLSX.utils.aoa_to_sheet(controlData);
+        const tabName = `${control.id} - ${control.description.substring(0, 20)}`.replace(/[^a-zA-Z0-9 -]/g, '');
+        XLSX.utils.book_append_sheet(workbook, controlSheet, tabName.substring(0, 31)); // Excel tab name limit
+      });
+    }
+
+    // TAB N+1: FINDINGS SUMMARY (Template - always include)
+    const findingsData = [];
+    findingsData.push(['FINDINGS SUMMARY']);
+    findingsData.push(['(To be populated during testing)']);
+    findingsData.push([]);
+    findingsData.push(['Finding #', 'Control ID', 'Finding Description', 'Risk Rating', 'Root Cause', 'Management Response', 'Due Date', 'Status']);
+    findingsData.push(['F001', '', '', '', '', '', '', 'Open']);
+    findingsData.push(['F002', '', '', '', '', '', '', 'Open']);
+
+    const findingsSheet = XLSX.utils.aoa_to_sheet(findingsData);
+    XLSX.utils.book_append_sheet(workbook, findingsSheet, 'Findings Summary');
+
+    // Generate filename and download
+    const filename = `AuditProgram_${industryName}_${processName}_${date}.xlsx`.replace(/[^a-zA-Z0-9_.-]/g, '_');
     XLSX.writeFile(workbook, filename);
   };
 
