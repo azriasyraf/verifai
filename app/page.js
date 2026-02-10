@@ -152,7 +152,42 @@ export default function Verifai() {
   };
 
   const deleteRisk = (index) => {
+    const riskToDelete = editedProgram.risks[index];
     const updated = editedProgram.risks.filter((_, i) => i !== index);
+
+    // Renumber risk IDs
+    const renumbered = updated.map((risk, i) => ({
+      ...risk,
+      id: `R${String(i + 1).padStart(3, '0')}`
+    }));
+
+    // Update control references to risks
+    const updatedControls = editedProgram.controls.map(control => ({
+      ...control,
+      mitigatesRisks: control.mitigatesRisks
+        ?.filter(rId => rId !== riskToDelete.id)
+        .map(rId => {
+          const oldIndex = parseInt(rId.substring(1));
+          const newIndex = oldIndex > (index + 1) ? oldIndex - 1 : oldIndex;
+          return `R${String(newIndex).padStart(3, '0')}`;
+        })
+    }));
+
+    setEditedProgram({...editedProgram, risks: renumbered, controls: updatedControls});
+  };
+
+  const addRisk = () => {
+    const newId = `R${String((editedProgram.risks?.length || 0) + 1).padStart(3, '0')}`;
+    const newRisk = {
+      id: newId,
+      category: 'Financial',
+      description: 'New risk description',
+      rating: 'Medium',
+      assertion: 'Completeness',
+      relatedControls: [],
+      frameworkReference: ''
+    };
+    const updated = [...(editedProgram.risks || []), newRisk];
     setEditedProgram({...editedProgram, risks: updated});
   };
 
@@ -163,7 +198,51 @@ export default function Verifai() {
   };
 
   const deleteControl = (index) => {
+    const controlToDelete = editedProgram.controls[index];
     const updated = editedProgram.controls.filter((_, i) => i !== index);
+
+    // Renumber control IDs
+    const renumbered = updated.map((control, i) => ({
+      ...control,
+      id: `C${String(i + 1).padStart(3, '0')}`
+    }));
+
+    // Update risk references to controls
+    const updatedRisks = editedProgram.risks.map(risk => ({
+      ...risk,
+      relatedControls: risk.relatedControls
+        ?.filter(cId => cId !== controlToDelete.id)
+        .map(cId => {
+          const oldIndex = parseInt(cId.substring(1));
+          const newIndex = oldIndex > (index + 1) ? oldIndex - 1 : oldIndex;
+          return `C${String(newIndex).padStart(3, '0')}`;
+        })
+    }));
+
+    // Update procedure references to controls
+    const updatedProcedures = editedProgram.auditProcedures
+      .filter(proc => proc.controlId !== controlToDelete.id)
+      .map(proc => {
+        const oldIndex = parseInt(proc.controlId.substring(1));
+        const newIndex = oldIndex > (index + 1) ? oldIndex - 1 : oldIndex;
+        return {...proc, controlId: `C${String(newIndex).padStart(3, '0')}`};
+      });
+
+    setEditedProgram({...editedProgram, controls: renumbered, risks: updatedRisks, auditProcedures: updatedProcedures});
+  };
+
+  const addControl = () => {
+    const newId = `C${String((editedProgram.controls?.length || 0) + 1).padStart(3, '0')}`;
+    const newControl = {
+      id: newId,
+      description: 'New control description',
+      type: 'Preventive',
+      frequency: 'Monthly',
+      owner: 'Department Head',
+      mitigatesRisks: [],
+      frameworkReference: ''
+    };
+    const updated = [...(editedProgram.controls || []), newControl];
     setEditedProgram({...editedProgram, controls: updated});
   };
 
@@ -595,9 +674,19 @@ export default function Verifai() {
           {/* Risks */}
           {(isEditMode ? editedProgram?.risks : auditProgram?.risks) && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
-            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">
-              Risk Assessment {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-[#1e3a8a]">
+                Risk Assessment {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+              </h2>
+              {isEditMode && (
+                <button
+                  onClick={addRisk}
+                  className="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600"
+                >
+                  + Add Risk
+                </button>
+              )}
+            </div>
             <div className="space-y-4">
               {(isEditMode ? editedProgram.risks : auditProgram.risks).map((risk, index) => (
                 <div key={index} className="border-l-4 border-[#0d9488] pl-4 py-2">
@@ -607,18 +696,60 @@ export default function Verifai() {
                         {risk.id}
                       </span>
                     )}
-                    <span className="font-semibold text-[#1e3a8a]">{risk.category}</span>
-                    <span className={`px-3 py-1 rounded text-sm font-medium ${
-                      risk.rating === 'High' ? 'bg-red-100 text-red-700' :
-                      risk.rating === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-green-100 text-green-700'
-                    }`}>
-                      {risk.rating}
-                    </span>
-                    {risk.assertion && (
-                      <span className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                        {risk.assertion}
+                    {isEditMode ? (
+                      <select
+                        value={risk.category}
+                        onChange={(e) => updateRisk(index, 'category', e.target.value)}
+                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                      >
+                        <option>Financial</option>
+                        <option>Operational</option>
+                        <option>Compliance</option>
+                        <option>IT</option>
+                        <option>Strategic</option>
+                      </select>
+                    ) : (
+                      <span className="font-semibold text-[#1e3a8a]">{risk.category}</span>
+                    )}
+                    {isEditMode ? (
+                      <select
+                        value={risk.rating}
+                        onChange={(e) => updateRisk(index, 'rating', e.target.value)}
+                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                      >
+                        <option>High</option>
+                        <option>Medium</option>
+                        <option>Low</option>
+                      </select>
+                    ) : (
+                      <span className={`px-3 py-1 rounded text-sm font-medium ${
+                        risk.rating === 'High' ? 'bg-red-100 text-red-700' :
+                        risk.rating === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-green-100 text-green-700'
+                      }`}>
+                        {risk.rating}
                       </span>
+                    )}
+                    {isEditMode ? (
+                      <select
+                        value={risk.assertion || ''}
+                        onChange={(e) => updateRisk(index, 'assertion', e.target.value)}
+                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                      >
+                        <option value="">Select...</option>
+                        <option>Completeness</option>
+                        <option>Existence</option>
+                        <option>Accuracy</option>
+                        <option>Valuation</option>
+                        <option>Rights</option>
+                        <option>Presentation</option>
+                      </select>
+                    ) : (
+                      risk.assertion && (
+                        <span className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                          {risk.assertion}
+                        </span>
+                      )
                     )}
                     {isEditMode && (
                       <button
@@ -660,21 +791,69 @@ export default function Verifai() {
           {/* Controls */}
           {(isEditMode ? editedProgram?.controls : auditProgram?.controls) && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
-            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">
-              Control Activities {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-[#1e3a8a]">
+                Control Activities {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+              </h2>
+              {isEditMode && (
+                <button
+                  onClick={addControl}
+                  className="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600"
+                >
+                  + Add Control
+                </button>
+              )}
+            </div>
             <div className="grid gap-4">
               {(isEditMode ? editedProgram.controls : auditProgram.controls).map((control, index) => (
                 <div key={index} className="border border-[#e2e8f0] rounded-lg p-4">
                   <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <span className="font-mono text-sm bg-[#f8fafc] px-2 py-1 rounded border border-[#e2e8f0]">{control.id}</span>
-                    <span className="text-sm text-[#0d9488] font-medium">{control.type}</span>
-                    {control.frequency && (
-                      <span className="text-sm bg-purple-50 text-purple-700 px-2 py-1 rounded">
-                        {control.frequency}
-                      </span>
+                    {isEditMode ? (
+                      <select
+                        value={control.type}
+                        onChange={(e) => updateControl(index, 'type', e.target.value)}
+                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                      >
+                        <option>Preventive</option>
+                        <option>Detective</option>
+                        <option>Corrective</option>
+                      </select>
+                    ) : (
+                      <span className="text-sm text-[#0d9488] font-medium">{control.type}</span>
                     )}
-                    <span className="text-sm text-[#64748b]">Owner: {control.owner}</span>
+                    {isEditMode ? (
+                      <select
+                        value={control.frequency || ''}
+                        onChange={(e) => updateControl(index, 'frequency', e.target.value)}
+                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                      >
+                        <option value="">Select...</option>
+                        <option>Continuous</option>
+                        <option>Daily</option>
+                        <option>Weekly</option>
+                        <option>Monthly</option>
+                        <option>Quarterly</option>
+                        <option>Annual</option>
+                      </select>
+                    ) : (
+                      control.frequency && (
+                        <span className="text-sm bg-purple-50 text-purple-700 px-2 py-1 rounded">
+                          {control.frequency}
+                        </span>
+                      )
+                    )}
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        value={control.owner}
+                        onChange={(e) => updateControl(index, 'owner', e.target.value)}
+                        className="px-2 py-1 border border-blue-300 rounded text-sm"
+                        placeholder="Owner"
+                      />
+                    ) : (
+                      <span className="text-sm text-[#64748b]">Owner: {control.owner}</span>
+                    )}
                     {isEditMode && (
                       <button
                         onClick={() => deleteControl(index)}
