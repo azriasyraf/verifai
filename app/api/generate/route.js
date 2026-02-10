@@ -7,10 +7,10 @@ const groq = new Groq({
 
 export async function POST(request) {
   try {
-    const { industry, process, sampleMethod, sampleData, assessmentType } = await request.json();
+    const { industry, process, assessmentType } = await request.json();
 
     // Build the prompt based on inputs
-    const prompt = buildPrompt(industry, process, sampleMethod, sampleData, assessmentType);
+    const prompt = buildPrompt(industry, process, assessmentType);
 
     // Call Groq API with Llama model
     const completion = await groq.chat.completions.create({
@@ -31,6 +31,32 @@ export async function POST(request) {
     const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
     const auditProgram = JSON.parse(cleanedText);
 
+    // Validate cross-references: every risk must have at least one real control
+    if (auditProgram.risks && auditProgram.controls) {
+      const controlIds = new Set(auditProgram.controls.map(c => c.id));
+      const riskIds = new Set(auditProgram.risks.map(r => r.id));
+
+      for (const risk of auditProgram.risks) {
+        const validControls = (risk.relatedControls || []).filter(id => controlIds.has(id));
+        if (validControls.length === 0) {
+          console.warn(`Risk ${risk.id} has no valid controls — AI failed to link it`);
+        }
+        risk.relatedControls = validControls;
+      }
+
+      for (const control of auditProgram.controls) {
+        const validRisks = (control.mitigatesRisks || []).filter(id => riskIds.has(id));
+        control.mitigatesRisks = validRisks;
+      }
+
+      // Drop procedures referencing non-existent controls
+      if (auditProgram.auditProcedures) {
+        auditProgram.auditProcedures = auditProgram.auditProcedures.filter(
+          p => controlIds.has(p.controlId)
+        );
+      }
+    }
+
     return NextResponse.json({ success: true, data: auditProgram });
   } catch (error) {
     console.error('Error generating audit program:', error);
@@ -41,7 +67,7 @@ export async function POST(request) {
   }
 }
 
-function buildPrompt(industry, process, sampleMethod, sampleData, assessmentType = 'program-only') {
+function buildPrompt(industry, process, assessmentType = 'program-only') {
   const industryNames = {
     distribution: 'Distribution & Sales (Import/Export)',
     manufacturing: 'Manufacturing',
@@ -63,15 +89,6 @@ function buildPrompt(industry, process, sampleMethod, sampleData, assessmentType
     ? 'Use COBIT 2019 framework for IT governance and management objectives (EDM, APO, BAI, DSS, MEA domains) to identify risks and design controls'
     : 'Use COSO 2013 Internal Control Framework (Control Environment, Risk Assessment, Control Activities, Information & Communication, Monitoring Activities) to identify risks and design controls';
 
-  let samplingGuidance = '';
-  if (sampleMethod === 'rule-of-thumb') {
-    samplingGuidance = 'Use rule-of-thumb sampling guidance (e.g., "Test 25 samples or 10% of population, whichever is less")';
-  } else if (sampleMethod === 'statistical') {
-    samplingGuidance = `Use statistical sampling with: Population size: ${sampleData.populationSize}, Confidence level: ${sampleData.confidenceLevel}%, Error rate: ${sampleData.errorRate}%. Calculate appropriate sample size using these parameters.`;
-  } else if (sampleMethod === 'custom') {
-    samplingGuidance = `Use custom sampling: Sample size: ${sampleData.customSampleSize}, Methodology: ${sampleData.customMethodology}, Justification: ${sampleData.customJustification}`;
-  }
-
   // Define what to generate based on assessment type
   const assessmentScope = assessmentType === 'governance-only'
     ? 'ONLY generate the Risk Management & Governance Assessment. Do NOT include audit objectives, risks, controls, or procedures.'
@@ -89,7 +106,7 @@ CONTROL FRAMEWORK: ${controlFrameworkGuidance}
 
 RISK MANAGEMENT & GOVERNANCE: ${assessmentType !== 'program-only' ? 'Assess the maturity and effectiveness of the organization\'s risk management process and governance structure before evaluating specific controls. Reference COSO ERM (Enterprise Risk Management), IIA Three Lines Model, and ISO 31000 risk management principles.' : 'Assume risk management and governance have already been assessed.'}
 
-${assessmentType !== 'governance-only' ? samplingGuidance : ''}
+SAMPLING: Sample sizes should be practical and audit-appropriate (e.g., "25 samples", "10% of population, minimum 20 items", etc.). The auditor will determine final sample sizes during testing based on their professional judgment and risk assessment.
 
 Return your response as valid JSON. Structure depends on assessment type:
 - If governance-only: Include ONLY framework, processOverview, and riskManagementAssessment
@@ -194,8 +211,9 @@ RISK MANAGEMENT & GOVERNANCE ASSESSMENT:
 COMPLETENESS & COVERAGE:
 - Cover ALL relevant financial statement assertions (Completeness, Existence, Accuracy, Valuation, Rights, Presentation) or IT objectives
 - Include comprehensive risks covering all major risk categories for this process
-- Ensure EVERY risk has at least one mitigating control (check relatedControls)
-- Ensure EVERY control is tested by at least one audit procedure (check controlId)
+- CRITICAL: Every single risk in the "risks" array MUST have at least one entry in its "relatedControls" array. A risk with an empty relatedControls array is INVALID. If you identify a risk, you must also create a control for it.
+- CRITICAL: Every single control in the "controls" array MUST have at least one entry in its "mitigatesRisks" array, AND at least one audit procedure in "auditProcedures" with a matching "controlId". A control with no procedures is INVALID.
+- Before returning, verify: for each risk R, at least one control C exists where C.mitigatesRisks includes R.id. For each control C, at least one procedure P exists where P.controlId equals C.id.
 - Include mix of Preventive, Detective, and Corrective controls
 
 ANALYTICS PROCEDURES:
@@ -215,7 +233,7 @@ INDUSTRY & PROCESS SPECIFICITY:
 - Ensure audit procedures are practical, executable, and reflect real-world scenarios
 
 TECHNICAL REQUIREMENTS:
-- Sample sizes must align with the sampling method specified
+- Provide reasonable sample sizes as starting points (auditors will adjust during testing)
 - Each control should have clear frequency (how often it operates)
 - Each risk should be rated based on likelihood and impact
 - Use the ${controlFramework} framework to structure control categories

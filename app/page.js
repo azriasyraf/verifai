@@ -19,28 +19,329 @@ const processes = [
   { id: 'it', name: 'IT/Cybersecurity' }
 ];
 
-const sampleMethods = [
-  {
-    id: 'rule-of-thumb',
-    name: 'Rule-of-Thumb',
-    description: 'Quick guidance based on audit best practices'
-  },
-  {
-    id: 'statistical',
-    name: 'Statistical Sampling',
-    description: 'Formula-based calculation with confidence levels'
-  },
-  {
-    id: 'custom',
-    name: 'Custom Input',
-    description: 'Define your own sample size and methodology'
-  }
-];
+
+// Strips invalid cross-references from AI-generated data
+function sanitizeProgram(program) {
+  if (!program) return program;
+  const controlIds = new Set((program.controls || []).map(c => c.id));
+  const riskIds = new Set((program.risks || []).map(r => r.id));
+
+  const risks = (program.risks || []).map(risk => ({
+    ...risk,
+    relatedControls: (risk.relatedControls || []).filter(id => controlIds.has(id))
+  }));
+
+  const controls = (program.controls || []).map(control => ({
+    ...control,
+    mitigatesRisks: (control.mitigatesRisks || []).filter(id => riskIds.has(id))
+  }));
+
+  const auditProcedures = (program.auditProcedures || []).filter(
+    proc => controlIds.has(proc.controlId)
+  );
+
+  return { ...program, risks, controls, auditProcedures };
+}
+
+// Analytics test library — curated per process
+const analyticsLibrary = {
+  revenue: [
+    {
+      id: 'RC-001', name: 'Duplicate Invoice Numbers',
+      purpose: 'Detect double billing or duplicate revenue entries.',
+      dataneeded: 'Sales ledger — Invoice Number, Customer ID, Invoice Date, Amount',
+      steps: ['Add helper column: =COUNTIF($A$2:$A$1000,A2) on Invoice Number', 'Filter for count > 1, then confirm Customer ID matches'],
+      redflags: 'Same invoice number + same customer = investigate whether revenue was recognised twice.',
+      keywords: ['invoice', 'billing', 'revenue recognition', 'receivable']
+    },
+    {
+      id: 'RC-002', name: 'Round Number Transactions',
+      purpose: 'Flag potentially estimated or fictitious entries.',
+      dataneeded: 'Sales ledger — Invoice Number, Amount, Date',
+      steps: ['Add helper column: =MOD(A2,1000)=0 on Amount', 'Filter for TRUE'],
+      redflags: 'Clusters of round-number transactions near period end may indicate estimates posted instead of actuals.',
+      keywords: ['invoice', 'revenue', 'transaction', 'journal entry']
+    },
+    {
+      id: 'RC-003', name: 'Transactions Outside Business Hours',
+      purpose: 'Identify unauthorized or unusual postings.',
+      dataneeded: 'Sales ledger with timestamp — Transaction ID, Amount, Timestamp',
+      steps: ['Add helper column: =HOUR(A2) on Timestamp', 'Filter for values < 7 or > 19'],
+      redflags: 'High-value transactions posted late at night or on weekends with no business justification.',
+      keywords: ['posting', 'transaction', 'journal', 'access', 'unauthorized', 'improper', 'fictitious', 'fraud', 'segregation']
+    },
+    {
+      id: 'RC-004', name: 'Credit Notes After Period End',
+      purpose: 'Test for revenue cut-off manipulation.',
+      dataneeded: 'Credit note listing — Credit Note Number, Customer ID, Date, Amount, Original Invoice Reference',
+      steps: ['Filter Transaction Type = "Credit Note"', 'Filter Date > period end date'],
+      redflags: 'Large credit notes shortly after period close may indicate revenue was overstated in the prior period.',
+      keywords: ['credit note', 'reversal', 'cut-off', 'period end', 'revenue', 'manipulation', 'overstatement', 'recognition']
+    },
+    {
+      id: 'RC-005', name: 'Credit Limit Breaches',
+      purpose: 'Identify sales approved beyond customer credit limits.',
+      dataneeded: 'Customer master + AR aging — Customer ID, Outstanding Balance, Credit Limit',
+      steps: ['Add helper column: =B2-C2 (Outstanding Balance minus Credit Limit)', 'Filter for values > 0'],
+      redflags: 'Customers consistently over their limit may indicate weak approval controls or undisclosed related-party arrangements.',
+      keywords: ['credit limit', 'customer', 'receivable', 'credit approval']
+    },
+    {
+      id: 'RC-006', name: 'Revenue Spikes Near Period End',
+      purpose: 'Test for window-dressing or premature revenue recognition.',
+      dataneeded: 'Daily sales summary — Date, Total Revenue',
+      steps: ['Filter last 5 business days of the period', 'Add average: =AVERAGE($B$2:$B$1000) for comparison', 'Flag days where revenue > 2x the daily average'],
+      redflags: 'Unusual spikes in the last few days of the period that reverse early in the next period.',
+      keywords: ['revenue', 'period end', 'recognition', 'sales', 'cut-off']
+    },
+  ],
+  procurement: [
+    {
+      id: 'PP-001', name: 'Duplicate Vendor IDs',
+      purpose: 'Detect fictitious or duplicate vendors in the master file.',
+      dataneeded: 'Vendor master — Vendor ID, Vendor Name, Address, Bank Account',
+      steps: ['Add helper column: =COUNTIF($A$2:$A$1000,A2) on Vendor ID', 'Filter for count > 1, check if Name or Bank Account differs'],
+      redflags: 'Same Vendor ID with different bank accounts, or slight name variations (ACME Corp vs Acme Corporation) suggesting duplicates.',
+      keywords: ['vendor', 'supplier', 'master file', 'vendor master', 'onboarding']
+    },
+    {
+      id: 'PP-002', name: 'Duplicate Invoices',
+      purpose: 'Identify invoices that may have been paid twice.',
+      dataneeded: 'AP transaction listing — Invoice Number, Vendor ID, Invoice Date, Amount',
+      steps: ['Add helper column: =COUNTIF($A$2:$A$1000,A2) on Invoice Number', 'Filter for count > 1, then confirm Vendor ID matches'],
+      redflags: 'Same invoice number + same vendor = investigate whether both were paid and whether one was recovered.',
+      keywords: ['invoice', 'payment', 'accounts payable', 'AP', 'three-way match']
+    },
+    {
+      id: 'PP-003', name: 'Split Purchases Below Approval Threshold',
+      purpose: 'Detect intentional splitting to bypass approval limits.',
+      dataneeded: 'Purchase order listing — PO Number, Vendor ID, Date, Amount, Requestor',
+      steps: ['Sort by Vendor ID then Date', 'Add helper: =COUNTIFS($A$2:$A$1000,A2,$B$2:$B$1000,B2) — same vendor, same date', 'Filter count > 1 where individual amounts are below threshold but combined exceed it'],
+      redflags: 'Multiple POs to the same vendor on the same day, each just under the approval limit.',
+      keywords: ['purchase order', 'approval', 'threshold', 'authorization', 'procurement']
+    },
+    {
+      id: 'PP-004', name: 'Payments Just Below Approval Threshold',
+      purpose: 'Flag transactions clustered just under approval limits.',
+      dataneeded: 'Payment listing — Payment ID, Vendor ID, Amount, Approver',
+      steps: ['Filter Amount between (threshold × 0.9) and threshold (e.g. $9,000–$9,999 if threshold is $10,000)', 'Sort by Requestor to identify repeat offenders'],
+      redflags: 'High concentration of payments just under the threshold from the same requestor or to the same vendor.',
+      keywords: ['payment', 'approval', 'threshold', 'authorization', 'limit']
+    },
+    {
+      id: 'PP-005', name: 'Employee-Vendor Conflict of Interest',
+      purpose: 'Identify employees who may have set up vendors for personal gain.',
+      dataneeded: 'Employee master (Name, Address) + Vendor master (Vendor Name, Address, Bank Account)',
+      steps: ['Copy employee names into a separate column', 'Use =ISNUMBER(SEARCH(D2,B2)) to check if employee name appears in vendor name', 'Separately compare address columns using the same approach'],
+      redflags: 'Employee name matching a vendor name, or shared address between an employee and a vendor.',
+      keywords: ['vendor', 'conflict of interest', 'related party', 'supplier', 'master', 'fraud', 'fictitious', 'unauthorized', 'employee']
+    },
+    {
+      id: 'PP-006', name: 'Vendors with Incomplete Details',
+      purpose: 'Flag potentially fictitious vendors missing key information.',
+      dataneeded: 'Vendor master — Vendor ID, Name, Address, Registration Number, Bank Account',
+      steps: ['Use Conditional Formatting → Highlight Cell Rules → Blanks across Name, Address, Registration, Bank Account columns', 'Filter for any row with at least one blank'],
+      redflags: 'Vendors missing registration numbers or bank details that have received payments.',
+      keywords: ['vendor', 'master', 'registration', 'supplier', 'due diligence']
+    },
+    {
+      id: 'PP-007', name: 'Round Number Invoices',
+      purpose: 'Identify potentially estimated or fictitious invoices.',
+      dataneeded: 'AP transaction listing — Invoice Number, Vendor ID, Amount',
+      steps: ['Add helper column: =MOD(A2,1000)=0 on Amount', 'Filter for TRUE'],
+      redflags: 'Multiple round-number invoices from the same vendor may indicate fabricated amounts.',
+      keywords: ['invoice', 'payment', 'amount', 'accounts payable']
+    },
+  ],
+  hr: [
+    {
+      id: 'HR-001', name: 'Terminated Employees Still Receiving Pay',
+      purpose: 'Detect ghost payroll payments after termination.',
+      dataneeded: 'Payroll run + HR termination records — Employee ID, Pay Date, Termination Date',
+      steps: ['VLOOKUP Termination Date from HR records into payroll using Employee ID', 'Add helper column: =B2>C2 (Pay Date > Termination Date)', 'Filter for TRUE'],
+      redflags: 'Any employee receiving pay after their termination date requires immediate investigation.',
+      keywords: ['termination', 'payroll', 'offboarding', 'employee', 'separation']
+    },
+    {
+      id: 'HR-002', name: 'Duplicate Bank Accounts',
+      purpose: 'Identify two employees sharing a bank account — a ghost employee indicator.',
+      dataneeded: 'Payroll master — Employee ID, Employee Name, Bank Account Number',
+      steps: ['Add helper column: =COUNTIF($C$2:$C$1000,C2) on Bank Account Number', 'Filter for count > 1'],
+      redflags: 'Two different employees with the same bank account number is a strong indicator of a ghost employee.',
+      keywords: ['payroll', 'bank account', 'employee', 'payment', 'disbursement']
+    },
+    {
+      id: 'HR-003', name: 'Salary Changes Without Supporting Records',
+      purpose: 'Detect unauthorized pay increases.',
+      dataneeded: 'Payroll change log — Employee ID, Change Date, Old Salary, New Salary, Approver',
+      steps: ['Filter Transaction Type = "Salary Change"', 'Filter Approver column for blank'],
+      redflags: 'Salary changes with no approver recorded, or approver is the same person whose salary changed.',
+      keywords: ['salary', 'compensation', 'payroll', 'approval', 'change']
+    },
+    {
+      id: 'HR-004', name: 'Excessive Overtime',
+      purpose: 'Flag potential timesheet fraud or approval gaps.',
+      dataneeded: 'Timesheet data — Employee ID, Week, Regular Hours, Overtime Hours',
+      steps: ['Filter Overtime Hours > 20 per week (adjust to company policy)', 'Sort by Employee ID to identify repeat patterns'],
+      redflags: 'Same employees consistently at the overtime threshold, or overtime spikes with no corresponding project activity.',
+      keywords: ['overtime', 'timesheet', 'hours', 'payroll', 'time']
+    },
+    {
+      id: 'HR-005', name: 'Salaries Outside Approved Grade Band',
+      purpose: 'Identify salaries that fall outside approved ranges.',
+      dataneeded: 'Payroll master + grade band table — Employee ID, Grade, Salary, Band Min, Band Max',
+      steps: ['VLOOKUP Band Min and Band Max from grade table using Grade', 'Add helper column: =OR(C2<D2, C2>E2) (salary outside band)', 'Filter for TRUE'],
+      redflags: 'Salaries above band maximum may indicate unauthorized increases; below minimum may indicate classification errors.',
+      keywords: ['salary', 'grade', 'compensation', 'band', 'range']
+    },
+    {
+      id: 'HR-006', name: 'New Employees Added Near Period End',
+      purpose: 'Detect timing anomalies in headcount that inflate payroll.',
+      dataneeded: 'HR master — Employee ID, Name, Hire Date',
+      steps: ['Filter Hire Date within the last 30 days of the period', 'Cross-check first payroll date against hire date'],
+      redflags: 'Employees hired in the last week of the period receiving a full month\'s pay, or hire dates that don\'t match onboarding records.',
+      keywords: ['hire', 'onboarding', 'new employee', 'payroll', 'headcount']
+    },
+  ],
+  inventory: [
+    {
+      id: 'INV-001', name: 'Negative Inventory Balances',
+      purpose: 'Identify system errors or recording failures.',
+      dataneeded: 'Inventory listing — Item ID, Description, Quantity on Hand',
+      steps: ['Filter Quantity on Hand < 0'],
+      redflags: 'Negative balances indicate items were recorded as issued before being received — a timing or system error.',
+      keywords: ['inventory', 'stock', 'quantity', 'balance', 'receiving']
+    },
+    {
+      id: 'INV-002', name: 'Slow-Moving or Zero-Movement Items',
+      purpose: 'Flag obsolescence risk.',
+      dataneeded: 'Inventory movement report — Item ID, Description, Last Movement Date, Value',
+      steps: ['Add helper column: =TODAY()-C2 (days since last movement)', 'Filter for > 180 days (adjust to policy)', 'Sort by Value descending — focus on high-value slow movers'],
+      redflags: 'High-value items with no movement in over 6 months may need write-down or write-off assessment.',
+      keywords: ['inventory', 'movement', 'obsolescence', 'slow-moving', 'stock']
+    },
+    {
+      id: 'INV-003', name: 'Unexplained Inventory Adjustments',
+      purpose: 'Detect unauthorized write-offs or stock manipulation.',
+      dataneeded: 'Inventory adjustment log — Adjustment ID, Item ID, Date, Quantity, Reason Code, Approver',
+      steps: ['Filter Transaction Type = "Adjustment"', 'Filter Reason Code or Approver for blank'],
+      redflags: 'Adjustments with no reason code or approver are a control gap — particularly if high-value or recurring.',
+      keywords: ['adjustment', 'inventory', 'write-off', 'stock', 'approval']
+    },
+    {
+      id: 'INV-004', name: "Benford's Law on Inventory Values",
+      purpose: 'Statistical test for fabricated quantities or values.',
+      dataneeded: 'Inventory listing — Item ID, Unit Value or Quantity on Hand',
+      steps: ['Add helper column: =LEFT(TEXT(A2,"0"),1) to extract first digit', 'Count frequency of each digit (1–9) using COUNTIF', 'Compare to expected: 1=30.1%, 2=17.6%, 3=12.5%, 4=9.7%, 5=7.9%, 6=6.7%, 7=5.8%, 8=5.1%, 9=4.6%', 'Flag digits with > 5% deviation from expected'],
+      redflags: 'Significant deviation from Benford\'s distribution — particularly overrepresentation of a specific digit — warrants further investigation.',
+      keywords: ['inventory', 'valuation', 'quantity', 'value', 'fabricated']
+    },
+    {
+      id: 'INV-005', name: 'High-Value Items with No Reorder Point',
+      purpose: 'Identify control gaps in replenishment.',
+      dataneeded: 'Inventory master — Item ID, Description, Unit Cost, Reorder Point',
+      steps: ['Filter Reorder Point = 0 or blank', 'Sort by Unit Cost descending', 'Focus review on top 20% by value'],
+      redflags: 'High-value items with no reorder point set are at risk of stockout or are potentially obsolete and not being monitored.',
+      keywords: ['reorder', 'inventory', 'replenishment', 'stock', 'control']
+    },
+    {
+      id: 'INV-006', name: 'Physical Count vs System Discrepancies',
+      purpose: 'Test accuracy of inventory records.',
+      dataneeded: 'Physical count sheet + system inventory — Item ID, Physical Quantity, System Quantity',
+      steps: ['VLOOKUP System Quantity against Physical Count using Item ID', 'Add helper column: =B2-C2 (Physical minus System)', 'Filter for non-zero differences, sort by absolute value descending'],
+      redflags: 'Large or recurring variances on the same items may indicate theft, recording errors, or measurement issues.',
+      keywords: ['physical count', 'stocktake', 'reconciliation', 'inventory', 'variance']
+    },
+  ],
+  it: [
+    {
+      id: 'IT-001', name: 'Terminated Users with Active Accounts',
+      purpose: 'Confirm access is revoked after offboarding.',
+      dataneeded: 'Active user list + HR termination records — User ID, Account Status, Termination Date',
+      steps: ['VLOOKUP Termination Date from HR records into user list using Employee ID', 'Filter Account Status = "Active" where Termination Date is not blank'],
+      redflags: 'Any active account belonging to a terminated employee is an immediate access control failure.',
+      keywords: ['access', 'user', 'account', 'termination', 'offboarding', 'deprovisioning']
+    },
+    {
+      id: 'IT-002', name: 'Users with Multiple Active Accounts',
+      purpose: 'Detect unauthorized account creation.',
+      dataneeded: 'Active user list — User ID, Employee ID, Account Status',
+      steps: ['Add helper column: =COUNTIF($B$2:$B$1000,B2) on Employee ID', 'Filter Account Status = "Active" and count > 1'],
+      redflags: 'One employee with multiple active accounts may indicate a shared account or unauthorized account created for privileged access.',
+      keywords: ['user', 'account', 'access', 'privilege', 'provisioning']
+    },
+    {
+      id: 'IT-003', name: 'Privileged Access Review',
+      purpose: 'Confirm admin rights are limited to roles that require them.',
+      dataneeded: 'User access listing — User ID, Employee Name, Role, Access Level',
+      steps: ['Filter Access Level = "Admin" or "Super User"', 'Cross-check Role against approved privileged access list'],
+      redflags: 'Admin access assigned to non-IT roles (e.g. Finance Clerk with admin rights) indicates access provisioning control gaps.',
+      keywords: ['admin', 'privilege', 'access', 'role', 'super user', 'access control']
+    },
+    {
+      id: 'IT-004', name: 'Logins Outside Business Hours',
+      purpose: 'Identify unauthorized or suspicious system access.',
+      dataneeded: 'System access log — User ID, Login Timestamp',
+      steps: ['Add helper column: =HOUR(B2) on Login Timestamp', 'Filter for values < 7 or > 19', 'Separately filter weekends: =WEEKDAY(B2,2)>5'],
+      redflags: 'Privileged users logging in outside business hours without documented justification, particularly on weekends or public holidays.',
+      keywords: ['login', 'access', 'monitoring', 'log', 'audit trail']
+    },
+    {
+      id: 'IT-005', name: 'Excessive Failed Login Attempts',
+      purpose: 'Detect brute force attempts or credential sharing.',
+      dataneeded: 'Security event log — User ID, Event Type, Date',
+      steps: ['Filter Event Type = "Failed Login"', 'Add helper: =COUNTIFS($A$2:$A$1000,A2,$B$2:$B$1000,"Failed Login") per user', 'Filter for count > 10 in a single day'],
+      redflags: 'High failed login counts on a single account in a short window, especially followed by a successful login.',
+      keywords: ['login', 'password', 'authentication', 'security', 'failed']
+    },
+    {
+      id: 'IT-006', name: 'Segregation of Duties Conflicts',
+      purpose: 'Identify users who can both create and approve transactions.',
+      dataneeded: 'User access matrix — User ID, Module, Create Permission, Approve Permission',
+      steps: ['Filter Create Permission = "Yes" AND Approve Permission = "Yes" in same module', 'List all flagged users and their modules'],
+      redflags: 'Any user with end-to-end access in a financial module (e.g. can raise and approve a purchase order) is a segregation of duties violation.',
+      keywords: ['segregation', 'access', 'approval', 'create', 'duties', 'SOD']
+    },
+    {
+      id: 'IT-007', name: 'Password Age Analysis',
+      purpose: 'Identify accounts with stale passwords posing a security risk.',
+      dataneeded: 'User account listing — User ID, Last Password Change Date',
+      steps: ['Add helper column: =TODAY()-B2 (days since last password change)', 'Filter for > 90 days (adjust to company policy)'],
+      redflags: 'Accounts — especially privileged ones — with passwords unchanged for over 90 days, or accounts that have never had a password change.',
+      keywords: ['password', 'authentication', 'security', 'access', 'credential']
+    },
+  ],
+};
+
+// Maps analytics tests to controls by keyword matching
+// First tries control descriptions, then falls back to risk descriptions
+function mapAnalyticsToControls(program, process) {
+  const tests = analyticsLibrary[process] || [];
+  const controls = program.controls || [];
+  const risks = program.risks || [];
+
+  return tests.map(test => {
+    // 1. Try matching by control description
+    const matchedControl = controls.find(control =>
+      test.keywords.some(kw => control.description.toLowerCase().includes(kw.toLowerCase()))
+    );
+    if (matchedControl) return { ...test, controlId: matchedControl.id, included: true };
+
+    // 2. Fallback: match by risk description, then use that risk's first related control
+    const matchedRisk = risks.find(risk =>
+      test.keywords.some(kw => risk.description.toLowerCase().includes(kw.toLowerCase()))
+    );
+    if (matchedRisk && matchedRisk.relatedControls?.length > 0) {
+      return { ...test, controlId: matchedRisk.relatedControls[0], included: true };
+    }
+
+    return { ...test, controlId: null, included: true };
+  });
+}
 
 export default function Verifai() {
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [selectedProcess, setSelectedProcess] = useState('');
-  const [selectedMethod, setSelectedMethod] = useState('');
   const [assessmentType, setAssessmentType] = useState('program-only');
   const [showResults, setShowResults] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -52,39 +353,38 @@ export default function Verifai() {
   const [editedProgram, setEditedProgram] = useState(null);
   const [originalProgram, setOriginalProgram] = useState(null);
 
-  // Statistical sampling fields
-  const [populationSize, setPopulationSize] = useState('');
-  const [confidenceLevel, setConfidenceLevel] = useState('95');
-  const [errorRate, setErrorRate] = useState('5');
+  // Analytics tests state
+  const [analyticsTests, setAnalyticsTests] = useState([]);
 
-  // Custom fields
-  const [customSampleSize, setCustomSampleSize] = useState('');
-  const [customMethodology, setCustomMethodology] = useState('');
-  const [customJustification, setCustomJustification] = useState('');
+  // Auditee / engagement details
+  const [auditeeDetails, setAuditeeDetails] = useState({
+    clientName: '',
+    department: '',
+    periodFrom: '',
+    periodTo: '',
+    engagementRef: '',
+    auditorName: '',
+    primaryContactName: '',
+    primaryContactTitle: '',
+  });
 
-  const canGenerate = selectedIndustry && selectedProcess && selectedMethod &&
-    (selectedMethod !== 'statistical' || populationSize) &&
-    (selectedMethod !== 'custom' || (customSampleSize && customMethodology && customJustification));
+  const updateAuditeeDetail = (field, value) => {
+    setAuditeeDetails(prev => ({ ...prev, [field]: value }));
+  };
+
+  const canGenerate = selectedIndustry && selectedProcess;
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     setError(null);
 
     try {
-      const sampleData = selectedMethod === 'statistical'
-        ? { populationSize, confidenceLevel, errorRate }
-        : selectedMethod === 'custom'
-        ? { customSampleSize, customMethodology, customJustification }
-        : {};
-
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           industry: selectedIndustry,
           process: selectedProcess,
-          sampleMethod: selectedMethod,
-          sampleData,
           assessmentType
         })
       });
@@ -92,9 +392,11 @@ export default function Verifai() {
       const result = await response.json();
 
       if (result.success) {
-        setAuditProgram(result.data);
-        setOriginalProgram(JSON.parse(JSON.stringify(result.data))); // Deep copy
-        setEditedProgram(JSON.parse(JSON.stringify(result.data))); // Deep copy
+        const cleanData = sanitizeProgram(result.data);
+        setAuditProgram(cleanData);
+        setOriginalProgram(JSON.parse(JSON.stringify(cleanData)));
+        setEditedProgram(JSON.parse(JSON.stringify(cleanData)));
+        setAnalyticsTests(mapAnalyticsToControls(cleanData, selectedProcess));
         setShowResults(true);
         setIsEditMode(false);
       } else {
@@ -238,7 +540,9 @@ export default function Verifai() {
       description: 'New control description',
       type: 'Preventive',
       frequency: 'Monthly',
-      owner: 'Department Head',
+      owner: '',
+      ownerRole: '',
+      ownerDepartment: '',
       mitigatesRisks: [],
       frameworkReference: ''
     };
@@ -257,6 +561,33 @@ export default function Verifai() {
     setEditedProgram({...editedProgram, auditProcedures: updated});
   };
 
+  const addProcedure = () => {
+    // Default to first control if exists
+    const defaultControlId = editedProgram.controls?.length > 0 ? editedProgram.controls[0].id : 'C001';
+    const newProcedure = {
+      controlId: defaultControlId,
+      procedure: 'New audit procedure description',
+      testingMethod: 'Inquiry',
+      sampleSize: '25 samples',
+      expectedEvidence: 'Documentation or evidence to be reviewed',
+      frameworkReference: 'IIA Standard 2310: Identifying Information'
+    };
+    const updated = [...(editedProgram.auditProcedures || []), newProcedure];
+    setEditedProgram({...editedProgram, auditProcedures: updated});
+  };
+
+  const updateAnalyticsControl = (index, controlId) => {
+    const updated = [...analyticsTests];
+    updated[index] = { ...updated[index], controlId };
+    setAnalyticsTests(updated);
+  };
+
+  const toggleAnalyticsTest = (index) => {
+    const updated = [...analyticsTests];
+    updated[index] = { ...updated[index], included: !updated[index].included };
+    setAnalyticsTests(updated);
+  };
+
   const exportToExcel = () => {
     const programToExport = isEditMode ? editedProgram : auditProgram;
     if (!programToExport) return;
@@ -266,19 +597,57 @@ export default function Verifai() {
     const processName = processes.find(p => p.id === selectedProcess)?.name || selectedProcess;
     const date = new Date().toISOString().split('T')[0];
 
+    // Pre-compute data quality checks once
+    const risks = programToExport.risks || [];
+    const controls = programToExport.controls || [];
+    const procedures = programToExport.auditProcedures || [];
+
+    const orphanedRisks = risks.filter(r => !r.relatedControls || r.relatedControls.length === 0);
+    const orphanedControls = controls.filter(c => !c.mitigatesRisks || c.mitigatesRisks.length === 0);
+    const untestedControls = controls.filter(c => !procedures.some(p => p.controlId === c.id));
+    const hasWarnings = orphanedRisks.length > 0 || orphanedControls.length > 0 || untestedControls.length > 0;
+
     // TAB 1: SUMMARY & DASHBOARD
     const summaryData = [];
 
-    // Header section
+    // Header
     summaryData.push(['AUDIT PROGRAM']);
     summaryData.push([`${processName} - ${industryName}`]);
+    summaryData.push([]);
+    summaryData.push(['Client / Company:', auditeeDetails.clientName || '']);
+    summaryData.push(['Department Under Audit:', auditeeDetails.department || '']);
+    summaryData.push(['Audit Period:', auditeeDetails.periodFrom && auditeeDetails.periodTo
+      ? `${auditeeDetails.periodFrom} to ${auditeeDetails.periodTo}`
+      : auditeeDetails.periodFrom || auditeeDetails.periodTo || '']);
+    summaryData.push(['Engagement Reference:', auditeeDetails.engagementRef || '']);
+    summaryData.push(['Prepared By:', auditeeDetails.auditorName || '']);
+    summaryData.push(['Primary Contact:', auditeeDetails.primaryContactName
+      ? `${auditeeDetails.primaryContactName}${auditeeDetails.primaryContactTitle ? ` · ${auditeeDetails.primaryContactTitle}` : ''}`
+      : '']);
     summaryData.push(['Date Generated:', date]);
     summaryData.push(['Version:', '1.0']);
-    summaryData.push(['Prepared By:', '']);
     summaryData.push(['Reviewed By:', '']);
     summaryData.push([]);
 
-    // Framework info
+    // Data Quality Warnings — at top so auditor sees them immediately
+    if (hasWarnings) {
+      summaryData.push(['⚠️ DATA QUALITY WARNINGS — REVIEW BEFORE FIELDWORK']);
+      if (orphanedRisks.length > 0) {
+        summaryData.push([`Risks with no mitigating controls (${orphanedRisks.length}):`]);
+        orphanedRisks.forEach(r => summaryData.push(['', `${r.id}: ${r.description.substring(0, 80)}`]));
+      }
+      if (orphanedControls.length > 0) {
+        summaryData.push([`Controls not linked to any risk (${orphanedControls.length}):`]);
+        orphanedControls.forEach(c => summaryData.push(['', `${c.id}: ${c.description.substring(0, 80)}`]));
+      }
+      if (untestedControls.length > 0) {
+        summaryData.push([`Controls with no audit procedures (${untestedControls.length}):`]);
+        untestedControls.forEach(c => summaryData.push(['', `${c.id}: ${c.description.substring(0, 80)}`]));
+      }
+      summaryData.push([]);
+    }
+
+    // Framework
     if (programToExport.framework) {
       summaryData.push(['FRAMEWORK']);
       summaryData.push(['Audit Methodology:', programToExport.framework.auditMethodology]);
@@ -289,50 +658,54 @@ export default function Verifai() {
     // Audit Objectives
     if (programToExport.auditObjectives) {
       summaryData.push(['AUDIT OBJECTIVES']);
-      programToExport.auditObjectives.forEach((obj, i) => {
-        summaryData.push([`${i + 1}.`, obj]);
-      });
+      programToExport.auditObjectives.forEach((obj, i) => summaryData.push([`${i + 1}.`, obj]));
       summaryData.push([]);
     }
 
     // Risk Overview
-    if (programToExport.risks) {
+    if (risks.length > 0) {
       summaryData.push(['RISK OVERVIEW']);
-      summaryData.push(['Total Risks:', programToExport.risks.length]);
-      const highRisks = programToExport.risks.filter(r => r.rating === 'High').length;
-      const medRisks = programToExport.risks.filter(r => r.rating === 'Medium').length;
-      const lowRisks = programToExport.risks.filter(r => r.rating === 'Low').length;
-      summaryData.push(['High Risk:', highRisks]);
-      summaryData.push(['Medium Risk:', medRisks]);
-      summaryData.push(['Low Risk:', lowRisks]);
+      summaryData.push(['Total Risks:', risks.length]);
+      summaryData.push(['High:', risks.filter(r => r.rating === 'High').length]);
+      summaryData.push(['Medium:', risks.filter(r => r.rating === 'Medium').length]);
+      summaryData.push(['Low:', risks.filter(r => r.rating === 'Low').length]);
+      summaryData.push(['Risks without controls:', orphanedRisks.length]);
       summaryData.push([]);
     }
 
-    // Dashboard Table
-    if (programToExport.controls && programToExport.auditProcedures) {
-      summaryData.push(['DASHBOARD - CONTROL STATUS']);
-      summaryData.push(['Control ID', 'Description', 'Type', 'Owner', 'Assigned To', 'Status', 'Findings?', 'Conclusion']);
-
-      programToExport.controls.forEach(control => {
+    // Dashboard — one row per control with live status flags
+    if (controls.length > 0) {
+      summaryData.push(['CONTROL STATUS DASHBOARD']);
+      summaryData.push([
+        'Control ID', 'Description', 'Type', 'Frequency', 'Owner',
+        'Risks Linked', 'Procedures Defined',
+        'Assigned To', 'Status', 'Findings?', 'Conclusion'
+      ]);
+      controls.forEach(control => {
+        const hasRisks = control.mitigatesRisks && control.mitigatesRisks.length > 0;
+        const hasProcedures = procedures.some(p => p.controlId === control.id);
         summaryData.push([
           control.id,
-          control.description.substring(0, 50) + '...',
+          control.description.substring(0, 60),
           control.type,
-          control.owner,
-          '', // Assigned To - to be filled
-          'Not Started', // Status - to be filled
-          'TBD', // Findings - to be filled
-          'TBD'  // Conclusion - to be filled
+          control.frequency || '',
+          control.owner || '',
+          hasRisks ? 'Yes' : 'NO ⚠️',
+          hasProcedures ? 'Yes' : 'NO ⚠️',
+          '', // Assigned To
+          'Not Started',
+          '',
+          ''
         ]);
       });
       summaryData.push([]);
     }
 
-    // Overall Conclusion section
+    // Sign-off
     summaryData.push(['OVERALL AUDIT CONCLUSION']);
     summaryData.push(['(To be completed after testing)']);
-    summaryData.push(['']);
-    summaryData.push(['REVIEW NOTES']);
+    summaryData.push([]);
+    summaryData.push(['REVIEW SIGN-OFF']);
     summaryData.push(['Manager Comments:', '']);
     summaryData.push(['Reviewer Signature:', '']);
     summaryData.push(['Date:', '']);
@@ -340,115 +713,161 @@ export default function Verifai() {
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
-    // TAB 2-N: CONTROL WORKPAPERS (One per control)
-    if (programToExport.controls && programToExport.auditProcedures) {
-      programToExport.controls.forEach((control, controlIndex) => {
-        const controlData = [];
+    // TAB 2-N: CONTROL WORKPAPERS — one per control, all controls included
+    controls.forEach(control => {
+      const controlData = [];
+      const hasRisks = control.mitigatesRisks && control.mitigatesRisks.length > 0;
+      const controlProcedures = procedures.filter(p => p.controlId === control.id);
+      const hasProcedures = controlProcedures.length > 0;
 
-        // Section A: Control Details
-        controlData.push(['CONTROL DETAILS']);
-        controlData.push(['Control ID:', control.id]);
-        controlData.push(['Control Description:', control.description]);
-        controlData.push(['Control Type:', control.type]);
-        controlData.push(['Control Frequency:', control.frequency || 'Not specified']);
-        controlData.push(['Control Owner:', control.owner]);
-        if (control.frameworkReference) {
-          controlData.push(['Framework Reference:', control.frameworkReference]);
-        }
+      // Warning banner at top if incomplete
+      if (!hasRisks || !hasProcedures) {
+        controlData.push(['⚠️ INCOMPLETE WORKPAPER — ACTION REQUIRED']);
+        if (!hasRisks) controlData.push(['', 'This control is not linked to any risks. Link it before testing.']);
+        if (!hasProcedures) controlData.push(['', 'No audit procedures defined. Add procedures before testing.']);
         controlData.push([]);
+      }
 
-        // Associated Risks (full details)
-        if (control.mitigatesRisks && control.mitigatesRisks.length > 0 && programToExport.risks) {
-          controlData.push(['ASSOCIATED RISKS']);
-          control.mitigatesRisks.forEach(riskId => {
-            const risk = programToExport.risks.find(r => r.id === riskId);
-            if (risk) {
-              controlData.push([`${risk.id}:`, risk.description]);
-              controlData.push(['Risk Category:', risk.category]);
-              controlData.push(['Risk Rating:', risk.rating]);
-              if (risk.assertion) {
-                controlData.push(['Assertion:', risk.assertion]);
-              }
-              if (risk.frameworkReference) {
-                controlData.push(['Framework Reference:', risk.frameworkReference]);
-              }
-              controlData.push([]);
-            }
-          });
-        }
+      // Section A: Control Details
+      controlData.push(['A. CONTROL DETAILS']);
+      controlData.push(['Control ID:', control.id]);
+      controlData.push(['Description:', control.description]);
+      controlData.push(['Type:', control.type]);
+      controlData.push(['Frequency:', control.frequency || 'Not specified']);
+      controlData.push(['Control Owner:', control.owner || '']);
+      if (control.ownerRole) controlData.push(['Owner Role:', control.ownerRole]);
+      if (control.ownerDepartment) controlData.push(['Owner Department:', control.ownerDepartment]);
+      if (auditeeDetails.clientName) controlData.push(['Client:', auditeeDetails.clientName]);
+      if (auditeeDetails.engagementRef) controlData.push(['Engagement Ref:', auditeeDetails.engagementRef]);
+      if (control.frameworkReference) {
+        controlData.push(['Framework Reference:', control.frameworkReference]);
+      }
+      controlData.push([]);
 
-        // Section B: Testing Plan
-        const procedures = programToExport.auditProcedures.filter(p => p.controlId === control.id);
-        if (procedures.length > 0) {
-          controlData.push(['TESTING PLAN']);
-          procedures.forEach((proc, i) => {
-            controlData.push([`Procedure ${i + 1}:`, proc.procedure]);
-            controlData.push(['Testing Method:', proc.testingMethod]);
-            controlData.push(['Sample Size:', proc.sampleSize]);
-            controlData.push(['Expected Evidence:', proc.expectedEvidence]);
-            if (proc.frameworkReference) {
-              controlData.push(['Framework Reference:', proc.frameworkReference]);
-            }
-            if (proc.analyticsTest) {
-              controlData.push(['Analytics Type:', proc.analyticsTest.type]);
-              controlData.push(['Analytics Description:', proc.analyticsTest.description]);
-            }
+      // Section B: Associated Risks
+      controlData.push(['B. ASSOCIATED RISKS']);
+      if (hasRisks) {
+        control.mitigatesRisks.forEach(riskId => {
+          const risk = risks.find(r => r.id === riskId);
+          if (risk) {
+            controlData.push([risk.id, risk.description]);
+            controlData.push(['Category / Rating:', `${risk.category} / ${risk.rating}`]);
+            if (risk.assertion) controlData.push(['Assertion:', risk.assertion]);
+            if (risk.frameworkReference) controlData.push(['Framework Reference:', risk.frameworkReference]);
             controlData.push([]);
-          });
-        }
-
-        // Section C: Testing Execution (Blank - to be filled)
-        controlData.push(['TESTING EXECUTION']);
-        controlData.push(['Sample Selected:', '']);
-        controlData.push(['Testing Date:', '']);
-        controlData.push(['Performed By:', '']);
-        controlData.push(['Results Observed:', '']);
-        controlData.push(['Exceptions Noted:', '']);
+          }
+        });
+      } else {
+        controlData.push(['⚠️ No risks linked to this control.']);
         controlData.push([]);
+      }
 
-        // Section D: Findings & Conclusion (Blank - to be filled)
-        controlData.push(['FINDINGS & CONCLUSION']);
-        controlData.push(['Finding Identified?', 'Yes [ ]  No [ ]']);
-        controlData.push(['Finding Description:', '']);
-        controlData.push(['Root Cause:', '']);
-        controlData.push(['Risk Rating:', 'High [ ]  Medium [ ]  Low [ ]']);
-        controlData.push(['Control Effectiveness:', 'Effective [ ]  Needs Improvement [ ]  Ineffective [ ]']);
-        controlData.push(['Auditor Notes:', '']);
+      // Section C: Testing Plan
+      controlData.push(['C. TESTING PLAN']);
+      if (hasProcedures) {
+        controlProcedures.forEach((proc, i) => {
+          controlData.push([`Procedure ${i + 1}:`, proc.procedure]);
+          controlData.push(['Testing Method:', proc.testingMethod]);
+          controlData.push(['Sample Size:', proc.sampleSize]);
+          controlData.push(['Expected Evidence:', proc.expectedEvidence]);
+          if (proc.frameworkReference) controlData.push(['IIA Reference:', proc.frameworkReference]);
+          if (proc.analyticsTest) {
+            controlData.push(['Analytics Type:', proc.analyticsTest.type]);
+            controlData.push(['Analytics Description:', proc.analyticsTest.description]);
+            controlData.push(['Population:', proc.analyticsTest.population || '']);
+          }
+          controlData.push([]);
+        });
+      } else {
+        controlData.push(['⚠️ No audit procedures defined for this control.']);
+        controlData.push([]);
+      }
 
-        const controlSheet = XLSX.utils.aoa_to_sheet(controlData);
-        const tabName = `${control.id} - ${control.description.substring(0, 20)}`.replace(/[^a-zA-Z0-9 -]/g, '');
-        XLSX.utils.book_append_sheet(workbook, controlSheet, tabName.substring(0, 31)); // Excel tab name limit
+      // Section D: Testing Execution
+      controlData.push(['D. TESTING EXECUTION']);
+      controlData.push(['Sample Selected:', '']);
+      controlData.push(['Testing Date:', '']);
+      controlData.push(['Performed By:', '']);
+      controlData.push(['Results Observed:', '']);
+      controlData.push(['Exceptions Noted:', '']);
+      controlData.push([]);
+
+      // Section E: Findings & Conclusion
+      controlData.push(['E. FINDINGS & CONCLUSION']);
+      controlData.push(['Finding Identified?', 'Yes [ ]  No [ ]']);
+      controlData.push(['Finding Description:', '']);
+      controlData.push(['Root Cause:', '']);
+      controlData.push(['Risk Rating:', 'High [ ]  Medium [ ]  Low [ ]']);
+      controlData.push(['Control Effectiveness:', 'Effective [ ]  Needs Improvement [ ]  Ineffective [ ]']);
+      controlData.push(['Auditor Notes:', '']);
+
+      const controlSheet = XLSX.utils.aoa_to_sheet(controlData);
+      const tabName = `${control.id} - ${control.description.substring(0, 20)}`.replace(/[^a-zA-Z0-9 -]/g, '').substring(0, 31);
+      XLSX.utils.book_append_sheet(workbook, controlSheet, tabName);
+    });
+
+    // ANALYTICS TESTS tab
+    const includedTests = analyticsTests.filter(t => t.included);
+    if (includedTests.length > 0) {
+      const analyticsData = [];
+      analyticsData.push(['ANALYTICS TESTS']);
+      analyticsData.push(['Data analytics procedures recommended for this audit program.']);
+      analyticsData.push([]);
+      analyticsData.push(['Test ID', 'Test Name', 'Linked Control', 'Status', 'Exceptions Found', 'Notes']);
+
+      includedTests.forEach(test => {
+        const linkedControl = controls.find(c => c.id === test.controlId);
+        analyticsData.push([test.id, test.name, test.controlId || 'Unassigned', 'Not Started', '', '']);
+        analyticsData.push(['Purpose:', test.purpose]);
+        analyticsData.push(['Data Needed:', test.dataneeded]);
+        analyticsData.push(['Steps:']);
+        test.steps.forEach((step, i) => analyticsData.push(['', `${i + 1}. ${step}`]));
+        analyticsData.push(['Red Flags:', test.redflags]);
+        if (linkedControl) analyticsData.push(['Linked Control:', `${linkedControl.id}: ${linkedControl.description.substring(0, 60)}`]);
+        analyticsData.push([]);
       });
+
+      const analyticsSheet = XLSX.utils.aoa_to_sheet(analyticsData);
+      XLSX.utils.book_append_sheet(workbook, analyticsSheet, 'Analytics Tests');
     }
 
-    // TAB N+1: FINDINGS SUMMARY (Template - always include)
+    // FINDINGS SUMMARY tab
     const findingsData = [];
     findingsData.push(['FINDINGS SUMMARY']);
-    findingsData.push(['(To be populated during testing)']);
+    findingsData.push(['(Populate as testing progresses)']);
     findingsData.push([]);
-    findingsData.push(['Finding #', 'Control ID', 'Finding Description', 'Risk Rating', 'Root Cause', 'Management Response', 'Due Date', 'Status']);
-    findingsData.push(['F001', '', '', '', '', '', '', 'Open']);
-    findingsData.push(['F002', '', '', '', '', '', '', 'Open']);
+    findingsData.push(['Finding #', 'Control ID', 'Risk ID', 'Finding Description', 'Risk Rating', 'Root Cause', 'Management Response', 'Due Date', 'Status']);
+    // Pre-populate one row per control that has procedures
+    controls.filter(c => procedures.some(p => p.controlId === c.id)).forEach((c, i) => {
+      findingsData.push([`F${String(i + 1).padStart(3, '0')}`, c.id, c.mitigatesRisks?.[0] || '', '', '', '', '', '', 'Open']);
+    });
 
     const findingsSheet = XLSX.utils.aoa_to_sheet(findingsData);
     XLSX.utils.book_append_sheet(workbook, findingsSheet, 'Findings Summary');
 
     // Generate filename and download
-    const filename = `AuditProgram_${industryName}_${processName}_${date}.xlsx`.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const clientSlug = auditeeDetails.clientName ? `${auditeeDetails.clientName}_` : '';
+    const filename = `AuditProgram_${clientSlug}${processName}_${date}.xlsx`.replace(/[^a-zA-Z0-9_.-]/g, '_');
     XLSX.writeFile(workbook, filename);
   };
 
   const resetForm = () => {
     setSelectedIndustry('');
     setSelectedProcess('');
-    setSelectedMethod('');
     setShowResults(false);
     setAuditProgram(null);
     setError(null);
-    setPopulationSize('');
-    setCustomSampleSize('');
-    setCustomMethodology('');
-    setCustomJustification('');
+    setAnalyticsTests([]);
+    setAuditeeDetails({
+      clientName: '',
+      department: '',
+      periodFrom: '',
+      periodTo: '',
+      engagementRef: '',
+      auditorName: '',
+      primaryContactName: '',
+      primaryContactTitle: '',
+    });
   };
 
   if (showResults && auditProgram) {
@@ -516,6 +935,91 @@ export default function Verifai() {
                 >
                   Generate Another
                 </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Engagement Details — always editable, user-entered, not AI-generated */}
+          <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
+            <h2 className="text-xl font-semibold text-[#1e3a8a] mb-4">📋 Engagement Details</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Client / Company Name</label>
+                <input
+                  type="text"
+                  value={auditeeDetails.clientName}
+                  onChange={(e) => updateAuditeeDetail('clientName', e.target.value)}
+                  placeholder="e.g. Acme Corporation"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Department Under Audit</label>
+                <input
+                  type="text"
+                  value={auditeeDetails.department}
+                  onChange={(e) => updateAuditeeDetail('department', e.target.value)}
+                  placeholder="e.g. Finance & Accounting"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Audit Period From</label>
+                <input
+                  type="date"
+                  value={auditeeDetails.periodFrom}
+                  onChange={(e) => updateAuditeeDetail('periodFrom', e.target.value)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Audit Period To</label>
+                <input
+                  type="date"
+                  value={auditeeDetails.periodTo}
+                  onChange={(e) => updateAuditeeDetail('periodTo', e.target.value)}
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Engagement Reference</label>
+                <input
+                  type="text"
+                  value={auditeeDetails.engagementRef}
+                  onChange={(e) => updateAuditeeDetail('engagementRef', e.target.value)}
+                  placeholder="e.g. IA-2026-001"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Auditor Name</label>
+                <input
+                  type="text"
+                  value={auditeeDetails.auditorName}
+                  onChange={(e) => updateAuditeeDetail('auditorName', e.target.value)}
+                  placeholder="Lead auditor"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Primary Contact Name</label>
+                <input
+                  type="text"
+                  value={auditeeDetails.primaryContactName}
+                  onChange={(e) => updateAuditeeDetail('primaryContactName', e.target.value)}
+                  placeholder="Client-side point of contact"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Primary Contact Title</label>
+                <input
+                  type="text"
+                  value={auditeeDetails.primaryContactTitle}
+                  onChange={(e) => updateAuditeeDetail('primaryContactTitle', e.target.value)}
+                  placeholder="e.g. Finance Manager"
+                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
+                />
               </div>
             </div>
           </div>
@@ -761,13 +1265,64 @@ export default function Verifai() {
                       </button>
                     )}
                   </div>
+
+                  {/* Orphan warning */}
+                  {(!risk.relatedControls || risk.relatedControls.length === 0) && (
+                    <div className="bg-red-50 border border-red-200 rounded px-3 py-2 mb-2">
+                      <span className="text-red-700 text-sm">⚠️ Warning: No controls mitigate this risk</span>
+                    </div>
+                  )}
+
                   {isEditMode ? (
-                    <textarea
-                      value={risk.description}
-                      onChange={(e) => updateRisk(index, 'description', e.target.value)}
-                      className="w-full px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-                      rows="2"
-                    />
+                    <>
+                      <textarea
+                        value={risk.description}
+                        onChange={(e) => updateRisk(index, 'description', e.target.value)}
+                        className="w-full px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                        rows="2"
+                      />
+                      {/* Link to controls */}
+                      <div className="mb-2 bg-blue-50 p-3 rounded border border-blue-200">
+                        <label className="text-sm font-semibold text-[#1e3a8a] block mb-2">🔗 Link to Controls:</label>
+                        {editedProgram.controls && editedProgram.controls.length > 0 ? (
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {editedProgram.controls.map(ctrl => (
+                              <label key={ctrl.id} className="flex items-start gap-2 cursor-pointer hover:bg-blue-100 p-1 rounded">
+                                <input
+                                  type="checkbox"
+                                  checked={(risk.relatedControls || []).includes(ctrl.id)}
+                                  onChange={(e) => {
+                                    const isChecked = e.target.checked;
+                                    // Single atomic update for both risks and controls
+                                    setEditedProgram(prev => ({
+                                      ...prev,
+                                      risks: prev.risks.map((r, i) => i === index
+                                        ? { ...r, relatedControls: isChecked
+                                            ? [...(r.relatedControls || []).filter(id => id !== ctrl.id), ctrl.id]
+                                            : (r.relatedControls || []).filter(id => id !== ctrl.id) }
+                                        : r
+                                      ),
+                                      controls: prev.controls.map(c => c.id === ctrl.id
+                                        ? { ...c, mitigatesRisks: isChecked
+                                            ? [...(c.mitigatesRisks || []).filter(id => id !== risk.id), risk.id]
+                                            : (c.mitigatesRisks || []).filter(id => id !== risk.id) }
+                                        : c
+                                      )
+                                    }));
+                                  }}
+                                  className="mt-0.5"
+                                />
+                                <span className="text-sm">
+                                  <span className="font-mono text-xs">{ctrl.id}</span> - {ctrl.description.substring(0, 60)}...
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">No controls available - add controls first</p>
+                        )}
+                      </div>
+                    </>
                   ) : (
                     <p className="text-[#475569] mb-2">{risk.description}</p>
                   )}
@@ -844,15 +1399,35 @@ export default function Verifai() {
                       )
                     )}
                     {isEditMode ? (
-                      <input
-                        type="text"
-                        value={control.owner}
-                        onChange={(e) => updateControl(index, 'owner', e.target.value)}
-                        className="px-2 py-1 border border-blue-300 rounded text-sm"
-                        placeholder="Owner"
-                      />
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          value={control.owner || ''}
+                          onChange={(e) => updateControl(index, 'owner', e.target.value)}
+                          className="px-2 py-1 border border-blue-300 rounded text-sm w-28"
+                          placeholder="Owner name"
+                        />
+                        <input
+                          type="text"
+                          value={control.ownerRole || ''}
+                          onChange={(e) => updateControl(index, 'ownerRole', e.target.value)}
+                          className="px-2 py-1 border border-blue-300 rounded text-sm w-24"
+                          placeholder="Role"
+                        />
+                        <input
+                          type="text"
+                          value={control.ownerDepartment || ''}
+                          onChange={(e) => updateControl(index, 'ownerDepartment', e.target.value)}
+                          className="px-2 py-1 border border-blue-300 rounded text-sm w-24"
+                          placeholder="Dept"
+                        />
+                      </div>
                     ) : (
-                      <span className="text-sm text-[#64748b]">Owner: {control.owner}</span>
+                      <span className="text-sm text-[#64748b]">
+                        Owner: {control.owner}
+                        {control.ownerRole ? ` · ${control.ownerRole}` : ''}
+                        {control.ownerDepartment ? ` · ${control.ownerDepartment}` : ''}
+                      </span>
                     )}
                     {isEditMode && (
                       <button
@@ -864,13 +1439,70 @@ export default function Verifai() {
                       </button>
                     )}
                   </div>
+
+                  {/* Orphan warning - no risks */}
+                  {(!control.mitigatesRisks || control.mitigatesRisks.length === 0) && (
+                    <div className="bg-red-50 border border-red-200 rounded px-3 py-2 mb-2">
+                      <span className="text-red-700 text-sm">⚠️ Warning: This control doesn't mitigate any risks</span>
+                    </div>
+                  )}
+                  {/* Orphan warning - no procedures */}
+                  {!(isEditMode ? editedProgram : auditProgram)?.auditProcedures?.some(p => p.controlId === control.id) && (
+                    <div className="bg-orange-50 border border-orange-200 rounded px-3 py-2 mb-2">
+                      <span className="text-orange-700 text-sm">⚠️ Warning: No audit procedures test this control</span>
+                    </div>
+                  )}
+
                   {isEditMode ? (
-                    <textarea
-                      value={control.description}
-                      onChange={(e) => updateControl(index, 'description', e.target.value)}
-                      className="w-full px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-                      rows="2"
-                    />
+                    <>
+                      <textarea
+                        value={control.description}
+                        onChange={(e) => updateControl(index, 'description', e.target.value)}
+                        className="w-full px-3 py-2 border border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                        rows="2"
+                      />
+                      {/* Link to risks */}
+                      <div className="mb-2 bg-blue-50 p-3 rounded border border-blue-200">
+                        <label className="text-sm font-semibold text-[#1e3a8a] block mb-2">🔗 Link to Risks:</label>
+                        {editedProgram.risks && editedProgram.risks.length > 0 ? (
+                          <div className="space-y-1 max-h-32 overflow-y-auto">
+                            {editedProgram.risks.map(r => (
+                              <label key={r.id} className="flex items-start gap-2 cursor-pointer hover:bg-blue-100 p-1 rounded">
+                                <input
+                                  type="checkbox"
+                                  checked={(control.mitigatesRisks || []).includes(r.id)}
+                                  onChange={(e) => {
+                                    const isChecked = e.target.checked;
+                                    // Single atomic update for both controls and risks
+                                    setEditedProgram(prev => ({
+                                      ...prev,
+                                      controls: prev.controls.map((c, i) => i === index
+                                        ? { ...c, mitigatesRisks: isChecked
+                                            ? [...(c.mitigatesRisks || []).filter(id => id !== r.id), r.id]
+                                            : (c.mitigatesRisks || []).filter(id => id !== r.id) }
+                                        : c
+                                      ),
+                                      risks: prev.risks.map(risk => risk.id === r.id
+                                        ? { ...risk, relatedControls: isChecked
+                                            ? [...(risk.relatedControls || []).filter(id => id !== control.id), control.id]
+                                            : (risk.relatedControls || []).filter(id => id !== control.id) }
+                                        : risk
+                                      )
+                                    }));
+                                  }}
+                                  className="mt-0.5"
+                                />
+                                <span className="text-sm">
+                                  <span className="font-mono text-xs">{r.id}</span> - {r.description.substring(0, 60)}...
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">No risks available - add risks first</p>
+                        )}
+                      </div>
+                    </>
                   ) : (
                     <p className="text-[#475569] mb-2">{control.description}</p>
                   )}
@@ -894,9 +1526,19 @@ export default function Verifai() {
           {/* Audit Procedures */}
           {(isEditMode ? editedProgram?.auditProcedures : auditProgram?.auditProcedures) && (
           <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
-            <h2 className="text-2xl font-semibold text-[#1e3a8a] mb-4">
-              Audit Procedures {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-[#1e3a8a]">
+                Audit Procedures {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+              </h2>
+              {isEditMode && (
+                <button
+                  onClick={addProcedure}
+                  className="bg-blue-500 text-white px-4 py-2 rounded text-sm hover:bg-blue-600"
+                >
+                  + Add Procedure
+                </button>
+              )}
+            </div>
             <div className="space-y-6">
               {(isEditMode ? editedProgram.auditProcedures : auditProgram.auditProcedures).map((proc, index) => (
                 <div key={index} className="border border-[#e2e8f0] rounded-lg p-5">
@@ -904,7 +1546,24 @@ export default function Verifai() {
                     <span className="font-mono text-sm bg-[#1e3a8a] text-white px-3 py-1 rounded">
                       Procedure {index + 1}
                     </span>
-                    <span className="text-sm text-[#64748b]">Control: {proc.controlId}</span>
+                    {isEditMode ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-[#64748b]">Control:</span>
+                        <select
+                          value={proc.controlId}
+                          onChange={(e) => updateProcedure(index, 'controlId', e.target.value)}
+                          className="px-2 py-1 border border-blue-300 rounded text-sm"
+                        >
+                          {editedProgram.controls?.map(ctrl => (
+                            <option key={ctrl.id} value={ctrl.id}>
+                              {ctrl.id} - {ctrl.description.substring(0, 30)}...
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-[#64748b]">Control: {proc.controlId}</span>
+                    )}
                     {proc.testingMethod === 'Data Analytics' && (
                       <span className="text-sm bg-orange-100 text-orange-700 px-2 py-1 rounded font-medium">
                         📊 Analytics
@@ -937,7 +1596,7 @@ export default function Verifai() {
                   )}
 
                   {/* Analytics Test Details */}
-                  {proc.analyticsTest && (
+                  {proc.analyticsTest && proc.analyticsTest.type && (
                     <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
                       <h4 className="text-sm font-semibold text-orange-900 mb-2">📊 Analytics Test Details</h4>
                       <div className="space-y-2 text-sm">
@@ -960,15 +1619,47 @@ export default function Verifai() {
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
                       <span className="text-[#64748b]">Testing Method:</span>
-                      <p className="text-[#1e3a8a] font-medium">{proc.testingMethod}</p>
+                      {isEditMode ? (
+                        <select
+                          value={proc.testingMethod}
+                          onChange={(e) => updateProcedure(index, 'testingMethod', e.target.value)}
+                          className="w-full px-2 py-1 border border-blue-300 rounded text-sm mt-1"
+                        >
+                          <option>Inquiry</option>
+                          <option>Observation</option>
+                          <option>Inspection</option>
+                          <option>Reperformance</option>
+                          <option>Data Analytics</option>
+                        </select>
+                      ) : (
+                        <p className="text-[#1e3a8a] font-medium">{proc.testingMethod}</p>
+                      )}
                     </div>
                     <div>
                       <span className="text-[#64748b]">Sample Size:</span>
-                      <p className="text-[#1e3a8a] font-medium">{proc.sampleSize}</p>
+                      {isEditMode ? (
+                        <input
+                          type="text"
+                          value={proc.sampleSize}
+                          onChange={(e) => updateProcedure(index, 'sampleSize', e.target.value)}
+                          className="w-full px-2 py-1 border border-blue-300 rounded text-sm mt-1"
+                        />
+                      ) : (
+                        <p className="text-[#1e3a8a] font-medium">{proc.sampleSize}</p>
+                      )}
                     </div>
                     <div>
                       <span className="text-[#64748b]">Expected Evidence:</span>
-                      <p className="text-[#475569]">{proc.expectedEvidence}</p>
+                      {isEditMode ? (
+                        <textarea
+                          value={proc.expectedEvidence}
+                          onChange={(e) => updateProcedure(index, 'expectedEvidence', e.target.value)}
+                          className="w-full px-2 py-1 border border-blue-300 rounded text-sm mt-1"
+                          rows="2"
+                        />
+                      ) : (
+                        <p className="text-[#475569]">{proc.expectedEvidence}</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -976,6 +1667,81 @@ export default function Verifai() {
             </div>
           </div>
           )}
+          {/* Analytics Tests */}
+          {analyticsTests.length > 0 && (
+            <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <h2 className="text-2xl font-semibold text-[#1e3a8a]">
+                    📊 Analytics Tests {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+                  </h2>
+                  <p className="text-sm text-[#64748b] mt-1">
+                    {analyticsTests.filter(t => t.included).length} tests recommended for this process
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                {analyticsTests.map((test, index) => (
+                  <div key={test.id} className={`border rounded-lg p-4 ${!test.included ? 'opacity-50 bg-gray-50' : 'border-[#e2e8f0]'}`}>
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">{test.id}</span>
+                        <span className="font-semibold text-[#1e3a8a]">{test.name}</span>
+                        {test.controlId ? (
+                          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">→ {test.controlId}</span>
+                        ) : (
+                          <span className="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded">⚠ Unassigned</span>
+                        )}
+                      </div>
+                      {isEditMode && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <select
+                            value={test.controlId || ''}
+                            onChange={(e) => updateAnalyticsControl(index, e.target.value || null)}
+                            className="px-2 py-1 border border-blue-300 rounded text-sm"
+                          >
+                            <option value="">Unassigned</option>
+                            {(editedProgram?.controls || auditProgram?.controls || []).map(c => (
+                              <option key={c.id} value={c.id}>{c.id} — {c.description.substring(0, 30)}...</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => toggleAnalyticsTest(index)}
+                            className={`px-3 py-1 rounded text-sm font-medium ${test.included ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                          >
+                            {test.included ? 'Remove' : 'Include'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm text-[#475569] mb-3">{test.purpose}</p>
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                      <div>
+                        <span className="text-xs font-medium text-[#64748b] block mb-1">Data Needed</span>
+                        <span className="text-[#475569]">{test.dataneeded}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs font-medium text-[#64748b] block mb-1">Steps</span>
+                        <ol className="space-y-1">
+                          {test.steps.map((step, i) => (
+                            <li key={i} className="text-[#475569] flex gap-1">
+                              <span className="text-[#0d9488] font-medium shrink-0">{i + 1}.</span>
+                              <span className="font-mono text-xs bg-gray-50 px-1 rounded">{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    </div>
+                    <div className="bg-orange-50 border border-orange-100 rounded px-3 py-2 text-sm">
+                      <span className="font-medium text-orange-800">Red flags: </span>
+                      <span className="text-orange-700">{test.redflags}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
     );
@@ -1092,113 +1858,6 @@ export default function Verifai() {
             </p>
           </div>
 
-          {/* Sample Size Method */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-[#475569] mb-3">
-              Sample Size Methodology
-            </label>
-            <div className="space-y-3">
-              {sampleMethods.map((method) => (
-                <label
-                  key={method.id}
-                  className="flex items-start p-4 border border-[#e2e8f0] rounded-lg cursor-pointer hover:bg-[#f8fafc] transition-colors"
-                >
-                  <input
-                    type="radio"
-                    name="sampleMethod"
-                    value={method.id}
-                    checked={selectedMethod === method.id}
-                    onChange={(e) => setSelectedMethod(e.target.value)}
-                    className="mt-1 mr-3"
-                  />
-                  <div>
-                    <div className="font-medium text-[#1e3a8a]">{method.name}</div>
-                    <div className="text-sm text-[#64748b]">{method.description}</div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Statistical Sampling Inputs */}
-          {selectedMethod === 'statistical' && (
-            <div className="mb-6 p-4 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
-              <h3 className="font-medium text-[#1e3a8a] mb-4">Statistical Parameters</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm text-[#475569] mb-2">Population Size</label>
-                  <input
-                    type="number"
-                    value={populationSize}
-                    onChange={(e) => setPopulationSize(e.target.value)}
-                    placeholder="e.g., 1000"
-                    className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-[#475569] mb-2">Confidence Level</label>
-                  <select
-                    value={confidenceLevel}
-                    onChange={(e) => setConfidenceLevel(e.target.value)}
-                    className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                  >
-                    <option value="90">90%</option>
-                    <option value="95">95%</option>
-                    <option value="99">99%</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-[#475569] mb-2">Error Rate (%)</label>
-                  <input
-                    type="number"
-                    value={errorRate}
-                    onChange={(e) => setErrorRate(e.target.value)}
-                    placeholder="e.g., 5"
-                    className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Custom Input Fields */}
-          {selectedMethod === 'custom' && (
-            <div className="mb-6 p-4 bg-[#f8fafc] rounded-lg border border-[#e2e8f0]">
-              <h3 className="font-medium text-[#1e3a8a] mb-4">Custom Sampling Details</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-[#475569] mb-2">Sample Size</label>
-                  <input
-                    type="number"
-                    value={customSampleSize}
-                    onChange={(e) => setCustomSampleSize(e.target.value)}
-                    placeholder="e.g., 30"
-                    className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-[#475569] mb-2">Sampling Methodology</label>
-                  <input
-                    type="text"
-                    value={customMethodology}
-                    onChange={(e) => setCustomMethodology(e.target.value)}
-                    placeholder="e.g., Systematic sampling, Random sampling"
-                    className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-[#475569] mb-2">Justification</label>
-                  <textarea
-                    value={customJustification}
-                    onChange={(e) => setCustomJustification(e.target.value)}
-                    placeholder="Explain your rationale for this sample size and methodology..."
-                    rows={3}
-                    className="w-full px-3 py-2 border border-[#e2e8f0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0d9488]"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Generate Button */}
           <button
