@@ -197,10 +197,27 @@ export default function Verifai() {
         if (control.frameworkReference) {
           controlData.push(['Framework Reference:', control.frameworkReference]);
         }
-        if (control.mitigatesRisks && control.mitigatesRisks.length > 0) {
-          controlData.push(['Mitigates Risks:', control.mitigatesRisks.join(', ')]);
-        }
         controlData.push([]);
+
+        // Associated Risks (full details)
+        if (control.mitigatesRisks && control.mitigatesRisks.length > 0 && auditProgram.risks) {
+          controlData.push(['ASSOCIATED RISKS']);
+          control.mitigatesRisks.forEach(riskId => {
+            const risk = auditProgram.risks.find(r => r.id === riskId);
+            if (risk) {
+              controlData.push([`${risk.id}:`, risk.description]);
+              controlData.push(['Risk Category:', risk.category]);
+              controlData.push(['Risk Rating:', risk.rating]);
+              if (risk.assertion) {
+                controlData.push(['Assertion:', risk.assertion]);
+              }
+              if (risk.frameworkReference) {
+                controlData.push(['Framework Reference:', risk.frameworkReference]);
+              }
+              controlData.push([]);
+            }
+          });
+        }
 
         // Section B: Testing Plan
         const procedures = auditProgram.auditProcedures.filter(p => p.controlId === control.id);
