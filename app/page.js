@@ -313,29 +313,15 @@ const analyticsLibrary = {
   ],
 };
 
-// Maps analytics tests to controls by keyword matching
-// First tries control descriptions, then falls back to risk descriptions
-function mapAnalyticsToControls(program, process) {
+// Maps analytics tests to risks by keyword matching
+function mapAnalyticsToRisks(program, process) {
   const tests = analyticsLibrary[process] || [];
-  const controls = program.controls || [];
   const risks = program.risks || [];
-
   return tests.map(test => {
-    // 1. Try matching by control description
-    const matchedControl = controls.find(control =>
-      test.keywords.some(kw => control.description.toLowerCase().includes(kw.toLowerCase()))
-    );
-    if (matchedControl) return { ...test, controlId: matchedControl.id, included: true };
-
-    // 2. Fallback: match by risk description, then use that risk's first related control
-    const matchedRisk = risks.find(risk =>
+    const matched = risks.find(risk =>
       test.keywords.some(kw => risk.description.toLowerCase().includes(kw.toLowerCase()))
     );
-    if (matchedRisk && matchedRisk.relatedControls?.length > 0) {
-      return { ...test, controlId: matchedRisk.relatedControls[0], included: true };
-    }
-
-    return { ...test, controlId: null, included: true };
+    return { ...test, riskId: matched?.id || null, included: true };
   });
 }
 
@@ -397,7 +383,7 @@ export default function Verifai() {
         setAuditProgram(cleanData);
         setOriginalProgram(JSON.parse(JSON.stringify(cleanData)));
         setEditedProgram(JSON.parse(JSON.stringify(cleanData)));
-        setAnalyticsTests(mapAnalyticsToControls(cleanData, selectedProcess));
+        setAnalyticsTests(mapAnalyticsToRisks(cleanData, selectedProcess));
         setShowResults(true);
         setIsEditMode(false);
       } else {
@@ -581,9 +567,9 @@ export default function Verifai() {
     setEditedProgram({...editedProgram, auditProcedures: updated});
   };
 
-  const updateAnalyticsControl = (index, controlId) => {
+  const updateAnalyticsRisk = (index, riskId) => {
     const updated = [...analyticsTests];
-    updated[index] = { ...updated[index], controlId };
+    updated[index] = { ...updated[index], riskId };
     setAnalyticsTests(updated);
   };
 
@@ -823,20 +809,20 @@ export default function Verifai() {
     const includedTests = analyticsTests.filter(t => t.included);
     if (includedTests.length > 0) {
       const analyticsData = [];
-      analyticsData.push(['ANALYTICS TESTS']);
-      analyticsData.push(['Data analytics procedures recommended for this audit program.']);
+      analyticsData.push(['DATA ANALYTICS']);
+      analyticsData.push(['Population-based analytics procedures — run on full dataset, not a sample.']);
       analyticsData.push([]);
-      analyticsData.push(['Test ID', 'Test Name', 'Linked Control', 'Status', 'Exceptions Found', 'Notes']);
+      analyticsData.push(['Test ID', 'Test Name', 'Risk Addressed', 'Status', 'Exceptions Found', 'Notes']);
 
       includedTests.forEach(test => {
-        const linkedControl = controls.find(c => c.id === test.controlId);
-        analyticsData.push([test.id, test.name, test.controlId || 'Unassigned', 'Not Started', '', '']);
+        const linkedRisk = risks.find(r => r.id === test.riskId);
+        analyticsData.push([test.id, test.name, test.riskId || 'Unassigned', 'Not Started', '', '']);
         analyticsData.push(['Purpose:', test.purpose]);
         analyticsData.push(['Data Needed:', test.dataneeded]);
         analyticsData.push(['Steps:']);
         test.steps.forEach((step, i) => analyticsData.push(['', `${i + 1}. ${step}`]));
         analyticsData.push(['Red Flags:', test.redflags]);
-        if (linkedControl) analyticsData.push(['Linked Control:', `${linkedControl.id}: ${linkedControl.description.substring(0, 60)}`]);
+        if (linkedRisk) analyticsData.push(['Risk Addressed:', `${linkedRisk.id}: ${linkedRisk.description.substring(0, 60)}`]);
         analyticsData.push([]);
       });
 
@@ -845,7 +831,7 @@ export default function Verifai() {
         { wch: 12 }, { wch: 55 }, { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 30 }
       ];
       analyticsSheet['!freeze'] = { xSplit: 0, ySplit: 1 };
-      XLSX.utils.book_append_sheet(workbook, analyticsSheet, 'Analytics Tests');
+      XLSX.utils.book_append_sheet(workbook, analyticsSheet, 'Data Analytics');
     }
 
     // FINDINGS SUMMARY tab
@@ -1609,10 +1595,10 @@ export default function Verifai() {
               <div className="flex justify-between items-center mb-4">
                 <div>
                   <h2 className="text-2xl font-semibold text-[#1e3a8a]">
-                    📊 Analytics Tests {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
+                    📊 Data Analytics {isEditMode && <span className="text-sm text-blue-600">(Editing)</span>}
                   </h2>
                   <p className="text-sm text-[#64748b] mt-1">
-                    {analyticsTests.filter(t => t.included).length} tests recommended for this process
+                    {analyticsTests.filter(t => t.included).length} population-based tests recommended for this process
                   </p>
                 </div>
               </div>
@@ -1623,8 +1609,8 @@ export default function Verifai() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded">{test.id}</span>
                         <span className="font-semibold text-[#1e3a8a]">{test.name}</span>
-                        {test.controlId ? (
-                          <span className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded">→ {test.controlId}</span>
+                        {test.riskId ? (
+                          <span className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded">→ {test.riskId}</span>
                         ) : (
                           <span className="text-xs bg-yellow-50 text-yellow-700 px-2 py-1 rounded">⚠ Unassigned</span>
                         )}
@@ -1632,13 +1618,13 @@ export default function Verifai() {
                       {isEditMode && (
                         <div className="flex items-center gap-2 shrink-0">
                           <select
-                            value={test.controlId || ''}
-                            onChange={(e) => updateAnalyticsControl(index, e.target.value || null)}
+                            value={test.riskId || ''}
+                            onChange={(e) => updateAnalyticsRisk(index, e.target.value || null)}
                             className="px-2 py-1 border border-blue-300 rounded text-sm"
                           >
                             <option value="">Unassigned</option>
-                            {(editedProgram?.controls || auditProgram?.controls || []).map(c => (
-                              <option key={c.id} value={c.id}>{c.id} — {c.description.substring(0, 30)}...</option>
+                            {(editedProgram?.risks || auditProgram?.risks || []).map(r => (
+                              <option key={r.id} value={r.id}>{r.id} — {r.description.substring(0, 30)}...</option>
                             ))}
                           </select>
                           <button
