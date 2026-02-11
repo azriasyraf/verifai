@@ -352,6 +352,7 @@ export default function Verifai() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editedProgram, setEditedProgram] = useState(null);
   const [originalProgram, setOriginalProgram] = useState(null);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   // Analytics tests state
   const [analyticsTests, setAnalyticsTests] = useState([]);
@@ -417,11 +418,15 @@ export default function Verifai() {
   const cancelEdit = () => {
     setEditedProgram(JSON.parse(JSON.stringify(originalProgram)));
     setIsEditMode(false);
+    setConfirmReset(false);
   };
 
   const resetToAI = () => {
-    if (confirm('Reset all changes to AI-generated version?')) {
+    if (confirmReset) {
       setEditedProgram(JSON.parse(JSON.stringify(originalProgram)));
+      setConfirmReset(false);
+    } else {
+      setConfirmReset(true);
     }
   };
 
@@ -711,6 +716,12 @@ export default function Verifai() {
     summaryData.push(['Date:', '']);
 
     const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    summarySheet['!cols'] = [
+      { wch: 24 }, { wch: 48 }, { wch: 15 }, { wch: 15 },
+      { wch: 22 }, { wch: 15 }, { wch: 18 }, { wch: 20 },
+      { wch: 15 }, { wch: 12 }, { wch: 20 }
+    ];
+    summarySheet['!freeze'] = { xSplit: 0, ySplit: 1 };
     XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
 
     // TAB 2-N: CONTROL WORKPAPERS — one per control, all controls included
@@ -802,6 +813,8 @@ export default function Verifai() {
       controlData.push(['Auditor Notes:', '']);
 
       const controlSheet = XLSX.utils.aoa_to_sheet(controlData);
+      controlSheet['!cols'] = [{ wch: 24 }, { wch: 75 }];
+      controlSheet['!freeze'] = { xSplit: 0, ySplit: 1 };
       const tabName = `${control.id} - ${control.description.substring(0, 20)}`.replace(/[^a-zA-Z0-9 -]/g, '').substring(0, 31);
       XLSX.utils.book_append_sheet(workbook, controlSheet, tabName);
     });
@@ -828,6 +841,10 @@ export default function Verifai() {
       });
 
       const analyticsSheet = XLSX.utils.aoa_to_sheet(analyticsData);
+      analyticsSheet['!cols'] = [
+        { wch: 12 }, { wch: 55 }, { wch: 20 }, { wch: 15 }, { wch: 25 }, { wch: 30 }
+      ];
+      analyticsSheet['!freeze'] = { xSplit: 0, ySplit: 1 };
       XLSX.utils.book_append_sheet(workbook, analyticsSheet, 'Analytics Tests');
     }
 
@@ -843,6 +860,11 @@ export default function Verifai() {
     });
 
     const findingsSheet = XLSX.utils.aoa_to_sheet(findingsData);
+    findingsSheet['!cols'] = [
+      { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 45 },
+      { wch: 12 }, { wch: 30 }, { wch: 35 }, { wch: 12 }, { wch: 12 }
+    ];
+    findingsSheet['!freeze'] = { xSplit: 0, ySplit: 4 };
     XLSX.utils.book_append_sheet(workbook, findingsSheet, 'Findings Summary');
 
     // Generate filename and download
@@ -858,16 +880,7 @@ export default function Verifai() {
     setAuditProgram(null);
     setError(null);
     setAnalyticsTests([]);
-    setAuditeeDetails({
-      clientName: '',
-      department: '',
-      periodFrom: '',
-      periodTo: '',
-      engagementRef: '',
-      auditorName: '',
-      primaryContactName: '',
-      primaryContactTitle: '',
-    });
+    // Note: auditeeDetails intentionally NOT reset — persists across multiple generates in same session
   };
 
   if (showResults && auditProgram) {
@@ -915,12 +928,20 @@ export default function Verifai() {
                     >
                       Cancel
                     </button>
-                    <button
-                      onClick={resetToAI}
-                      className="bg-[#ef4444] text-white px-6 py-3 rounded-lg hover:bg-[#dc2626] transition-colors"
-                    >
-                      ↺ Reset to AI
-                    </button>
+                    {confirmReset ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-[#ef4444] font-medium">Reset all changes?</span>
+                        <button onClick={resetToAI} className="bg-[#ef4444] text-white px-4 py-2 rounded-lg hover:bg-[#dc2626] transition-colors text-sm font-medium">Yes, reset</button>
+                        <button onClick={() => setConfirmReset(false)} className="bg-[#e2e8f0] text-[#475569] px-4 py-2 rounded-lg hover:bg-[#cbd5e1] transition-colors text-sm">Cancel</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={resetToAI}
+                        className="bg-[#ef4444] text-white px-6 py-3 rounded-lg hover:bg-[#dc2626] transition-colors"
+                      >
+                        ↺ Reset to AI
+                      </button>
+                    )}
                     <button
                       onClick={exportToExcel}
                       className="bg-[#0d9488] text-white px-6 py-3 rounded-lg hover:bg-[#0f766e] transition-colors font-semibold"
@@ -935,91 +956,6 @@ export default function Verifai() {
                 >
                   Generate Another
                 </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Engagement Details — always editable, user-entered, not AI-generated */}
-          <div className="bg-white rounded-lg shadow-sm border border-[#e2e8f0] p-6 mb-6">
-            <h2 className="text-xl font-semibold text-[#1e3a8a] mb-4">📋 Engagement Details</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Client / Company Name</label>
-                <input
-                  type="text"
-                  value={auditeeDetails.clientName}
-                  onChange={(e) => updateAuditeeDetail('clientName', e.target.value)}
-                  placeholder="e.g. Acme Corporation"
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Department Under Audit</label>
-                <input
-                  type="text"
-                  value={auditeeDetails.department}
-                  onChange={(e) => updateAuditeeDetail('department', e.target.value)}
-                  placeholder="e.g. Finance & Accounting"
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Audit Period From</label>
-                <input
-                  type="date"
-                  value={auditeeDetails.periodFrom}
-                  onChange={(e) => updateAuditeeDetail('periodFrom', e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Audit Period To</label>
-                <input
-                  type="date"
-                  value={auditeeDetails.periodTo}
-                  onChange={(e) => updateAuditeeDetail('periodTo', e.target.value)}
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Engagement Reference</label>
-                <input
-                  type="text"
-                  value={auditeeDetails.engagementRef}
-                  onChange={(e) => updateAuditeeDetail('engagementRef', e.target.value)}
-                  placeholder="e.g. IA-2026-001"
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Auditor Name</label>
-                <input
-                  type="text"
-                  value={auditeeDetails.auditorName}
-                  onChange={(e) => updateAuditeeDetail('auditorName', e.target.value)}
-                  placeholder="Lead auditor"
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Primary Contact Name</label>
-                <input
-                  type="text"
-                  value={auditeeDetails.primaryContactName}
-                  onChange={(e) => updateAuditeeDetail('primaryContactName', e.target.value)}
-                  placeholder="Client-side point of contact"
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-[#64748b] mb-1">Primary Contact Title</label>
-                <input
-                  type="text"
-                  value={auditeeDetails.primaryContactTitle}
-                  onChange={(e) => updateAuditeeDetail('primaryContactTitle', e.target.value)}
-                  placeholder="e.g. Finance Manager"
-                  className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm"
-                />
               </div>
             </div>
           </div>
@@ -1859,6 +1795,45 @@ export default function Verifai() {
           </div>
 
 
+          {/* Engagement Details */}
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-[#475569] mb-3 uppercase tracking-wide">Engagement Details <span className="text-[#94a3b8] font-normal normal-case">(optional — carries across all programs this session)</span></h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Client / Company Name</label>
+                <input type="text" value={auditeeDetails.clientName} onChange={(e) => updateAuditeeDetail('clientName', e.target.value)} placeholder="e.g. Acme Corporation" className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Department Under Audit</label>
+                <input type="text" value={auditeeDetails.department} onChange={(e) => updateAuditeeDetail('department', e.target.value)} placeholder="e.g. Finance & Accounting" className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Audit Period From</label>
+                <input type="date" value={auditeeDetails.periodFrom} onChange={(e) => updateAuditeeDetail('periodFrom', e.target.value)} className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Audit Period To</label>
+                <input type="date" value={auditeeDetails.periodTo} onChange={(e) => updateAuditeeDetail('periodTo', e.target.value)} className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Engagement Reference</label>
+                <input type="text" value={auditeeDetails.engagementRef} onChange={(e) => updateAuditeeDetail('engagementRef', e.target.value)} placeholder="e.g. IA-2026-001" className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Auditor Name</label>
+                <input type="text" value={auditeeDetails.auditorName} onChange={(e) => updateAuditeeDetail('auditorName', e.target.value)} placeholder="Lead auditor" className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Primary Contact Name</label>
+                <input type="text" value={auditeeDetails.primaryContactName} onChange={(e) => updateAuditeeDetail('primaryContactName', e.target.value)} placeholder="Client-side point of contact" className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-[#64748b] mb-1">Primary Contact Title</label>
+                <input type="text" value={auditeeDetails.primaryContactTitle} onChange={(e) => updateAuditeeDetail('primaryContactTitle', e.target.value)} placeholder="e.g. Finance Manager" className="w-full px-3 py-2 border border-[#e2e8f0] rounded focus:outline-none focus:ring-2 focus:ring-[#0d9488] text-sm" />
+              </div>
+            </div>
+          </div>
+
           {/* Generate Button */}
           <button
             onClick={handleGenerate}
@@ -1869,7 +1844,15 @@ export default function Verifai() {
                 : 'bg-[#cbd5e1] text-[#94a3b8] cursor-not-allowed'
             }`}
           >
-            {isGenerating ? 'Generating Audit Program...' : 'Generate Audit Program'}
+            {isGenerating ? (
+              <span className="flex items-center justify-center gap-3">
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating Audit Program...
+              </span>
+            ) : 'Generate Audit Program'}
           </button>
         </div>
 
