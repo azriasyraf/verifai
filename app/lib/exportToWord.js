@@ -211,6 +211,18 @@ export async function exportToWord(report) {
   sections.push(divider());
   sections.push(body(report.conclusion || ''));
 
+  // AI DISCLOSURE
+  sections.push(new Paragraph({ spacing: { before: 600 } }));
+  sections.push(new Paragraph({
+    children: [new TextRun({
+      text: 'Prepared with AI assistance using Verifai. All AI-generated content has been reviewed and approved by the engagement team prior to issue.',
+      size: 18,
+      color: '999999',
+      italics: true,
+    })],
+    alignment: AlignmentType.CENTER,
+  }));
+
   // Build document
   const doc = new Document({
     styles: {

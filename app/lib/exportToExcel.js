@@ -141,6 +141,8 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
   summaryData.push(['Manager Comments:', '']);
   summaryData.push(['Reviewer Signature:', '']);
   summaryData.push(['Date:', '']);
+  summaryData.push([]);
+  summaryData.push(['Prepared with AI assistance using Verifai (verifai-omega.vercel.app). All content reviewed by the audit team before use.']);
 
   const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
   summarySheet['!cols'] = [

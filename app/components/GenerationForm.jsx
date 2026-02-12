@@ -290,20 +290,34 @@ export default function GenerationForm({
                     <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{parseError}</p>
                   )}
                   {parsedFindings?.findings?.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-1">
+                    <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2">
                       <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Findings detected</p>
-                      {parsedFindings.findings.map((f, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
-                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                            f.riskRating === 'High' ? 'bg-red-100 text-red-700' :
-                            f.riskRating === 'Low' ? 'bg-green-100 text-green-700' :
-                            'bg-orange-100 text-orange-700'
-                          }`}>{f.riskRating || 'Medium'}</span>
-                          <span>{f.ref}</span>
-                          <span className="text-gray-400">·</span>
-                          <span className="truncate">{f.findingDescription.substring(0, 60)}{f.findingDescription.length > 60 ? '...' : ''}</span>
-                        </div>
-                      ))}
+                      {parsedFindings.findings.map((f, i) => {
+                        const warnings = [];
+                        const descWords = (f.findingDescription || '').trim().split(/\s+/).length;
+                        if (!f.findingDescription || descWords < 8) warnings.push('Finding description is too brief');
+                        if (!f.rootCause || f.rootCause.trim().length === 0) warnings.push('Root cause is empty');
+                        if (!f.riskRating || f.riskRating === 'Open') warnings.push('Risk rating not set');
+                        return (
+                          <div key={i} className="space-y-1">
+                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                                f.riskRating === 'High' ? 'bg-red-100 text-red-700' :
+                                f.riskRating === 'Low' ? 'bg-green-100 text-green-700' :
+                                'bg-orange-100 text-orange-700'
+                              }`}>{f.riskRating || 'Medium'}</span>
+                              <span className="font-medium">{f.ref}</span>
+                              <span className="text-gray-400">·</span>
+                              <span className="truncate">{(f.findingDescription || '').substring(0, 60)}{(f.findingDescription || '').length > 60 ? '...' : ''}</span>
+                            </div>
+                            {warnings.map((w, wi) => (
+                              <p key={wi} className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5 ml-1">
+                                {w}
+                              </p>
+                            ))}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

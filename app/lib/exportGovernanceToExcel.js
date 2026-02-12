@@ -83,6 +83,8 @@ export function exportGovernanceToExcel(assessment, auditeeDetails) {
   (assessment.recommendations || []).forEach((rec, i) => {
     overviewRows.push([`${i + 1}.`, rec]);
   });
+  overviewRows.push(['']);
+  overviewRows.push(['Prepared with AI assistance using Verifai (verifai-omega.vercel.app). All content reviewed by the audit team before use.']);
 
   const overviewSheet = makeSheet(overviewRows, [30, 100]);
   XLSX.utils.book_append_sheet(workbook, overviewSheet, 'Overview');

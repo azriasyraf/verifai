@@ -8,6 +8,23 @@ const RATING_STYLES = {
   Low: 'bg-green-100 text-green-700 border border-green-200',
 };
 
+const WEAK_RESPONSE_PATTERNS = [
+  'will monitor', 'noted', 'team has been reminded', 'will improve',
+  'steps will be taken', 'in progress', 'will be addressed', 'management acknowledges',
+  'will take note', 'will ensure', 'will review'
+];
+
+function getMgmtResponseIssues(text) {
+  if (!text || text.trim().length === 0) return ['No management response provided'];
+  const issues = [];
+  const lower = text.toLowerCase();
+  const wordCount = text.trim().split(/\s+/).length;
+  if (wordCount < 25) issues.push('Response is too brief to be actionable');
+  if (WEAK_RESPONSE_PATTERNS.some(p => lower.includes(p))) issues.push('Contains vague language — ensure a specific action, owner, and due date are stated');
+  if (!/\d{1,2}[\s/-]\w+[\s/-]\d{2,4}|\w+ \d{4}|q[1-4] \d{4}/i.test(text)) issues.push('No due date detected');
+  return issues;
+}
+
 const OPINION_STYLES = {
   'Needs Improvement': 'bg-red-50 text-red-700 border-red-200',
   'Satisfactory with Exceptions': 'bg-orange-50 text-orange-700 border-orange-200',
@@ -92,7 +109,26 @@ function FindingCard({ finding, index, isEditMode, onChange }) {
         {field('Cause', 'cause', true)}
         {field('Effect', 'effect', true)}
         {field('Recommendation', 'recommendation', true)}
-        {field('Mgmt Response', 'managementResponse', true)}
+        {/* Management Response with QC flags */}
+        <div className="grid grid-cols-[140px_1fr] gap-3 py-2 border-b border-gray-100">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-1">Mgmt Response</span>
+          <div className="space-y-1.5">
+            {isEditMode ? (
+              <EditableText
+                value={finding.managementResponse}
+                onChange={val => onChange(index, 'managementResponse', val)}
+                multiline
+              />
+            ) : (
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{finding.managementResponse || ''}</p>
+            )}
+            {getMgmtResponseIssues(finding.managementResponse).map((issue, i) => (
+              <p key={i} className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                {issue}
+              </p>
+            ))}
+          </div>
+        </div>
         {field('Action Owner', 'actionOwner')}
         {field('Due Date', 'dueDate')}
         {field('Status', 'status')}
