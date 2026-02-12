@@ -84,7 +84,7 @@ export default function UserGuide() {
             <div className="flex border-b border-gray-200 px-6 gap-4 text-sm">
               {[
                 { id: 'engine', label: '⚙️ The Engine' },
-                { id: 'features', label: '✅ Features' },
+                { id: 'features', label: '📖 How to Use' },
                 { id: 'coming', label: '🔜 Coming Soon' },
                 { id: 'credits', label: '👤 Credits' },
               ].map(tab => (
@@ -156,48 +156,99 @@ export default function UserGuide() {
               )}
 
               {activeTab === 'features' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
+
+                  {/* Audit Program */}
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Audit Program Generator</h3>
-                    <p className="text-xs text-gray-500 mb-2">
-                      Currently supports a curated set of industries and processes — these are placeholders
-                      while we validate the core experience. Coverage will expand significantly in future releases.
+                    <h3 className="font-semibold text-gray-900 mb-3">Audit Program Generator</h3>
+                    <ol className="space-y-3">
+                      {[
+                        {
+                          step: 'Fill in engagement details',
+                          desc: 'Enter client name, department, audit period, engagement reference, and auditor name. These appear on your exported workpaper — skip if not needed.',
+                        },
+                        {
+                          step: 'Select your industry and process',
+                          desc: 'Choose the industry context and the specific process you are auditing (e.g. Revenue to Cash, Procurement to Payment). These are the starting options — more will be added.',
+                        },
+                        {
+                          step: 'Click Generate',
+                          desc: 'Verifai generates a full audit program: objectives, risks, controls with framework references, audit procedures, and analytics tests. Takes about 10–15 seconds.',
+                        },
+                        {
+                          step: 'Review and customise',
+                          desc: 'Click Edit Program to modify anything — add or remove risks, controls, and procedures, or change descriptions. Everything the AI generates is a starting point, not a final answer.',
+                        },
+                        {
+                          step: 'Check the Analytics Tests section',
+                          desc: 'Verifai auto-suggests data analytics tests mapped to your risks. Toggle tests on/off and re-map them to different risks if needed.',
+                        },
+                        {
+                          step: 'Export to Excel',
+                          desc: 'Download a multi-tab workbook with your full audit program, analytics test details, and control matrix. Ready to use or share.',
+                        },
+                      ].map((item, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                          <div>
+                            <p className="font-medium text-gray-900">{item.step}</p>
+                            <p className="text-gray-500 text-xs mt-0.5">{item.desc}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div className="border-t border-gray-100" />
+
+                  {/* RMGA */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Risk Management & Governance Assessment (RMGA)</h3>
+                    <p className="text-xs text-gray-500 mb-3">
+                      An entity-level working paper — assesses the organisation&apos;s governance framework, risk culture, and oversight mechanisms. Not tied to a specific process.
                     </p>
-                    <ul className="space-y-1.5 list-none">
+                    <ol className="space-y-3">
                       {[
-                        'Generate full audit programs in seconds — select your industry and process to get started',
-                        'Risk & control mapping with IIA IPPF and COSO ERM framework references',
-                        'Analytics tests library — 35 tests across all processes, auto-mapped to risks',
-                        'Engagement details capture (client, period, auditor, reference)',
-                        'Full edit mode — customise all AI-generated content inline',
-                        'Excel export — multi-tab workbook (Program, Analytics, Controls)',
-                      ].map((f, i) => (
-                        <li key={i} className="flex gap-2">
-                          <span className="text-green-500 mt-0.5 shrink-0">✓</span>
-                          <span>{f}</span>
+                        {
+                          step: 'Switch to Governance mode',
+                          desc: 'On the main form, select Risk & Governance Assessment. Fill in engagement details and select the industry and company type.',
+                        },
+                        {
+                          step: 'Select processes in scope',
+                          desc: 'Tick the processes that are in scope for the engagement. These are used as context only — the assessment itself covers governance at entity level.',
+                        },
+                        {
+                          step: 'Click Generate',
+                          desc: 'Verifai generates four assessment areas: Risk Management Framework, Control Environment & Risk Culture, Training & Awareness, and Risk Reporting & Oversight.',
+                        },
+                        {
+                          step: 'Work through each area',
+                          desc: 'For each area you\'ll see walkthrough steps, documents to obtain, and inquiry questions. Use the Management Response and Auditor Assessment fields to document your fieldwork as you go.',
+                        },
+                        {
+                          step: 'Write area conclusions',
+                          desc: 'Once you\'ve completed fieldwork for an area, type your conclusion in the Conclusion box at the bottom of that area.',
+                        },
+                        {
+                          step: 'Generate the Overall Assessment',
+                          desc: 'When your working paper is complete, scroll to the bottom and click Generate Overall Assessment. Choose AI-suggested (Verifai synthesises a maturity rating from your conclusions) or enter your own manually.',
+                        },
+                        {
+                          step: 'Export to Excel',
+                          desc: 'Download a 3-tab workbook: Summary (scope, objectives, overall assessment), Working Paper (all areas and conclusions), and Inquiry Responses.',
+                        },
+                      ].map((item, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-purple-100 text-purple-700 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                          <div>
+                            <p className="font-medium text-gray-900">{item.step}</p>
+                            <p className="text-gray-500 text-xs mt-0.5">{item.desc}</p>
+                          </div>
                         </li>
                       ))}
-                    </ul>
+                    </ol>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Risk Management & Governance Assessment (RMGA)</h3>
-                    <ul className="space-y-1.5 list-none">
-                      {[
-                        'Entity-level governance working paper — assesses the organisation\'s governance backbone, not individual process controls',
-                        'Four assessment areas: Risk Management Framework, Control Environment & Risk Culture, Training & Awareness, Risk Reporting & Oversight',
-                        'Walkthrough steps, documents to obtain, inquiry questions with purpose notes, red flags — all per area',
-                        'Management response + auditor assessment fields for each inquiry question',
-                        'Per-area conclusions and full edit mode',
-                        'On-demand Overall Assessment — AI-generated maturity rating (L1–L5) or manual input',
-                        'Excel export — 3 tabs (Summary, Working Paper, Inquiry Responses)',
-                      ].map((f, i) => (
-                        <li key={i} className="flex gap-2">
-                          <span className="text-green-500 mt-0.5 shrink-0">✓</span>
-                          <span>{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+
                 </div>
               )}
 
