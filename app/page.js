@@ -7,6 +7,7 @@ import { exportGovernanceToExcel } from './lib/exportGovernanceToExcel';
 import GenerationForm from './components/GenerationForm';
 import AuditProgramView from './components/AuditProgramView';
 import GovernanceView from './components/GovernanceView';
+import UserGuide from './components/UserGuide';
 
 // Strips invalid cross-references from AI-generated data
 function sanitizeProgram(program) {
@@ -433,21 +434,26 @@ export default function Verifai() {
   // Governance assessment results view
   if (showResults && generationMode === 'governance' && governanceAssessment) {
     return (
-      <GovernanceView
-        assessment={governanceAssessment}
-        auditeeDetails={auditeeDetails}
-        onExportExcel={handleExportGovernance}
-        onGenerateAuditProgram={handleGenerateFromAssessment}
-        onStartOver={resetForm}
-        isGeneratingAudit={isGenerating}
-      />
+      <>
+        <UserGuide />
+        <GovernanceView
+          assessment={governanceAssessment}
+          auditeeDetails={auditeeDetails}
+          onExportExcel={handleExportGovernance}
+          onGenerateAuditProgram={handleGenerateFromAssessment}
+          onStartOver={resetForm}
+          isGeneratingAudit={isGenerating}
+        />
+      </>
     );
   }
 
   // Audit program results view (existing — unchanged)
   if (showResults && auditProgram) {
     return (
-      <AuditProgramView
+      <>
+        <UserGuide />
+        <AuditProgramView
         auditProgram={auditProgram}
         editedProgram={editedProgram}
         isEditMode={isEditMode}
@@ -478,12 +484,15 @@ export default function Verifai() {
         updateAnalyticsRisk={updateAnalyticsRisk}
         toggleAnalyticsTest={toggleAnalyticsTest}
       />
+      </>
     );
   }
 
   // Form view
   return (
-    <GenerationForm
+    <>
+      <UserGuide />
+      <GenerationForm
       // shared
       generationMode={generationMode}
       setGenerationMode={setGenerationMode}
@@ -507,5 +516,6 @@ export default function Verifai() {
       canGenerateGovernance={canGenerateGovernance}
       handleGenerateGovernance={handleGenerateGovernance}
     />
+    </>
   );
 }

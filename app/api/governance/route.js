@@ -81,16 +81,10 @@ function buildGovernancePrompt(industry, companyType, processes, auditeeDetails)
       ].filter(Boolean).join(' | ')
     : '';
 
-  // Build process-specific area IDs — GA001–GA004 are fixed, GA005+ are per-process
-  const processAreas = processes.map((p, i) => {
-    const areaId = `GA${String(5 + i).padStart(3, '0')}`;
-    return `${areaId}: Process-Specific Governance for ${processNames[p] || p}`;
-  });
-
   return `Generate a Risk Management & Governance Assessment working paper for:
 - Industry: ${industryLabel}
 - Company Type: ${companyType}
-- Processes in scope: ${processLabels}
+- Processes in scope (context only — not areas to assess): ${processLabels}
 ${engagementContext ? `- Engagement: ${engagementContext}` : ''}
 
 Return a JSON object with this exact structure:
@@ -118,12 +112,11 @@ Return a JSON object with this exact structure:
   ]
 }
 
-Governance areas to cover — generate ALL of the following as separate entries in the areas array:
+Governance areas to cover — generate EXACTLY these 4 areas as separate entries in the areas array:
 1. Risk Management Framework (areaId: GA001)
 2. Control Environment & Risk Culture (areaId: GA002) — combined area covering BOTH the formal control environment (organisational structure, delegations of authority, segregation of duties, accountability mechanisms, policies) AND risk culture/tone at the top (leadership behaviour and messaging, how risk is discussed and escalated, employee awareness and psychological safety, cultural norms around risk). Do NOT treat these as separate sub-sections — generate integrated questions that assess how formal structures and cultural behaviours reinforce each other.
 3. Training & Awareness (areaId: GA003)
 4. Risk Reporting & Oversight (areaId: GA004)
-${processAreas.map((a, i) => `${i + 5}. ${a}`).join('\n')}
 
 Requirements for each area:
 - At minimum 3 walkthroughSteps (numbered steps the auditor physically performs)
@@ -133,8 +126,8 @@ Requirements for each area:
 - At minimum 3 redFlags specific to this area and this organisation type
 - Leave conclusion as an empty string ""
 
+This is an entity-level governance assessment — assess the organisation's governance backbone, not individual process controls.
 Make all content highly specific to a ${companyType} in the ${industryLabel} industry.
 Reference IIA IPPF and COSO ERM where appropriate.
-For the process-specific governance areas, focus on governance oversight of that particular process.
 Return only valid JSON. No markdown, no commentary.`;
 }
