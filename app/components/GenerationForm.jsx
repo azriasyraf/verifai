@@ -274,7 +274,7 @@ export default function GenerationForm({
           {isAudit && (
             <>
               <button
-                onClick={handleGenerate}
+                onClick={() => handleGenerate()}
                 disabled={!canGenerate || isGenerating}
                 className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                   canGenerate && !isGenerating
