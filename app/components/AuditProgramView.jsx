@@ -443,6 +443,12 @@ export default function AuditProgramView({
                 ) : (
                   <p className="text-gray-700 text-sm leading-relaxed mb-2">{risk.description}</p>
                 )}
+                {risk.clientEvidence && (
+                  <div className="flex items-start gap-1.5 mb-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                    <span className="text-amber-500 text-xs shrink-0 mt-0.5">📋</span>
+                    <p className="text-xs text-amber-700"><span className="font-semibold">Client observation:</span> {risk.clientEvidence}</p>
+                  </div>
+                )}
                 {risk.frameworkReference && (
                   <div className="text-xs text-indigo-500 mb-2 font-mono">
                     {risk.frameworkReference}
@@ -633,6 +639,12 @@ export default function AuditProgramView({
                   </>
                 ) : (
                   <p className="text-gray-700 text-sm leading-relaxed mb-2">{control.description}</p>
+                )}
+                {control.gapFlag && (
+                  <div className="flex items-start gap-1.5 mb-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                    <span className="text-red-500 text-xs shrink-0 mt-0.5">⚠</span>
+                    <p className="text-xs text-red-700"><span className="font-semibold">Control gap flagged:</span> {control.gapNote || 'Walkthrough suggests this control may not be operating as expected.'}</p>
+                  </div>
                 )}
                 {control.frameworkReference && (
                   <div className="text-xs text-indigo-500 mb-2 font-mono">

@@ -3,9 +3,14 @@ import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+const SYSTEM_PROMPT = `You are an expert internal auditor specialising in risk management and governance assessments. You synthesise completed working paper evidence into overall assessment conclusions following IIA IPPF and COSO ERM frameworks.
+
+NON-NEGOTIABLE OUTPUT RULES:
+1. Return only valid JSON matching the exact schema. No markdown, no commentary, no explanation outside the JSON.
+2. maturityRating must be exactly one of the 5 defined levels — no variations.
+3. All observations and recommendations must be drawn directly from the working paper evidence provided.`;
 
 export async function POST(request) {
   try {
@@ -22,31 +27,21 @@ export async function POST(request) {
 
     const completion = await groq.chat.completions.create({
       messages: [
-        {
-          role: 'system',
-          content: 'You are an expert internal auditor specialising in risk management and governance assessments. You synthesise completed working paper evidence into overall assessment conclusions following IIA IPPF and COSO ERM frameworks.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt }
       ],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.5,
+      temperature: 0.4,
       max_tokens: 2000,
+      response_format: { type: 'json_object' },
     });
 
-    const responseText = completion.choices[0].message.content;
-    const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const result = JSON.parse(cleanedText);
+    const result = JSON.parse(completion.choices[0].message.content);
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     console.error('Error generating overall assessment conclusion:', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
@@ -74,28 +69,28 @@ Conclusion: ${area.conclusion || '(not completed)'}
 ${responses ? `Key Responses:\n${responses}` : '(no responses recorded)'}`;
   }).join('\n\n');
 
-  return `Based on the completed governance assessment working paper below, generate an overall assessment conclusion.
+  return `Synthesise the completed governance assessment working paper below into an overall conclusion as JSON.
 
-Assessment: ${assessmentTitle || 'Risk Management & Governance Assessment'}
-Scope: ${scope || ''}
-${engagementContext ? `Engagement: ${engagementContext}` : ''}
+ASSESSMENT: ${assessmentTitle || 'Risk Management & Governance Assessment'}
+SCOPE: ${scope || ''}
+${engagementContext ? `ENGAGEMENT: ${engagementContext}` : ''}
 
 COMPLETED WORKING PAPER:
 ${areasSummary}
 
-Based on this evidence, return a JSON object:
+SCHEMA — return exactly this structure:
+
 {
-  "maturityRating": "string — one of: Level 1 - Initial, Level 2 - Developing, Level 3 - Defined, Level 4 - Managed, Level 5 - Optimising",
-  "rationale": "string — 2-3 sentences explaining the maturity rating based on evidence above",
-  "keyObservations": ["string", ...],
-  "recommendations": ["string", ...]
+  "maturityRating": "Level 1 - Initial | Level 2 - Developing | Level 3 - Defined | Level 4 - Managed | Level 5 - Optimising",
+  "rationale": "2-3 sentences explaining the maturity rating — must reference specific areas or findings from the working paper above",
+  "keyObservations": ["Observation drawn directly from completed conclusions and responses", "..."],
+  "recommendations": ["Actionable recommendation addressing a specific gap identified", "..."]
 }
 
-Requirements:
-- maturityRating must be one of the 5 levels above, derived from the evidence
-- rationale must reference specific areas or findings from the working paper
-- keyObservations: 3-5 observations drawn directly from completed conclusions and responses
-- recommendations: 3-5 actionable recommendations addressing gaps identified in the working paper
-- If working paper is largely incomplete, note this and provide a preliminary assessment
-- Return only valid JSON. No markdown, no commentary.`;
+REQUIREMENTS:
+- maturityRating: choose exactly one of the 5 levels above based on the evidence
+- rationale: must cite specific area names or findings — not generic governance language
+- keyObservations: 3–5 observations grounded in the working paper evidence
+- recommendations: 3–5 specific, actionable recommendations targeting identified gaps
+- If the working paper is largely incomplete, note this and provide a preliminary assessment based on available evidence`;
 }

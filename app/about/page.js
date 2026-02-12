@@ -156,6 +156,7 @@ export default function AboutPage() {
         {/* Footer */}
         <div className="text-center text-xs text-gray-400 pb-8 space-y-1">
           <p>Built by <span className="font-medium text-gray-600">Azri Asyraf</span>, Audit Sorcerer · Prompt Whisperer · Absolutely Not a Developer</p>
+          <p><span className="font-medium text-gray-600">Azira</span>, Auditor-at-large · The One Who Actually Knows What She&apos;s Talking About</p>
           <p>Verifai is a personal project. Not affiliated with the IIA or any professional body.</p>
         </div>
 

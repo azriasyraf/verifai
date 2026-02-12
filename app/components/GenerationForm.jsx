@@ -61,6 +61,10 @@ export default function GenerationForm({
   const [parseError, setParseError] = useState(null);
   const fileInputRef = useRef(null);
 
+  // Client context enrichment state (audit mode only)
+  const [clientContext, setClientContext] = useState('');
+  const [showContextPanel, setShowContextPanel] = useState(false);
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -434,11 +438,53 @@ export default function GenerationForm({
             </div>
           </div>}
 
+          {/* Client context enrichment — audit mode only */}
+          {isAudit && (
+            <div className="mb-5">
+              <button
+                type="button"
+                onClick={() => setShowContextPanel(prev => !prev)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm text-sm text-gray-600 hover:border-indigo-300 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-base">📋</span>
+                  <span className="font-medium text-gray-700">Enrich with client context</span>
+                  <span className="text-xs text-gray-400">optional — paste walkthrough notes or interview observations</span>
+                </div>
+                <span className="text-gray-400 text-xs">{showContextPanel ? '▲' : '▼'}</span>
+              </button>
+
+              {showContextPanel && (
+                <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 px-5 pb-5 pt-4 space-y-3">
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Paste walkthrough notes, interview summaries, or process observations below. Verifai will use these to adjust risk ratings, flag control gaps, and add client-specific evidence to the audit program.
+                  </p>
+                  <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
+                    <p className="text-xs text-indigo-700 font-medium">Best practice: provide both walkthrough notes and a P&P document for gap analysis.</p>
+                    <p className="text-xs text-indigo-500 mt-0.5">Walkthrough notes only → adjusts risk ratings and adds observations. P&P upload coming soon.</p>
+                  </div>
+                  <textarea
+                    value={clientContext}
+                    onChange={e => setClientContext(e.target.value)}
+                    placeholder="e.g. During the walkthrough, the Finance Manager confirmed that purchase orders are verbally approved and not recorded in the system. The approval matrix document has not been updated since 2022. Staff were unaware of the delegation of authority policy..."
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+                    rows={6}
+                  />
+                  {clientContext.trim().length > 0 && (
+                    <p className="text-xs text-green-600 font-medium">
+                      ✓ Context provided — AI will use this to adjust risks and flag control gaps
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Generate Button */}
           {isAudit && (
             <>
               <button
-                onClick={() => handleGenerate()}
+                onClick={() => handleGenerate(clientContext.trim() || undefined)}
                 disabled={!canGenerate || isGenerating}
                 className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                   canGenerate && !isGenerating

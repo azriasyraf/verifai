@@ -3,9 +3,15 @@ import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+const SYSTEM_PROMPT = `You are an expert internal auditor specialising in risk management and governance assessments. You generate structured governance assessment working papers following IIA IPPF and COSO ERM frameworks.
+
+NON-NEGOTIABLE OUTPUT RULES:
+1. Return only valid JSON matching the exact schema. No markdown, no commentary, no explanation outside the JSON.
+2. Generate EXACTLY 4 areas with areaIds GA001–GA004 in order.
+3. Every area must meet the minimum counts specified: walkthroughSteps (3+), documentsToObtain (3+), inquiryQuestions (5+), redFlags (3+).
+4. Leave all conclusion fields as empty strings "".`;
 
 export async function POST(request) {
   try {
@@ -22,33 +28,21 @@ export async function POST(request) {
 
     const completion = await groq.chat.completions.create({
       messages: [
-        {
-          role: 'system',
-          content: 'You are an expert internal auditor specialising in risk management and governance assessments. You generate structured governance assessment working papers based on IIA IPPF and COSO ERM frameworks.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt }
       ],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
+      temperature: 0.4,
       max_tokens: 8000,
+      response_format: { type: 'json_object' },
     });
 
-    const responseText = completion.choices[0].message.content;
-
-    // Strip markdown code fences if present
-    const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const assessment = JSON.parse(cleanedText);
+    const assessment = JSON.parse(completion.choices[0].message.content);
 
     return NextResponse.json({ success: true, data: assessment });
   } catch (error) {
     console.error('Error generating governance assessment:', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
@@ -57,7 +51,7 @@ function buildGovernancePrompt(industry, companyType, auditeeDetails) {
     distribution: 'Distribution & Sales (Import/Export)',
     manufacturing: 'Manufacturing',
     services: 'Services',
-    construction: 'Construction'
+    construction: 'Construction',
   };
 
   const industryLabel = industryNames[industry] || industry;
@@ -74,52 +68,56 @@ function buildGovernancePrompt(industry, companyType, auditeeDetails) {
       ].filter(Boolean).join(' | ')
     : '';
 
-  return `Generate a Risk Management & Governance Assessment working paper for:
-- Industry: ${industryLabel}
-- Company Type: ${companyType}
-${engagementContext ? `- Engagement: ${engagementContext}` : ''}
+  return `Generate a Risk Management & Governance Assessment working paper as JSON.
 
-Return a JSON object with this exact structure:
+ENGAGEMENT: ${industryLabel} | ${companyType}${engagementContext ? `\n${engagementContext}` : ''}
+FRAMEWORK: IIA IPPF + COSO ERM
+SCOPE: Entity-level governance backbone — NOT individual process controls
+
+SCHEMA — return exactly this structure:
+
 {
-  "assessmentTitle": "string",
-  "scope": "string — 2-3 sentences describing what was assessed",
-  "objectives": ["string", ...],
-  "approach": "string — describes walkthrough + inquiry methodology",
+  "assessmentTitle": "Risk Management & Governance Assessment — [client/entity description]",
+  "scope": "2-3 sentences describing what was assessed at the entity level",
+  "objectives": ["Objective 1", "Objective 2", "Objective 3"],
+  "approach": "Describes the walkthrough and inquiry methodology used",
   "areas": [
     {
       "areaId": "GA001",
-      "area": "string — governance area name",
-      "description": "string — what this area covers",
-      "walkthroughSteps": ["string", ...],
-      "documentsToObtain": ["string", ...],
+      "area": "Governance area name",
+      "description": "What this area covers and why it matters",
+      "walkthroughSteps": ["Step 1", "Step 2", "Step 3"],
+      "documentsToObtain": ["Document 1", "Document 2", "Document 3"],
       "inquiryQuestions": [
-        {
-          "question": "string",
-          "purpose": "string — why this question matters"
-        }
+        { "question": "Question text", "purpose": "Why this question matters to the audit" }
       ],
-      "redFlags": ["string", ...],
+      "redFlags": ["Red flag 1", "Red flag 2", "Red flag 3"],
       "conclusion": ""
     }
   ]
 }
 
-Governance areas to cover — generate EXACTLY these 4 areas as separate entries in the areas array:
-1. Risk Management Framework (areaId: GA001)
-2. Control Environment & Risk Culture (areaId: GA002) — combined area covering BOTH the formal control environment (organisational structure, delegations of authority, segregation of duties, accountability mechanisms, policies) AND risk culture/tone at the top (leadership behaviour and messaging, how risk is discussed and escalated, employee awareness and psychological safety, cultural norms around risk). Do NOT treat these as separate sub-sections — generate integrated questions that assess how formal structures and cultural behaviours reinforce each other.
-3. Training & Awareness (areaId: GA003)
-4. Risk Reporting & Oversight (areaId: GA004)
+AREAS — generate EXACTLY these 4 in order:
 
-Requirements for each area:
-- At minimum 3 walkthroughSteps (numbered steps the auditor physically performs)
-- At minimum 3 documentsToObtain (specific document names to request)
-- At minimum 5 inquiryQuestions, each with a purpose explaining why the question matters
-- Inquiry questions for GA002 must be genuinely distinct — no two questions should cover the same theme. Cover: formal accountability structures, leadership behaviour, escalation culture, policy enforcement, and cultural norms.
-- At minimum 3 redFlags specific to this area and this organisation type
-- Leave conclusion as an empty string ""
+GA001 — Risk Management Framework
+Assess whether a formal risk management framework exists, is documented, approved, and operating effectively. Reference ISO 31000 and COSO ERM.
 
-This is an entity-level governance assessment — assess the organisation's governance backbone, not individual process controls.
+GA002 — Control Environment & Risk Culture
+Combined area covering BOTH formal control structures (organisational accountability, delegations of authority, segregation of duties, policy enforcement) AND cultural/behavioural dimensions (tone at the top, escalation norms, psychological safety, how risk is discussed day-to-day). Inquiry questions must be genuinely distinct — cover: formal accountability, leadership behaviour, escalation culture, policy enforcement, and cultural norms. Do not repeat the same theme across questions.
+
+GA003 — Training & Awareness
+Assess whether risk and control awareness is embedded through training, communications, and onboarding. Include assessment of training frequency, content quality, and evidence of completion.
+
+GA004 — Risk Reporting & Oversight
+Assess the quality, frequency, and use of risk reporting to the board, audit committee, and senior management. Include assessment of escalation mechanisms and management's responsiveness to risk information.
+
+REQUIREMENTS per area:
+- walkthroughSteps: minimum 3 — specific physical steps the auditor performs (inspect, request, observe, trace)
+- documentsToObtain: minimum 3 — specific named documents to request from the client
+- inquiryQuestions: minimum 5 — each with a purpose explaining its audit relevance
+- redFlags: minimum 3 — specific warning signs for this area and this organisation type
+- conclusion: always an empty string ""
+
 Make all content highly specific to a ${companyType} in the ${industryLabel} industry.
-Reference IIA IPPF and COSO ERM where appropriate.
-Return only valid JSON. No markdown, no commentary.`;
+Reference IIA IPPF and COSO ERM throughout.`;
 }

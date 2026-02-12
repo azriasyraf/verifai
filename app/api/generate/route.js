@@ -3,78 +3,66 @@ import { NextResponse } from 'next/server';
 
 export const maxDuration = 60;
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+const SYSTEM_PROMPT = `You are an expert internal auditor generating structured audit working papers following IIA IPPF and COSO/COBIT frameworks.
+
+NON-NEGOTIABLE OUTPUT RULES:
+1. Return only valid JSON matching the exact schema. No markdown, no commentary, no explanation outside the JSON.
+2. Every risk MUST have at least one entry in relatedControls.
+   INVALID: { "id": "R001", "relatedControls": [] }
+   VALID:   { "id": "R001", "relatedControls": ["C001"] }
+3. Every control MUST have at least one entry in mitigatesRisks AND at least one procedure with a matching controlId.
+4. Cross-references must be bidirectional: if R001 lists C001, then C001 must list R001.
+5. Verify all cross-references before returning. Remove broken references rather than leaving them empty.`;
 
 export async function POST(request) {
   try {
-    const { industry, process, assessmentType } = await request.json();
+    const { industry, process, assessmentType, clientContext } = await request.json();
+    const prompt = buildPrompt(industry, process, assessmentType, clientContext);
 
-    // Build the prompt based on inputs
-    const prompt = buildPrompt(industry, process, assessmentType);
-
-    // Call Groq API with Llama model
     const completion = await groq.chat.completions.create({
       messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: prompt }
       ],
       model: 'llama-3.3-70b-versatile',
-      temperature: 0.7,
+      temperature: 0.3,
       max_tokens: 4000,
+      response_format: { type: 'json_object' },
     });
 
-    const responseText = completion.choices[0].message.content;
+    const auditProgram = JSON.parse(completion.choices[0].message.content);
 
-    // Parse the JSON response
-    const cleanedText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const auditProgram = JSON.parse(cleanedText);
-
-    // Validate cross-references: every risk must have at least one real control
+    // Validate and clean cross-references as a safety net
     if (auditProgram.risks && auditProgram.controls) {
       const controlIds = new Set(auditProgram.controls.map(c => c.id));
       const riskIds = new Set(auditProgram.risks.map(r => r.id));
 
       for (const risk of auditProgram.risks) {
-        const validControls = (risk.relatedControls || []).filter(id => controlIds.has(id));
-        if (validControls.length === 0) {
-          console.warn(`Risk ${risk.id} has no valid controls — AI failed to link it`);
-        }
-        risk.relatedControls = validControls;
+        risk.relatedControls = (risk.relatedControls || []).filter(id => controlIds.has(id));
       }
-
       for (const control of auditProgram.controls) {
-        const validRisks = (control.mitigatesRisks || []).filter(id => riskIds.has(id));
-        control.mitigatesRisks = validRisks;
+        control.mitigatesRisks = (control.mitigatesRisks || []).filter(id => riskIds.has(id));
       }
-
-      // Drop procedures referencing non-existent controls
       if (auditProgram.auditProcedures) {
-        auditProgram.auditProcedures = auditProgram.auditProcedures.filter(
-          p => controlIds.has(p.controlId)
-        );
+        auditProgram.auditProcedures = auditProgram.auditProcedures.filter(p => controlIds.has(p.controlId));
       }
     }
 
     return NextResponse.json({ success: true, data: auditProgram });
   } catch (error) {
     console.error('Error generating audit program:', error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-function buildPrompt(industry, process, assessmentType = 'program-only') {
+function buildPrompt(industry, process, assessmentType = 'program-only', clientContext = null) {
   const industryNames = {
     distribution: 'Distribution & Sales (Import/Export)',
     manufacturing: 'Manufacturing',
     services: 'Services',
-    construction: 'Construction'
+    construction: 'Construction',
   };
 
   const processNames = {
@@ -82,162 +70,129 @@ function buildPrompt(industry, process, assessmentType = 'program-only') {
     hr: 'HR (Recruitment & Payroll)',
     procurement: 'Procurement to Payment',
     inventory: 'Inventory',
-    it: 'IT/Cybersecurity'
+    it: 'IT/Cybersecurity',
   };
 
-  // Determine control framework based on process
+  const industryLabel = industryNames[industry] || industry;
+  const processLabel = processNames[process] || process;
   const controlFramework = process === 'it' ? 'COBIT 2019' : 'COSO 2013';
-  const controlFrameworkGuidance = process === 'it'
-    ? 'Use COBIT 2019 framework for IT governance and management objectives (EDM, APO, BAI, DSS, MEA domains) to identify risks and design controls'
-    : 'Use COSO 2013 Internal Control Framework (Control Environment, Risk Assessment, Control Activities, Information & Communication, Monitoring Activities) to identify risks and design controls';
+  const frameworkGuidance = process === 'it'
+    ? 'COBIT 2019 — use EDM, APO, BAI, DSS, MEA domains to identify risks and design controls'
+    : 'COSO 2013 — use Control Environment, Risk Assessment, Control Activities, Information & Communication, Monitoring to identify risks and design controls';
 
-  // Define what to generate based on assessment type
-  const assessmentScope = assessmentType === 'governance-only'
-    ? 'ONLY generate the Risk Management & Governance Assessment. Do NOT include audit objectives, risks, controls, or procedures.'
-    : assessmentType === 'program-only'
-    ? 'Generate the Process Audit Program (audit objectives, risks, controls, procedures). Do NOT include the riskManagementAssessment section - assume governance has already been assessed.'
-    : 'Generate a COMPREHENSIVE assessment including both Risk Management & Governance Assessment AND the full Process Audit Program.';
+  return `Generate a comprehensive internal audit program as JSON.
 
-  return `You are an expert internal auditor. Generate a comprehensive audit program for the ${processNames[process]} process in the ${industryNames[industry]} industry.
+ENGAGEMENT: ${processLabel} process | ${industryLabel} industry
+FRAMEWORK: ${controlFramework} — ${frameworkGuidance}
+METHODOLOGY: IIA IPPF (Standards 2010–2340)
 
-ASSESSMENT SCOPE: ${assessmentScope}
-
-AUDIT METHODOLOGY: Follow IIA International Professional Practices Framework (IPPF) Standards for conducting internal audits, including proper planning, risk assessment, testing, documentation, and reporting.
-
-CONTROL FRAMEWORK: ${controlFrameworkGuidance}
-
-RISK MANAGEMENT & GOVERNANCE: ${assessmentType !== 'program-only' ? 'Assess the maturity and effectiveness of the organization\'s risk management process and governance structure before evaluating specific controls. Reference COSO ERM (Enterprise Risk Management), IIA Three Lines Model, and ISO 31000 risk management principles.' : 'Assume risk management and governance have already been assessed.'}
-
-SAMPLING: Sample sizes should be practical and audit-appropriate (e.g., "25 samples", "10% of population, minimum 20 items", etc.). The auditor will determine final sample sizes during testing based on their professional judgment and risk assessment.
-
-Return your response as valid JSON. Structure depends on assessment type:
-- If governance-only: Include ONLY framework, processOverview, and riskManagementAssessment
-- If program-only: Include framework, processOverview, auditObjectives, risks, controls, auditProcedures (SKIP riskManagementAssessment)
-- If comprehensive: Include ALL sections
-
-Full structure:
+SCHEMA — return exactly this structure:
 
 {
   "framework": {
-    "auditMethodology": "IIA IPPF (International Professional Practices Framework)",
+    "auditMethodology": "IIA IPPF",
     "controlFramework": "${controlFramework}",
-    "description": "Brief explanation of how IIA IPPF guides the audit approach and how ${controlFramework} is used for risk identification and control design"
+    "description": "How IIA IPPF and ${controlFramework} shape this audit approach"
   },
-  "processOverview": "A 2-3 paragraph description of this process in this industry, including typical workflow and key characteristics",
-  "riskManagementAssessment": {
-    "maturityLevel": "Assessment of risk management maturity (Initial/Developing/Defined/Managed/Optimized based on industry norms)",
-    "maturityDescription": "Brief explanation of what this maturity level means for this organization",
-    "governanceStructure": "Assessment of governance framework, board oversight, three lines model, and management accountability for this process",
-    "assessmentProcedures": [
-      "Procedure 1 to evaluate risk management process",
-      "Procedure 2 to assess governance structure",
-      "Procedure 3 to test risk identification completeness"
-    ],
-    "keyQuestions": [
-      "Question 1 to ask management/board about risk management",
-      "Question 2 about governance oversight",
-      "Question 3 about risk appetite and tolerance"
-    ],
-    "redFlags": [
-      "Warning sign 1 indicating weak risk management",
-      "Warning sign 2 indicating governance gaps",
-      "Warning sign 3 indicating incomplete risk identification"
-    ],
-    "recommendations": [
-      "Recommendation 1 if risk management is weak",
-      "Recommendation 2 if governance needs improvement"
-    ]
-  },
+  "processOverview": "2-3 paragraphs describing the ${processLabel} process in the ${industryLabel} industry — typical workflow, key characteristics, and audit relevance",
   "auditObjectives": [
-    "Objective 1 (linked to financial statement assertion or IT objective)",
+    "Objective 1 — link to a financial statement assertion or IT objective",
     "Objective 2",
     "Objective 3"
   ],
   "risks": [
     {
       "id": "R001",
-      "category": "Risk category (Financial, Operational, Compliance, IT, Strategic)",
-      "description": "Detailed risk description",
-      "rating": "High/Medium/Low",
-      "assertion": "Financial assertion affected (Completeness/Existence/Accuracy/Valuation/Rights/Presentation) or IT objective",
-      "relatedControls": ["C001", "C002"],
-      "frameworkReference": "Specific framework principle (e.g., 'COSO - Risk Assessment Component' or 'COBIT APO12.01')"
+      "category": "Financial | Operational | Compliance | IT | Strategic",
+      "description": "Specific, detailed risk description",
+      "rating": "High | Medium | Low",
+      "assertion": "Completeness | Existence | Accuracy | Valuation | Rights | Presentation | IT objective",
+      "relatedControls": ["C001"],
+      "frameworkReference": "Specific ${controlFramework} component — e.g. 'COSO - Risk Assessment Component' or 'COBIT APO12.01'"
     }
   ],
   "controls": [
     {
       "id": "C001",
-      "description": "Control description",
-      "type": "Preventive/Detective/Corrective",
-      "frequency": "Continuous/Daily/Weekly/Monthly/Quarterly/Annual",
-      "owner": "Typical role responsible",
+      "description": "What the control does and how",
+      "type": "Preventive | Detective | Corrective",
+      "frequency": "Continuous | Daily | Weekly | Monthly | Quarterly | Annual",
+      "owner": "Typical role responsible for operating this control",
       "mitigatesRisks": ["R001"],
-      "frameworkReference": "Specific framework principle (e.g., 'COSO - Control Activities: Segregation of Duties' or 'COBIT DSS05.02')"
+      "frameworkReference": "Specific ${controlFramework} principle — e.g. 'COSO - Control Activities: Segregation of Duties'"
     }
   ],
   "auditProcedures": [
     {
       "controlId": "C001",
       "procedure": "Detailed step-by-step audit procedure",
-      "testingMethod": "Inquiry/Observation/Inspection/Reperformance/Data Analytics",
-      "sampleSize": "Specific sample size based on the sampling method provided",
-      "expectedEvidence": "What documentation/evidence to expect",
-      "frameworkReference": "IIA Standard reference (e.g., 'IIA Standard 2310: Identifying Information' or 'IIA Standard 2320: Analysis and Evaluation')",
+      "testingMethod": "Inquiry | Observation | Inspection | Reperformance | Data Analytics",
+      "sampleSize": "Practical sample size (auditor adjusts based on risk — e.g. '25 items' or '10% minimum 20')",
+      "expectedEvidence": "Specific documentation or evidence to obtain",
+      "frameworkReference": "IIA Standard — e.g. 'IIA Standard 2310: Identifying Information'",
       "analyticsTest": {
-        "type": "Type of analytics (Duplicate Detection/Cut-off Testing/Outlier Analysis/Trend Analysis/etc.)",
-        "description": "Specific analytics to perform (e.g., 'Identify duplicate invoices by vendor, amount, date')",
-        "population": "What data to analyze (e.g., 'All purchase transactions for the period')"
+        "type": "Duplicate Detection | Cut-off Testing | Outlier Analysis | Trend Analysis | Authorization Testing",
+        "description": "Specific analytics procedure to run",
+        "population": "Dataset to analyze — e.g. 'All purchase invoices for the period'"
       }
     }
   ]
 }
 
-Requirements:
+Note: analyticsTest is only required when testingMethod is "Data Analytics". Omit it for all other testing methods.
 
-FRAMEWORK REFERENCES:
-- Every risk must include a frameworkReference citing the specific ${controlFramework} component or principle
-- Every control must include a frameworkReference citing the specific ${controlFramework} control activity or principle
-- Every audit procedure must include a frameworkReference citing the specific IIA IPPF Standard (e.g., Standard 2310, 2320, 2330)
-- Framework references should be specific and educational, helping auditors understand WHY each element is included
+REQUIREMENTS — in priority order:
 
-RISK MANAGEMENT & GOVERNANCE ASSESSMENT:
-- Evaluate the maturity of risk management process (use industry benchmarks for this sector)
-- Assess whether the organization likely has formal risk management in place
-- Consider typical governance structures for ${industryNames[industry]} companies
-- Include 4-6 assessment procedures to evaluate risk management and governance
-- Include 5-8 key questions to ask management, board, or risk owners
-- Identify 3-5 red flags that would indicate weak or absent risk management/governance
-- Provide 2-4 recommendations if risk management needs improvement
-- Consider: Does this org have a CRO? Risk committee? Risk register? Three lines model?
+1. CROSS-REFERENCES (highest priority — verify before returning):
+   - Every risk: relatedControls must contain at least one real control ID from the controls array
+   - Every control: mitigatesRisks must contain at least one real risk ID from the risks array
+   - Every control: must have at least one procedure in auditProcedures with a matching controlId
+   - Bidirectionality: if R001 lists C001, then C001 must list R001
 
-COMPLETENESS & COVERAGE:
-- Cover ALL relevant financial statement assertions (Completeness, Existence, Accuracy, Valuation, Rights, Presentation) or IT objectives
-- Include comprehensive risks covering all major risk categories for this process
-- CRITICAL: Every single risk in the "risks" array MUST have at least one entry in its "relatedControls" array. A risk with an empty relatedControls array is INVALID. If you identify a risk, you must also create a control for it.
-- CRITICAL: Every single control in the "controls" array MUST have at least one entry in its "mitigatesRisks" array, AND at least one audit procedure in "auditProcedures" with a matching "controlId". A control with no procedures is INVALID.
-- Before returning, verify: for each risk R, at least one control C exists where C.mitigatesRisks includes R.id. For each control C, at least one procedure P exists where P.controlId equals C.id.
-- Include mix of Preventive, Detective, and Corrective controls
+2. COVERAGE:
+   - Cover all financial statement assertions: Completeness, Existence, Accuracy, Valuation, Rights, Presentation${process === 'it' ? '\n   - Cover key IT objectives: Availability, Confidentiality, Integrity' : ''}
+   - Include all major risk categories: Financial, Operational, Compliance${process === 'it' ? ', IT' : ''}
+   - Mix of Preventive, Detective, and Corrective controls
 
-ANALYTICS PROCEDURES:
-- Include at least 3-5 data analytics procedures covering:
-  1. Duplicate detection (same vendor, amount, date, invoice number)
-  2. Cut-off testing (transactions within 5-7 days of period end)
-  3. Outlier/exception analysis (unusually large amounts, statistical outliers)
-  4. Trend analysis (month-over-month patterns, seasonal variations)
-  5. Authorization testing (transactions exceeding approval thresholds)
-- For analytics procedures, set testingMethod to "Data Analytics" and populate analyticsTest object
-- Analytics procedures should test full population where practical
+3. DATA ANALYTICS — include at least 5 procedures:
+   - Duplicate detection (same vendor/customer, amount, date, reference number)
+   - Cut-off testing (transactions within 5–7 days of period end)
+   - Outlier/exception analysis (statistically large or unusual transactions)
+   - Trend analysis (month-on-month or period-on-period patterns)
+   - Authorization testing (transactions exceeding approval thresholds)
+   For each: testingMethod = "Data Analytics", populate the analyticsTest object
 
-INDUSTRY & PROCESS SPECIFICITY:
-- Make content highly specific to the ${industryNames[industry]} industry and ${processNames[process]} process
-- Reference industry-specific regulations, standards, and best practices
-- Include process-specific risks and controls unique to this combination
-- Ensure audit procedures are practical, executable, and reflect real-world scenarios
+4. FRAMEWORK REFERENCES:
+   - Every risk: cite the specific ${controlFramework} component or principle
+   - Every control: cite the specific ${controlFramework} control activity
+   - Every procedure: cite the specific IIA IPPF Standard number and name
 
-TECHNICAL REQUIREMENTS:
-- Provide reasonable sample sizes as starting points (auditors will adjust during testing)
-- Each control should have clear frequency (how often it operates)
-- Each risk should be rated based on likelihood and impact
-- Use the ${controlFramework} framework to structure control categories
-- Return ONLY valid JSON, no additional text or markdown formatting`;
+5. SPECIFICITY:
+   - Make all content highly specific to ${industryLabel} and ${processLabel}
+   - Reference industry-specific regulations and standards where relevant
+   - Ensure procedures are practical and executable in the field${clientContext ? `
+
+CLIENT CONTEXT PROVIDED — WALKTHROUGH / INTERVIEW NOTES:
+---
+${clientContext}
+---
+
+ADJUSTMENT RULES — apply these when client context is provided:
+
+1. ELEVATE risks directly observed or mentioned in the notes:
+   - Increase rating if evidence supports it
+   - Add optional field "clientEvidence": "brief quote or summary of the observation" to the risk object
+
+2. ADD risks not in the standard template if the notes reveal them:
+   - Add optional field "source": "client-walkthrough" to these risks
+
+3. FLAG control gaps where the notes suggest a standard control is not operating:
+   - Add optional field "gapFlag": true to the control object
+   - Add optional field "gapNote": "what was expected vs what the notes suggest" to the control object
+
+4. DO NOT remove standard risks just because the notes don't mention them.
+   Absence of evidence is not absence of risk — keep them at baseline rating.
+
+5. clientEvidence, source, gapFlag, and gapNote are OPTIONAL — only add them when the notes provide specific evidence.
+   Do not fabricate evidence. If the notes are vague, do not add these fields.` : ''}`;
 }

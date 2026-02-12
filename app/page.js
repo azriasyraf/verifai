@@ -123,8 +123,7 @@ export default function Verifai() {
         body: JSON.stringify({
           industry: selectedIndustry,
           process: selectedProcess,
-          // Pass governance context if coming from "Generate Audit Program from Assessment"
-          governanceContext: extraContext || governanceContext || undefined,
+          clientContext: extraContext || undefined,
         })
       });
 
