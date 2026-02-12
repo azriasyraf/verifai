@@ -7,6 +7,7 @@ import { exportGovernanceToExcel } from './lib/exportGovernanceToExcel';
 import GenerationForm from './components/GenerationForm';
 import AuditProgramView from './components/AuditProgramView';
 import GovernanceView from './components/GovernanceView';
+import ReportView from './components/ReportView';
 
 // Strips invalid cross-references from AI-generated data
 function sanitizeProgram(program) {
@@ -101,6 +102,12 @@ export default function Verifai() {
   const [governanceContext, setGovernanceContext] = useState('');
 
   const canGenerateGovernance = selectedIndustry && companyType;
+
+  // -------------------------------------------------------------------------
+  // Report state
+  // -------------------------------------------------------------------------
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [auditReport, setAuditReport] = useState(null);
 
   // -------------------------------------------------------------------------
   // Audit Program handlers (existing — unchanged)
@@ -381,6 +388,37 @@ export default function Verifai() {
     }
   };
 
+  // -------------------------------------------------------------------------
+  // Report handler
+  // -------------------------------------------------------------------------
+  const handleGenerateReport = async ({ engagementDetails, findings }) => {
+    setIsGeneratingReport(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ engagementDetails, findings }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setAuditReport(result.data);
+        setGenerationMode('report');
+        setShowResults(true);
+      } else {
+        setError(result.error || 'Failed to generate audit report');
+      }
+    } catch (err) {
+      setError('Failed to connect to generation service');
+      console.error(err);
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
   // Triggered by "Generate Audit Program from Assessment" button in GovernanceView.
   // Builds a governance context summary and calls handleGenerate with it.
   const handleGenerateFromAssessment = async () => {
@@ -422,6 +460,20 @@ export default function Verifai() {
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
+
+  // Report results view
+  if (showResults && generationMode === 'report' && auditReport) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-4xl mx-auto px-6 py-10">
+          <ReportView
+            report={auditReport}
+            onReset={() => { setAuditReport(null); setShowResults(false); setGenerationMode('report'); }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   // Governance assessment results view
   if (showResults && generationMode === 'governance' && governanceAssessment) {
@@ -497,6 +549,9 @@ export default function Verifai() {
       setCompanyType={setCompanyType}
       canGenerateGovernance={canGenerateGovernance}
       handleGenerateGovernance={handleGenerateGovernance}
+      // report
+      handleGenerateReport={handleGenerateReport}
+      isGeneratingReport={isGeneratingReport}
     />
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import * as XLSX from 'xlsx';
 
 const industries = [
   { id: 'distribution', name: 'Distribution & Sales (Import/Export)' },
@@ -46,9 +47,83 @@ export default function GenerationForm({
   setCompanyType,
   canGenerateGovernance,
   handleGenerateGovernance,
+  // report mode
+  handleGenerateReport,
+  isGeneratingReport,
 }) {
   const isAudit = generationMode === 'audit';
   const isGovernance = generationMode === 'governance';
+  const isReport = generationMode === 'report';
+
+  // Report upload state
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [parsedFindings, setParsedFindings] = useState(null);
+  const [parseError, setParseError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setParseError(null);
+    setParsedFindings(null);
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const workbook = XLSX.read(evt.target.result, { type: 'array' });
+
+        // Read engagement details from Summary tab
+        const summarySheet = workbook.Sheets['Summary'];
+        const engagementDetails = {};
+        if (summarySheet) {
+          const rows = XLSX.utils.sheet_to_json(summarySheet, { header: 1 });
+          rows.forEach(row => {
+            const label = String(row[0] || '').toLowerCase();
+            const value = String(row[1] || '');
+            if (label.includes('client')) engagementDetails.clientName = value;
+            if (label.includes('department')) engagementDetails.department = value;
+            if (label.includes('audit period')) engagementDetails.auditPeriod = value;
+            if (label.includes('engagement ref')) engagementDetails.engagementRef = value;
+            if (label.includes('prepared by')) engagementDetails.preparedBy = value;
+          });
+        }
+
+        // Read findings from Findings Summary tab
+        const findingsSheet = workbook.Sheets['Findings Summary'];
+        if (!findingsSheet) {
+          setParseError('Could not find a "Findings Summary" tab. Make sure you are uploading a Verifai audit program workbook.');
+          return;
+        }
+
+        const rows = XLSX.utils.sheet_to_json(findingsSheet, { header: 1 });
+        // Header row is row index 3 (0-based), data starts at row index 4
+        const dataRows = rows.slice(4).filter(row => row[3] && String(row[3]).trim() !== '');
+
+        if (dataRows.length === 0) {
+          setParseError('No findings found in the Findings Summary tab. Please fill in the Finding Description column before uploading.');
+          return;
+        }
+
+        const findings = dataRows.map(row => ({
+          ref: String(row[0] || ''),
+          controlId: String(row[1] || ''),
+          riskId: String(row[2] || ''),
+          findingDescription: String(row[3] || ''),
+          riskRating: String(row[4] || 'Medium'),
+          rootCause: String(row[5] || ''),
+          managementResponse: String(row[6] || ''),
+          dueDate: String(row[7] || ''),
+          status: String(row[8] || 'Open'),
+        }));
+
+        setParsedFindings({ engagementDetails, findings });
+        setUploadedFile(file.name);
+      } catch (err) {
+        setParseError('Failed to read the file. Please ensure it is a valid Excel workbook.');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
 
 
 
@@ -99,7 +174,7 @@ export default function GenerationForm({
           {/* ---------------------------------------------------------------- */}
           <div className="mb-5">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">What would you like to generate?</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {/* Audit Program card */}
               <button
                 type="button"
@@ -145,6 +220,29 @@ export default function GenerationForm({
                   </div>
                 </div>
               </button>
+
+              {/* Audit Report card */}
+              <button
+                type="button"
+                onClick={() => setGenerationMode('report')}
+                className={`text-left rounded-xl border p-4 transition-all ${
+                  isReport
+                    ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-1'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isReport ? 'border-indigo-600' : 'border-gray-300'}`}>
+                    {isReport && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 mb-1">Generate Audit Report</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      Upload your completed audit workbook. Verifai drafts the full report from your findings.
+                    </p>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -153,82 +251,134 @@ export default function GenerationForm({
           {/* ---------------------------------------------------------------- */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-5">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">
-              {isAudit ? 'Configure Audit Program' : 'Configure Governance Assessment'}
+              {isAudit ? 'Configure Audit Program' : isGovernance ? 'Configure Governance Assessment' : 'Upload Completed Workbook'}
             </h2>
 
             <div className="space-y-4">
-              {/* Industry — shown in both modes */}
-              <div>
-                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                  Industry
-                </label>
-                <select
-                  value={selectedIndustry}
-                  onChange={(e) => setSelectedIndustry(e.target.value)}
-                  className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                >
-                  <option value="">Select an industry...</option>
-                  {industries.map((industry) => (
-                    <option key={industry.id} value={industry.id}>
-                      {industry.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              {/* ----- AUDIT PROGRAM fields ----- */}
-              {isAudit && (
+              {/* ----- REPORT UPLOAD fields ----- */}
+              {isReport && (
+                <div className="space-y-4">
+                  <div
+                    className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+                      uploadedFile ? 'border-green-300 bg-green-50' : 'border-gray-200 hover:border-indigo-300 hover:bg-indigo-50'
+                    }`}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept=".xlsx,.xls"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                    {uploadedFile ? (
+                      <>
+                        <p className="text-sm font-semibold text-green-700">{uploadedFile}</p>
+                        <p className="text-xs text-green-600 mt-1">
+                          {parsedFindings?.findings?.length || 0} finding{parsedFindings?.findings?.length !== 1 ? 's' : ''} found. Click to replace.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-gray-600">Click to upload your completed audit workbook</p>
+                        <p className="text-xs text-gray-400 mt-1">.xlsx files only. Must be a Verifai-exported workbook with a completed Findings Summary tab.</p>
+                      </>
+                    )}
+                  </div>
+                  {parseError && (
+                    <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{parseError}</p>
+                  )}
+                  {parsedFindings?.findings?.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-1">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Findings detected</p>
+                      {parsedFindings.findings.map((f, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                          <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                            f.riskRating === 'High' ? 'bg-red-100 text-red-700' :
+                            f.riskRating === 'Low' ? 'bg-green-100 text-green-700' :
+                            'bg-orange-100 text-orange-700'
+                          }`}>{f.riskRating || 'Medium'}</span>
+                          <span>{f.ref}</span>
+                          <span className="text-gray-400">·</span>
+                          <span className="truncate">{f.findingDescription.substring(0, 60)}{f.findingDescription.length > 60 ? '...' : ''}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Industry, process, company type — audit and governance only */}
+              {!isReport && (
                 <>
-                  {/* Process */}
                   <div>
                     <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                      Process
+                      Industry
                     </label>
                     <select
-                      value={selectedProcess}
-                      onChange={(e) => setSelectedProcess(e.target.value)}
+                      value={selectedIndustry}
+                      onChange={(e) => setSelectedIndustry(e.target.value)}
                       className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                     >
-                      <option value="">Select a process...</option>
-                      {processes.map((process) => (
-                        <option key={process.id} value={process.id}>
-                          {process.name}
+                      <option value="">Select an industry...</option>
+                      {industries.map((industry) => (
+                        <option key={industry.id} value={industry.id}>
+                          {industry.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
+                  {/* ----- AUDIT PROGRAM fields ----- */}
+                  {isAudit && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                        Process
+                      </label>
+                      <select
+                        value={selectedProcess}
+                        onChange={(e) => setSelectedProcess(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                      >
+                        <option value="">Select a process...</option>
+                        {processes.map((process) => (
+                          <option key={process.id} value={process.id}>
+                            {process.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* ----- GOVERNANCE ASSESSMENT fields ----- */}
+                  {isGovernance && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                        Company Type
+                      </label>
+                      <select
+                        value={companyType}
+                        onChange={(e) => setCompanyType(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                      >
+                        <option value="">Select company type...</option>
+                        {companyTypes.map((ct) => (
+                          <option key={ct.id} value={ct.name}>
+                            {ct.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </>
               )}
 
-              {/* ----- GOVERNANCE ASSESSMENT fields ----- */}
-              {isGovernance && (
-                <>
-                  {/* Company Type */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                      Company Type
-                    </label>
-                    <select
-                      value={companyType}
-                      onChange={(e) => setCompanyType(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    >
-                      <option value="">Select company type...</option>
-                      {companyTypes.map((ct) => (
-                        <option key={ct.id} value={ct.name}>
-                          {ct.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                </>
-              )}
             </div>
           </div>
 
-          {/* Engagement Details — shown in both modes */}
+          {/* Engagement Details — shown in audit and governance modes only */}
+          {!isReport &&
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-5">
             <div className="flex items-center gap-2 mb-4">
               <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Engagement Details</h3>
@@ -268,7 +418,7 @@ export default function GenerationForm({
                 <input type="text" value={auditeeDetails.primaryContactTitle} onChange={(e) => updateAuditeeDetail('primaryContactTitle', e.target.value)} placeholder="e.g. Finance Manager" className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors" />
               </div>
             </div>
-          </div>
+          </div>}
 
           {/* Generate Button */}
           {isAudit && (
@@ -321,6 +471,33 @@ export default function GenerationForm({
               </button>
               {!canGenerateGovernance && !isGeneratingGovernance && (
                 <p className="text-center text-xs text-gray-400 mt-2">Select industry and company type to continue</p>
+              )}
+            </>
+          )}
+
+          {isReport && (
+            <>
+              <button
+                onClick={() => parsedFindings && handleGenerateReport(parsedFindings)}
+                disabled={!parsedFindings || isGeneratingReport}
+                className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
+                  parsedFindings && !isGeneratingReport
+                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm'
+                    : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                }`}
+              >
+                {isGeneratingReport ? (
+                  <span className="flex items-center justify-center gap-2.5">
+                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Drafting report...
+                  </span>
+                ) : 'Generate Audit Report'}
+              </button>
+              {!parsedFindings && !isGeneratingReport && (
+                <p className="text-center text-xs text-gray-400 mt-2">Upload a completed Verifai workbook to continue</p>
               )}
             </>
           )}
