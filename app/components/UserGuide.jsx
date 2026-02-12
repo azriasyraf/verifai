@@ -85,6 +85,7 @@ export default function UserGuide() {
               {[
                 { id: 'engine', label: '⚙️ The Engine' },
                 { id: 'features', label: '📖 How to Use' },
+                { id: 'featureslist', label: '✅ Features' },
                 { id: 'coming', label: '🔜 Coming Soon' },
                 { id: 'credits', label: '👤 Credits' },
               ].map(tab => (
@@ -214,10 +215,6 @@ export default function UserGuide() {
                           desc: 'On the main form, select Risk & Governance Assessment. Fill in engagement details and select the industry and company type.',
                         },
                         {
-                          step: 'Select processes in scope',
-                          desc: 'Tick the processes that are in scope for the engagement. These are used as context only — the assessment itself covers governance at entity level.',
-                        },
-                        {
                           step: 'Click Generate',
                           desc: 'Verifai generates four assessment areas: Risk Management Framework, Control Environment & Risk Culture, Training & Awareness, and Risk Reporting & Oversight.',
                         },
@@ -252,11 +249,69 @@ export default function UserGuide() {
                 </div>
               )}
 
+              {activeTab === 'featureslist' && (
+                <div className="space-y-5">
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Audit Program Generator</h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      {[
+                        { label: 'AI-generated audit program', desc: 'Full program in seconds — objectives, risks, controls, and procedures tailored to your industry.' },
+                        { label: 'IIA IPPF & COSO ERM references', desc: 'Every risk and control is tagged with the relevant framework reference.' },
+                        { label: 'Risk-control linkage', desc: 'Controls are explicitly mapped to the risks they mitigate with full traceability.' },
+                        { label: 'Analytics tests library', desc: '35 curated data analytics tests across all processes, auto-mapped to relevant risks.' },
+                        { label: 'Engagement details', desc: 'Capture client name, department, period, reference, and auditor — stamped on every export.' },
+                        { label: 'Full inline edit mode', desc: 'Edit any AI-generated content — add, remove, or rewrite risks, controls, and procedures.' },
+                        { label: 'Excel export', desc: 'Multi-tab workbook: Audit Program, Analytics Tests, and Control Matrix.' },
+                      ].map((f, i) => (
+                        <div key={i} className="flex gap-3 py-2 border-b border-gray-50">
+                          <span className="text-indigo-500 shrink-0 mt-0.5">✓</span>
+                          <div>
+                            <span className="font-medium text-gray-900">{f.label}</span>
+                            <span className="text-gray-500"> — {f.desc}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-3">Risk Management & Governance Assessment (RMGA)</h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      {[
+                        { label: 'Entity-level governance working paper', desc: 'Covers Risk Management Framework, Control Environment & Risk Culture, Training & Awareness, and Risk Reporting & Oversight.' },
+                        { label: 'Walkthrough steps & documents to obtain', desc: 'Specific steps the auditor performs and a list of documents to request — per area.' },
+                        { label: 'Inquiry questions with purpose notes', desc: 'Structured questions for management, each with a note explaining why it matters.' },
+                        { label: 'Red flags per area', desc: 'Governance-specific red flags to watch for during fieldwork.' },
+                        { label: 'Fieldwork documentation', desc: 'Management Response and Auditor Assessment fields for every inquiry question.' },
+                        { label: 'Per-area conclusions', desc: 'Write and save your conclusion for each governance area.' },
+                        { label: 'On-demand Overall Assessment', desc: 'AI-synthesised maturity rating (Level 1–5) based on your completed working paper, or enter your own manually.' },
+                        { label: 'Full inline edit mode', desc: 'Edit all AI-generated content — areas, questions, steps, and documents.' },
+                        { label: 'Excel export', desc: '3-tab workbook: Summary, Working Paper, and Inquiry Responses.' },
+                      ].map((f, i) => (
+                        <div key={i} className="flex gap-3 py-2 border-b border-gray-50">
+                          <span className="text-purple-500 shrink-0 mt-0.5">✓</span>
+                          <div>
+                            <span className="font-medium text-gray-900">{f.label}</span>
+                            <span className="text-gray-500"> — {f.desc}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'coming' && (
                 <div className="space-y-4">
                   <p className="text-gray-500">These features are in design or development. Your feedback shapes the priority.</p>
                   <div className="space-y-3">
                     {[
+                      {
+                        label: 'AI-Assisted RMGA Completion',
+                        desc: 'Feed Verifai your fieldwork notes or voice recordings and let the audit engine draft management responses, auditor assessments, and area conclusions for your review.',
+                        status: 'Planned',
+                        color: 'bg-gray-100 text-gray-600',
+                      },
                       {
                         label: 'Data Analytics Execution',
                         desc: 'Upload client data (Excel/CSV) and run analytics tests directly in the app — Verifai surfaces anomalies and flags findings.',
