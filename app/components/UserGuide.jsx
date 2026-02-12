@@ -112,7 +112,7 @@ export default function UserGuide() {
                     <h3 className="font-semibold text-gray-900 mb-1">What powers Verifai?</h3>
                     <p>
                       Verifai runs on <span className="font-medium text-indigo-700">Groq</span> with{' '}
-                      <span className="font-medium">Llama 3.3 70B</span> — a large language model
+                      <span className="font-medium">Llama 3.3 70B</span>, a large language model
                       optimised for fast, structured output. Generation typically takes 5–15 seconds.
                     </p>
                   </div>
@@ -166,11 +166,11 @@ export default function UserGuide() {
                       {[
                         {
                           step: 'Fill in engagement details',
-                          desc: 'Enter client name, department, audit period, engagement reference, and auditor name. These appear on your exported workpaper — skip if not needed.',
+                          desc: 'Enter client name, department, audit period, engagement reference, and auditor name. These appear on your exported workpaper. Skip if not needed.',
                         },
                         {
                           step: 'Select your industry and process',
-                          desc: 'Choose the industry context and the specific process you are auditing (e.g. Revenue to Cash, Procurement to Payment). These are the starting options — more will be added.',
+                          desc: 'Choose the industry context and the specific process you are auditing (e.g. Revenue to Cash, Procurement to Payment). These are the starting options. More will be added.',
                         },
                         {
                           step: 'Click Generate',
@@ -178,7 +178,7 @@ export default function UserGuide() {
                         },
                         {
                           step: 'Review and customise',
-                          desc: 'Click Edit Program to modify anything — add or remove risks, controls, and procedures, or change descriptions. Everything the AI generates is a starting point, not a final answer.',
+                          desc: 'Click Edit Program to modify anything. Add or remove risks, controls, and procedures, or change descriptions. Everything the AI generates is a starting point, not a final answer.',
                         },
                         {
                           step: 'Check the Analytics Tests section',
@@ -206,7 +206,7 @@ export default function UserGuide() {
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Risk Management & Governance Assessment (RMGA)</h3>
                     <p className="text-xs text-gray-500 mb-3">
-                      An entity-level working paper — assesses the organisation&apos;s governance framework, risk culture, and oversight mechanisms. Not tied to a specific process.
+                      An entity-level working paper covering the organisation&apos;s governance framework, risk culture, and oversight mechanisms. Not tied to a specific process.
                     </p>
                     <ol className="space-y-3">
                       {[
@@ -255,19 +255,19 @@ export default function UserGuide() {
                     <h3 className="font-semibold text-gray-900 mb-3">Audit Program Generator</h3>
                     <div className="grid grid-cols-1 gap-2">
                       {[
-                        { label: 'AI-generated audit program', desc: 'Full program in seconds — objectives, risks, controls, and procedures tailored to your industry.' },
+                        { label: 'AI-generated audit program', desc: 'Generates objectives, risks, controls, and procedures tailored to your industry. Usually done in under 15 seconds.' },
                         { label: 'IIA IPPF & COSO ERM references', desc: 'Every risk and control is tagged with the relevant framework reference.' },
                         { label: 'Risk-control linkage', desc: 'Controls are explicitly mapped to the risks they mitigate with full traceability.' },
                         { label: 'Analytics tests library', desc: '35 curated data analytics tests across all processes, auto-mapped to relevant risks.' },
-                        { label: 'Engagement details', desc: 'Capture client name, department, period, reference, and auditor — stamped on every export.' },
-                        { label: 'Full inline edit mode', desc: 'Edit any AI-generated content — add, remove, or rewrite risks, controls, and procedures.' },
+                        { label: 'Engagement details', desc: 'Capture client name, department, period, reference, and auditor. All stamped on every export.' },
+                        { label: 'Full inline edit mode', desc: 'Edit any AI-generated content: add, remove, or rewrite risks, controls, and procedures.' },
                         { label: 'Excel export', desc: 'Multi-tab workbook: Audit Program, Analytics Tests, and Control Matrix.' },
                       ].map((f, i) => (
                         <div key={i} className="flex gap-3 py-2 border-b border-gray-50">
                           <span className="text-indigo-500 shrink-0 mt-0.5">✓</span>
                           <div>
-                            <span className="font-medium text-gray-900">{f.label}</span>
-                            <span className="text-gray-500"> — {f.desc}</span>
+                            <p className="font-medium text-gray-900">{f.label}</p>
+                            <p className="text-gray-500 text-xs">{f.desc}</p>
                           </div>
                         </div>
                       ))}
@@ -279,20 +279,20 @@ export default function UserGuide() {
                     <div className="grid grid-cols-1 gap-2">
                       {[
                         { label: 'Entity-level governance working paper', desc: 'Covers Risk Management Framework, Control Environment & Risk Culture, Training & Awareness, and Risk Reporting & Oversight.' },
-                        { label: 'Walkthrough steps & documents to obtain', desc: 'Specific steps the auditor performs and a list of documents to request — per area.' },
+                        { label: 'Walkthrough steps & documents to obtain', desc: 'Specific steps the auditor performs and a list of documents to request, broken out per area.' },
                         { label: 'Inquiry questions with purpose notes', desc: 'Structured questions for management, each with a note explaining why it matters.' },
                         { label: 'Red flags per area', desc: 'Governance-specific red flags to watch for during fieldwork.' },
                         { label: 'Fieldwork documentation', desc: 'Management Response and Auditor Assessment fields for every inquiry question.' },
                         { label: 'Per-area conclusions', desc: 'Write and save your conclusion for each governance area.' },
-                        { label: 'On-demand Overall Assessment', desc: 'AI-synthesised maturity rating (Level 1–5) based on your completed working paper, or enter your own manually.' },
-                        { label: 'Full inline edit mode', desc: 'Edit all AI-generated content — areas, questions, steps, and documents.' },
+                        { label: 'On-demand Overall Assessment', desc: 'AI-synthesised maturity rating (Level 1 to 5) based on your completed working paper, or enter your own manually.' },
+                        { label: 'Full inline edit mode', desc: 'Edit all AI-generated content: areas, questions, steps, and documents.' },
                         { label: 'Excel export', desc: '3-tab workbook: Summary, Working Paper, and Inquiry Responses.' },
                       ].map((f, i) => (
                         <div key={i} className="flex gap-3 py-2 border-b border-gray-50">
                           <span className="text-purple-500 shrink-0 mt-0.5">✓</span>
                           <div>
-                            <span className="font-medium text-gray-900">{f.label}</span>
-                            <span className="text-gray-500"> — {f.desc}</span>
+                            <p className="font-medium text-gray-900">{f.label}</p>
+                            <p className="text-gray-500 text-xs">{f.desc}</p>
                           </div>
                         </div>
                       ))}
@@ -314,19 +314,19 @@ export default function UserGuide() {
                       },
                       {
                         label: 'Data Analytics Execution',
-                        desc: 'Upload client data (Excel/CSV) and run analytics tests directly in the app — Verifai surfaces anomalies and flags findings.',
+                        desc: 'Upload client data (Excel/CSV) and run analytics tests directly in the app. Verifai surfaces anomalies and flags findings.',
                         status: 'In design',
                         color: 'bg-blue-50 text-blue-700',
                       },
                       {
                         label: 'Process Walkthrough Documentation',
-                        desc: 'Structured working paper to document process flows end-to-end — who initiates, documents needed, segregation of duties, controls, GL posting.',
+                        desc: 'Structured working paper to document process flows end-to-end: who initiates, what documents are needed, segregation of duties, controls, and GL posting.',
                         status: 'Planned',
                         color: 'bg-gray-100 text-gray-600',
                       },
                       {
                         label: 'Policy & Procedure Upload',
-                        desc: 'Upload your SOPs and policies — the audit engine reads them and recommends risks, controls, and tests automatically.',
+                        desc: 'Upload your SOPs and policies. The audit engine reads them and recommends risks, controls, and tests.',
                         status: 'Planned',
                         color: 'bg-gray-100 text-gray-600',
                       },
@@ -338,7 +338,7 @@ export default function UserGuide() {
                       },
                       {
                         label: 'Team Collaboration',
-                        desc: 'Share workpapers with your team, assign controls, track review status.',
+                        desc: 'Share workpapers with your team, assign controls, and track review status.',
                         status: 'Future',
                         color: 'bg-gray-100 text-gray-500',
                       },
@@ -376,7 +376,7 @@ export default function UserGuide() {
                   <div className="space-y-2 text-xs text-gray-500">
                     <p><span className="font-medium text-gray-700">Built with:</span> Next.js · React · Tailwind CSS · Groq API · SheetJS</p>
                     <p><span className="font-medium text-gray-700">Frameworks referenced:</span> IIA IPPF · COSO ERM · COSO Internal Control</p>
-                    <p><span className="font-medium text-gray-700">Version:</span> Beta — things change fast. If something breaks, that&apos;s a feature.</p>
+                    <p><span className="font-medium text-gray-700">Version:</span> Beta. Things change fast. If something breaks, that&apos;s a feature.</p>
                   </div>
                   <div className="text-xs text-gray-400 pt-2 border-t border-gray-100">
                     Verifai is a personal project. It is not affiliated with the IIA or any professional body.

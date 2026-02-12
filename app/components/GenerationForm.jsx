@@ -320,7 +320,7 @@ export default function GenerationForm({
                 ) : 'Generate Governance Assessment'}
               </button>
               {!canGenerateGovernance && !isGeneratingGovernance && (
-                <p className="text-center text-xs text-gray-400 mt-2">Select industry, company type, and at least one process to continue</p>
+                <p className="text-center text-xs text-gray-400 mt-2">Select industry and company type to continue</p>
               )}
             </>
           )}
