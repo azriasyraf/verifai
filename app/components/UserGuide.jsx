@@ -159,9 +159,13 @@ export default function UserGuide() {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-2">Audit Program Generator</h3>
+                    <p className="text-xs text-gray-500 mb-2">
+                      Currently supports a curated set of industries and processes — these are placeholders
+                      while we validate the core experience. Coverage will expand significantly in future releases.
+                    </p>
                     <ul className="space-y-1.5 list-none">
                       {[
-                        'Generate full audit programs in under 15 seconds — 4 industries × 5 processes',
+                        'Generate full audit programs in seconds — select your industry and process to get started',
                         'Risk & control mapping with IIA IPPF and COSO ERM framework references',
                         'Analytics tests library — 35 tests across all processes, auto-mapped to risks',
                         'Engagement details capture (client, period, auditor, reference)',
@@ -176,10 +180,10 @@ export default function UserGuide() {
                     </ul>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Risk & Governance Assessment (RMGA)</h3>
+                    <h3 className="font-semibold text-gray-900 mb-2">Risk Management & Governance Assessment (RMGA)</h3>
                     <ul className="space-y-1.5 list-none">
                       {[
-                        'Entity-level governance working paper (GA001–GA004)',
+                        'Entity-level governance working paper — assesses the organisation\'s governance backbone, not individual process controls',
                         'Four assessment areas: Risk Management Framework, Control Environment & Risk Culture, Training & Awareness, Risk Reporting & Oversight',
                         'Walkthrough steps, documents to obtain, inquiry questions with purpose notes, red flags — all per area',
                         'Management response + auditor assessment fields for each inquiry question',
@@ -246,7 +250,6 @@ export default function UserGuide() {
                   </div>
                   <p className="text-xs text-gray-400">
                     Using Verifai during this beta phase? Your feedback directly influences what gets built next.
-                    Drop a note to <span className="font-medium text-gray-600">azriasyraf@gmail.com</span>
                   </p>
                 </div>
               )}
@@ -260,7 +263,7 @@ export default function UserGuide() {
                       Audit Sorcerer · Prompt Whisperer · Absolutely Not a Developer
                     </p>
                     <p className="text-gray-500 text-xs mt-3">
-                      CIA · Internal auditor who got tired of building the same working paper for the 400th time
+                      Internal auditor who got tired of building the same working paper for the 400th time
                       and decided to make the computer do it instead.
                     </p>
                   </div>
