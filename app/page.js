@@ -94,14 +94,13 @@ export default function Verifai() {
   // Governance Assessment state (new)
   // -------------------------------------------------------------------------
   const [companyType, setCompanyType] = useState('');
-  const [selectedProcesses, setSelectedProcesses] = useState([]);
   const [isGeneratingGovernance, setIsGeneratingGovernance] = useState(false);
   const [governanceAssessment, setGovernanceAssessment] = useState(null);
   // Context string derived from a completed governance assessment, passed into
   // the audit program prompt when "Generate Audit Program from Assessment" is used
   const [governanceContext, setGovernanceContext] = useState('');
 
-  const canGenerateGovernance = selectedIndustry && companyType && selectedProcesses.length > 0;
+  const canGenerateGovernance = selectedIndustry && companyType;
 
   // -------------------------------------------------------------------------
   // Audit Program handlers (existing — unchanged)
@@ -361,7 +360,6 @@ export default function Verifai() {
         body: JSON.stringify({
           industry: selectedIndustry,
           companyType,
-          processes: selectedProcesses,
           auditeeDetails,
         })
       });
@@ -411,11 +409,6 @@ export default function Verifai() {
 
     const ctx = contextLines.join('\n\n');
     setGovernanceContext(ctx);
-
-    // If no process is selected yet, default to the first process from the governance scope
-    if (!selectedProcess && selectedProcesses.length > 0) {
-      setSelectedProcess(selectedProcesses[0]);
-    }
 
     // Switch to audit results view after generation completes
     await handleGenerate(ctx);
@@ -502,8 +495,6 @@ export default function Verifai() {
       // governance
       companyType={companyType}
       setCompanyType={setCompanyType}
-      selectedProcesses={selectedProcesses}
-      setSelectedProcesses={setSelectedProcesses}
       canGenerateGovernance={canGenerateGovernance}
       handleGenerateGovernance={handleGenerateGovernance}
     />

@@ -7,16 +7,16 @@ const groq = new Groq({
 
 export async function POST(request) {
   try {
-    const { industry, companyType, processes, auditeeDetails } = await request.json();
+    const { industry, companyType, auditeeDetails } = await request.json();
 
-    if (!industry || !companyType || !processes || processes.length === 0) {
+    if (!industry || !companyType) {
       return NextResponse.json(
-        { success: false, error: 'Industry, company type, and at least one process are required' },
+        { success: false, error: 'Industry and company type are required' },
         { status: 400 }
       );
     }
 
-    const prompt = buildGovernancePrompt(industry, companyType, processes, auditeeDetails);
+    const prompt = buildGovernancePrompt(industry, companyType, auditeeDetails);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -50,7 +50,7 @@ export async function POST(request) {
   }
 }
 
-function buildGovernancePrompt(industry, companyType, processes, auditeeDetails) {
+function buildGovernancePrompt(industry, companyType, auditeeDetails) {
   const industryNames = {
     distribution: 'Distribution & Sales (Import/Export)',
     manufacturing: 'Manufacturing',
@@ -58,16 +58,7 @@ function buildGovernancePrompt(industry, companyType, processes, auditeeDetails)
     construction: 'Construction'
   };
 
-  const processNames = {
-    revenue: 'Revenue to Cash',
-    hr: 'HR (Recruitment & Payroll)',
-    procurement: 'Procurement to Payment',
-    inventory: 'Inventory',
-    it: 'IT/Cybersecurity'
-  };
-
   const industryLabel = industryNames[industry] || industry;
-  const processLabels = processes.map(p => processNames[p] || p).join(', ');
 
   const engagementContext = auditeeDetails
     ? [
@@ -84,7 +75,6 @@ function buildGovernancePrompt(industry, companyType, processes, auditeeDetails)
   return `Generate a Risk Management & Governance Assessment working paper for:
 - Industry: ${industryLabel}
 - Company Type: ${companyType}
-- Processes in scope (context only — not areas to assess): ${processLabels}
 ${engagementContext ? `- Engagement: ${engagementContext}` : ''}
 
 Return a JSON object with this exact structure:

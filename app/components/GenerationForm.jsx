@@ -44,27 +44,13 @@ export default function GenerationForm({
   // governance mode
   companyType,
   setCompanyType,
-  selectedProcesses,
-  setSelectedProcesses,
   canGenerateGovernance,
   handleGenerateGovernance,
 }) {
   const isAudit = generationMode === 'audit';
   const isGovernance = generationMode === 'governance';
 
-  const [processDropdownOpen, setProcessDropdownOpen] = useState(false);
 
-  const toggleProcess = (id) => {
-    setSelectedProcesses(prev =>
-      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
-    );
-  };
-
-  const processLabel = selectedProcesses.length === 0
-    ? 'Select processes...'
-    : selectedProcesses.length === processes.length
-      ? 'All processes'
-      : selectedProcesses.map(id => processes.find(p => p.id === id)?.name).join(', ');
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -237,42 +223,6 @@ export default function GenerationForm({
                     </select>
                   </div>
 
-                  {/* Processes in scope — collapsible multi-select dropdown */}
-                  <div className="relative">
-                    <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                      Processes in Scope
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setProcessDropdownOpen(o => !o)}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    >
-                      <span className={selectedProcesses.length === 0 ? 'text-gray-400' : 'text-gray-900 truncate pr-2'}>
-                        {processLabel}
-                      </span>
-                      <svg className={`w-4 h-4 text-gray-400 shrink-0 transition-transform ${processDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                    {processDropdownOpen && (
-                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-md py-1">
-                        {processes.map((process) => (
-                          <label key={process.id} className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 px-3 py-2 transition-colors">
-                            <input
-                              type="checkbox"
-                              checked={selectedProcesses.includes(process.id)}
-                              onChange={() => toggleProcess(process.id)}
-                              className="accent-indigo-600 w-4 h-4 shrink-0"
-                            />
-                            <span className="text-sm text-gray-700">{process.name}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                    {selectedProcesses.length === 0 && !processDropdownOpen && (
-                      <p className="text-xs text-gray-400 mt-1.5">Select at least one process</p>
-                    )}
-                  </div>
                 </>
               )}
             </div>
