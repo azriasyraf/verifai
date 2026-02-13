@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { analyticsLibrary } from './lib/analyticsLibrary';
 import { exportToExcel as exportToExcelLib } from './lib/exportToExcel';
 import { exportGovernanceToExcel } from './lib/exportGovernanceToExcel';
+import { exportWalkthroughToExcel } from './lib/exportWalkthroughToExcel';
 import GenerationForm from './components/GenerationForm';
 import AuditProgramView from './components/AuditProgramView';
 import GovernanceView from './components/GovernanceView';
 import ReportView from './components/ReportView';
+import WalkthroughView from './components/WalkthroughView';
 
 // Strips invalid cross-references from AI-generated data
 function sanitizeProgram(program) {
@@ -114,6 +116,13 @@ export default function Verifai() {
   // -------------------------------------------------------------------------
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [auditReport, setAuditReport] = useState(null);
+
+  // -------------------------------------------------------------------------
+  // Walkthrough state
+  // -------------------------------------------------------------------------
+  const [walkthroughResults, setWalkthroughResults] = useState(null);
+  const [isGeneratingWalkthrough, setIsGeneratingWalkthrough] = useState(false);
+  const [walkthroughClientContext, setWalkthroughClientContext] = useState('');
 
   // -------------------------------------------------------------------------
   // Audit Program handlers (existing — unchanged)
@@ -429,6 +438,9 @@ export default function Verifai() {
     setAuditProgram(null);
     setGovernanceAssessment(null);
     setGovernanceContext('');
+    setWalkthroughResults(null);
+    setIsGeneratingWalkthrough(false);
+    setWalkthroughClientContext('');
     setError(null);
     setAnalyticsTests([]);
     setAnalyticsFile(null);
@@ -542,6 +554,49 @@ export default function Verifai() {
   };
 
   // -------------------------------------------------------------------------
+  // Walkthrough handlers
+  // -------------------------------------------------------------------------
+  const handleGenerateWalkthrough = async () => {
+    setIsGeneratingWalkthrough(true);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/walkthrough', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ industry: selectedIndustry, process: selectedProcess, auditeeDetails }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setWalkthroughResults(result.data);
+        setGenerationMode('walkthrough');
+        setShowResults(true);
+      } else {
+        setError(result.error || 'Failed to generate walkthrough working paper');
+      }
+    } catch (err) {
+      setError('Failed to connect to generation service');
+      console.error(err);
+    } finally {
+      setIsGeneratingWalkthrough(false);
+    }
+  };
+
+  const handleExportWalkthrough = (enriched) => {
+    exportWalkthroughToExcel(enriched || walkthroughResults, auditeeDetails);
+  };
+
+  // Triggered by "Generate Audit Program from This Walkthrough" in WalkthroughView.
+  // Sets clientContext from walkthrough observations, switches to audit form pre-filled.
+  const handleGenerateFromWalkthrough = (contextString) => {
+    setGenerationMode('audit');
+    setShowResults(false);
+    // The GenerationForm clientContext is local state; we pass it via a prop so it
+    // can pre-populate the context panel. Store in a dedicated state variable.
+    setWalkthroughClientContext(contextString || '');
+  };
+
+  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
 
@@ -556,6 +611,19 @@ export default function Verifai() {
           />
         </div>
       </div>
+    );
+  }
+
+  // Walkthrough working paper results view
+  if (showResults && generationMode === 'walkthrough' && walkthroughResults) {
+    return (
+      <WalkthroughView
+        walkthrough={walkthroughResults}
+        auditeeDetails={auditeeDetails}
+        onExportExcel={handleExportWalkthrough}
+        onGenerateAuditProgram={handleGenerateFromWalkthrough}
+        onStartOver={resetForm}
+      />
     );
   }
 
@@ -648,6 +716,10 @@ export default function Verifai() {
       governanceAssessment={governanceAssessment}
       // analytics raised findings
       raisedFindings={raisedFindings}
+      // walkthrough
+      isGeneratingWalkthrough={isGeneratingWalkthrough}
+      handleGenerateWalkthrough={handleGenerateWalkthrough}
+      walkthroughClientContext={walkthroughClientContext}
     />
   );
 }

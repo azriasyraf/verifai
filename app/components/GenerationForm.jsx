@@ -54,10 +54,15 @@ export default function GenerationForm({
   governanceAssessment,
   // analytics raised findings
   raisedFindings,
+  // walkthrough mode
+  isGeneratingWalkthrough,
+  handleGenerateWalkthrough,
+  walkthroughClientContext,
 }) {
   const isAudit = generationMode === 'audit';
   const isGovernance = generationMode === 'governance';
   const isReport = generationMode === 'report';
+  const isWalkthrough = generationMode === 'walkthrough';
 
   // Report upload state
   const [uploadedFile, setUploadedFile] = useState(null);
@@ -66,8 +71,9 @@ export default function GenerationForm({
   const fileInputRef = useRef(null);
 
   // Client context enrichment state (audit mode only)
-  const [clientContext, setClientContext] = useState('');
-  const [showContextPanel, setShowContextPanel] = useState(false);
+  // Pre-populate from walkthrough if the user came from a walkthrough working paper
+  const [clientContext, setClientContext] = useState(walkthroughClientContext || '');
+  const [showContextPanel, setShowContextPanel] = useState(!!(walkthroughClientContext));
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -182,7 +188,7 @@ export default function GenerationForm({
           {/* ---------------------------------------------------------------- */}
           <div className="mb-5">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">What would you like to generate?</p>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {/* Audit Program card */}
               <button
                 type="button"
@@ -201,6 +207,29 @@ export default function GenerationForm({
                     <p className="text-sm font-semibold text-gray-900 mb-1">Generate Audit Program</p>
                     <p className="text-xs text-gray-500 leading-relaxed">
                       Risks, controls, and audit procedures for a specific process. Includes data analytics tests.
+                    </p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Process Walkthrough card */}
+              <button
+                type="button"
+                onClick={() => setGenerationMode('walkthrough')}
+                className={`text-left rounded-xl border p-4 transition-all ${
+                  isWalkthrough
+                    ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-500 ring-offset-1'
+                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isWalkthrough ? 'border-teal-600' : 'border-gray-300'}`}>
+                    {isWalkthrough && <div className="w-2 h-2 rounded-full bg-teal-600"></div>}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900 mb-1">Process Walkthrough</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                      Structured working paper to document walkthrough interviews and assess control design adequacy per checkpoint.
                     </p>
                   </div>
                 </div>
@@ -259,7 +288,7 @@ export default function GenerationForm({
           {/* ---------------------------------------------------------------- */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-5">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">
-              {isAudit ? 'Configure Audit Program' : isGovernance ? 'Configure Governance Assessment' : 'Upload Completed Workbook'}
+              {isAudit ? 'Configure Audit Program' : isGovernance ? 'Configure Governance Assessment' : isWalkthrough ? 'Configure Walkthrough Working Paper' : 'Upload Completed Workbook'}
             </h2>
 
             <div className="space-y-4">
@@ -352,8 +381,8 @@ export default function GenerationForm({
                     </select>
                   </div>
 
-                  {/* ----- AUDIT PROGRAM fields ----- */}
-                  {isAudit && (
+                  {/* ----- AUDIT PROGRAM + WALKTHROUGH fields ----- */}
+                  {(isAudit || isWalkthrough) && (
                     <div>
                       <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
                         Process
@@ -361,7 +390,7 @@ export default function GenerationForm({
                       <select
                         value={selectedProcess}
                         onChange={(e) => setSelectedProcess(e.target.value)}
-                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                        className={`w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-transparent transition-colors ${isWalkthrough ? 'focus:ring-2 focus:ring-teal-500' : 'focus:ring-2 focus:ring-indigo-500'}`}
                       >
                         <option value="">Select a process...</option>
                         {processes.map((process) => (
@@ -568,6 +597,36 @@ export default function GenerationForm({
             </>
           )}
 
+          {isWalkthrough && (() => {
+            const canGenerateWalkthrough = !!(selectedIndustry && selectedProcess);
+            return (
+              <>
+                <button
+                  onClick={handleGenerateWalkthrough}
+                  disabled={!canGenerateWalkthrough || isGeneratingWalkthrough}
+                  className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
+                    canGenerateWalkthrough && !isGeneratingWalkthrough
+                      ? 'bg-teal-600 hover:bg-teal-700 text-white cursor-pointer shadow-sm'
+                      : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                  }`}
+                >
+                  {isGeneratingWalkthrough ? (
+                    <span className="flex items-center justify-center gap-2.5">
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generating walkthrough...
+                    </span>
+                  ) : 'Generate Walkthrough Working Paper'}
+                </button>
+                {!canGenerateWalkthrough && !isGeneratingWalkthrough && (
+                  <p className="text-center text-xs text-gray-400 mt-2">Select industry and process to continue</p>
+                )}
+              </>
+            );
+          })()}
+
           {isReport && (() => {
             const hasRaised = raisedFindings?.length > 0;
             const canGenerate = parsedFindings || hasRaised;
@@ -624,7 +683,10 @@ export default function GenerationForm({
 
       {/* Footer */}
       <div className="text-center py-5 border-t border-gray-100">
-        <p className="text-xs text-gray-400">Powered by AI &nbsp;&middot;&nbsp; Built for Internal Auditors</p>
+        <p className="text-xs text-gray-400">
+          Powered by AI &nbsp;&middot;&nbsp; Built for Internal Auditors &nbsp;&middot;&nbsp;{' '}
+          <a href="/about" className="text-indigo-400 hover:text-indigo-600 underline underline-offset-2 transition-colors">Features &amp; updates</a>
+        </p>
       </div>
     </div>
   );

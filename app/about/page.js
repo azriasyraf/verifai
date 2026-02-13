@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export const metadata = {
   title: 'About Verifai',
-  description: 'Verifai generates professional audit programs and governance working papers in seconds using AI. Built for internal auditors.',
+  description: 'Verifai generates professional audit working papers in seconds using AI. Built for internal auditors.',
 };
 
 const auditFeatures = [
@@ -36,13 +36,33 @@ const rmgaFeatures = [
   { label: 'Excel export', desc: '3-tab workbook: Summary, Working Paper, and Inquiry Responses.' },
 ];
 
+const walkthroughFeatures = [
+  { label: 'AI-generated checkpoint template', desc: 'Generates process-specific checkpoints — each with expected control state, design considerations, and suggested interview questions.' },
+  { label: 'Design adequacy rating per checkpoint', desc: 'Rate each checkpoint as Adequate, Partially Adequate, Inadequate, or Not Assessed. Colour-coded badge updates instantly.' },
+  { label: 'Interview guidance (collapsible)', desc: 'Suggested questions per checkpoint expand on demand — guidance only, not a rigid script.' },
+  { label: 'What was described — auditor fill-in', desc: 'Free-text field per checkpoint to capture exactly what management or staff described during the interview.' },
+  { label: 'Freeform notes section', desc: 'One open notes area for anything that doesn\'t fit a specific checkpoint.' },
+  { label: 'Best practice reminder', desc: 'Prompt to share the notes with the auditee for confirmation before testing.' },
+  { label: 'Overall conclusion', desc: 'Summarise design adequacy across the whole process before proceeding to testing.' },
+  { label: 'Excel export — 3 tabs', desc: 'Summary, Walkthrough (per-checkpoint grid), and Freeform Notes.' },
+  { label: 'Generate audit program from walkthrough', desc: 'One click formats your observations as structured client context and pre-populates the audit program form — Verifai elevates risks where controls were rated Inadequate or Partially Adequate.' },
+];
+
+const reportFeatures = [
+  { label: 'Excel findings upload', desc: 'Upload your fieldwork findings file. Verifai parses finding descriptions, risk ratings, root causes, management responses, and due dates.' },
+  { label: 'Finding quality hints', desc: 'Weak or incomplete findings are flagged before generation so you can fix them first.' },
+  { label: 'Full CCCE report draft', desc: 'AI writes condition, criteria, cause, and effect for every finding in formal audit report language.' },
+  { label: 'Tabbed findings review', desc: 'Each finding gets its own tab. Edit any field inline before exporting.' },
+  { label: 'Management response QC flags', desc: 'Vague responses ("will monitor", no action owner, no due date) are flagged in amber.' },
+  { label: 'Word export (.docx)', desc: 'Formatted report ready to share, with AI disclosure footer.' },
+];
+
 const comingSoon = [
-  { label: 'AI-Assisted RMGA Completion', desc: 'Feed Verifai your fieldwork notes or voice recordings. The audit engine drafts management responses, assessments, and conclusions for your review.', status: 'Planned' },
-  { label: 'More Analytics Tests', desc: 'Phase 2 tests covering date thresholds, round-number analysis, split purchases, and multi-file joins (e.g. terminated employees cross-referenced against payroll).', status: 'Planned' },
-  { label: 'Process Walkthrough Documentation', desc: 'Structured working paper to document process flows end-to-end: who initiates, what documents are needed, segregation of duties, controls, and GL posting.', status: 'Planned' },
-  { label: 'Policy & Procedure Upload', desc: 'Upload your SOPs. The audit engine reads them and recommends risks, controls, and tests.', status: 'Planned' },
-  { label: 'Saved Engagements', desc: 'Save and reload your audit programs and governance assessments across sessions.', status: 'Planned' },
-  { label: 'Team Collaboration', desc: 'Share workpapers with your team, assign controls, and track review status.', status: 'Future' },
+  { label: 'See what changed from the AI draft', desc: 'Verifai will track every edit you make and include a change summary on export. Your supervisor can see that you engaged with the output, not just downloaded it.', status: 'Next up' },
+  { label: 'More analytics tests', desc: 'Date thresholds, round-number clusters, split purchases, and cross-file joins like terminated employees cross-referenced against payroll.', status: 'Planned' },
+  { label: 'Policy & procedure upload', desc: 'Upload your SOPs. Verifai reads them alongside walkthrough notes and flags where what is written differs from what is actually happening.', status: 'Planned' },
+  { label: 'Saved engagements', desc: 'Save and reload your working papers across sessions. Right now everything lives in the browser tab.', status: 'Planned' },
+  { label: 'Team collaboration', desc: 'Share workpapers with your team, assign sections, and track review status without bouncing Excel files around.', status: 'Future' },
 ];
 
 export default function AboutPage() {
@@ -71,8 +91,7 @@ export default function AboutPage() {
             <span className="text-indigo-600">In seconds.</span>
           </h1>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Verifai uses AI to generate audit programs and governance assessments that would otherwise
-            take hours to build from scratch. Fully editable and ready to export to Excel.
+            Verifai uses AI to generate audit programs, walkthrough working papers, governance assessments, and full audit reports — work that used to take hours, done in seconds. Fully editable. Ready to export.
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link
@@ -124,10 +143,32 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Feature 2: RMGA */}
+        {/* Feature 2: Process Walkthrough */}
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">2</div>
+            <div className="w-8 h-8 rounded-lg bg-teal-100 flex items-center justify-center text-teal-600 font-bold text-sm">2</div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Process Walkthrough Working Paper</h2>
+              <p className="text-sm text-gray-500">Document walkthrough interviews checkpoint by checkpoint. Assess control design adequacy — then generate an audit program from your findings.</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+            {walkthroughFeatures.map((f, i) => (
+              <div key={i} className="flex gap-3 px-5 py-3">
+                <span className="text-teal-500 shrink-0 mt-0.5 text-sm">✓</span>
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900">{f.label}</p>
+                  <p className="text-gray-500 text-xs">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Feature 3: RMGA */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-sm">3</div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Risk Management & Governance Assessment</h2>
               <p className="text-sm text-gray-500">Entity-level governance working paper following IIA IPPF and COSO ERM frameworks.</p>
@@ -146,10 +187,10 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Feature 3: Analytics Execution */}
+        {/* Feature 4: Analytics Execution */}
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-sm">3</div>
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-sm">4</div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Data Analytics Execution</h2>
               <p className="text-sm text-gray-500">Upload client data and run tests directly in the app. No Excel formulas. Results inline, working paper ready to export.</p>
@@ -159,6 +200,28 @@ export default function AboutPage() {
             {analyticsFeatures.map((f, i) => (
               <div key={i} className="flex gap-3 px-5 py-3">
                 <span className="text-emerald-500 shrink-0 mt-0.5 text-sm">✓</span>
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900">{f.label}</p>
+                  <p className="text-gray-500 text-xs">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Feature 5: Audit Report */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-sm">5</div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Audit Report Generator</h2>
+              <p className="text-sm text-gray-500">Upload your completed findings workbook. Verifai drafts a full audit report in CCCE format, ready to export to Word.</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+            {reportFeatures.map((f, i) => (
+              <div key={i} className="flex gap-3 px-5 py-3">
+                <span className="text-rose-500 shrink-0 mt-0.5 text-sm">✓</span>
                 <div className="text-sm">
                   <p className="font-medium text-gray-900">{f.label}</p>
                   <p className="text-gray-500 text-xs">{f.desc}</p>

@@ -7,7 +7,7 @@ const BANNER_KEY = 'verifai_guide_dismissed';
 export default function UserGuide() {
   const [bannerVisible, setBannerVisible] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('engine');
+  const [activeTab, setActiveTab] = useState('features');
 
   useEffect(() => {
     const dismissed = localStorage.getItem(BANNER_KEY);
@@ -20,7 +20,7 @@ export default function UserGuide() {
   };
 
   const openGuide = () => {
-    setActiveTab('engine');
+    setActiveTab('features');
     setModalOpen(true);
   };
 
@@ -83,10 +83,7 @@ export default function UserGuide() {
             {/* Tabs */}
             <div className="flex border-b border-gray-200 px-6 gap-4 text-sm">
               {[
-                { id: 'engine', label: '⚙️ The Engine' },
                 { id: 'features', label: '📖 How to Use' },
-                { id: 'featureslist', label: '✅ Features' },
-                { id: 'coming', label: '🔜 Coming Soon' },
                 { id: 'credits', label: '👤 Credits' },
               ].map(tab => (
                 <button
@@ -105,56 +102,6 @@ export default function UserGuide() {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-6 py-5 text-sm text-gray-700 space-y-4">
-
-              {activeTab === 'engine' && (
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">What powers Verifai?</h3>
-                    <p>
-                      Verifai runs on <span className="font-medium text-indigo-700">Groq</span> with{' '}
-                      <span className="font-medium">Llama 3.3 70B</span>, a large language model
-                      optimised for fast, structured output. Generation typically takes 5–15 seconds.
-                    </p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                    <p className="font-medium text-gray-900">How does it compare to other AI?</p>
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr className="text-left text-gray-500">
-                          <th className="pb-2 font-medium">Model</th>
-                          <th className="pb-2 font-medium">Capability</th>
-                          <th className="pb-2 font-medium">Cost</th>
-                          <th className="pb-2 font-medium">Fit for Verifai?</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        <tr>
-                          <td className="py-1.5 font-medium">GPT-4o (OpenAI)</td>
-                          <td className="py-1.5">Excellent</td>
-                          <td className="py-1.5 text-orange-600">$$$</td>
-                          <td className="py-1.5 text-gray-500">Overkill for now</td>
-                        </tr>
-                        <tr>
-                          <td className="py-1.5 font-medium">Claude Sonnet (Anthropic)</td>
-                          <td className="py-1.5">Excellent</td>
-                          <td className="py-1.5 text-orange-600">$$$</td>
-                          <td className="py-1.5 text-gray-500">Overkill for now</td>
-                        </tr>
-                        <tr>
-                          <td className="py-1.5 font-medium text-indigo-700">Llama 3.3 70B (Groq)</td>
-                          <td className="py-1.5">Very Good</td>
-                          <td className="py-1.5 text-green-600 font-medium">Free</td>
-                          <td className="py-1.5 text-green-700 font-medium">✓ Fit for purpose</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  <p className="text-gray-500 text-xs">
-                    Groq&apos;s free tier is currently sufficient for generating structured audit content.
-                    We&apos;ll upgrade the engine as demand grows.
-                  </p>
-                </div>
-              )}
 
               {activeTab === 'features' && (
                 <div className="space-y-6">
@@ -264,6 +211,56 @@ export default function UserGuide() {
 
                   <div className="border-t border-gray-100" />
 
+                  {/* Process Walkthrough */}
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Process Walkthrough Working Paper</h3>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Document walkthrough interviews checkpoint by checkpoint. Assess control design adequacy before testing begins. Export to Excel or flow directly into an audit program.
+                    </p>
+                    <ol className="space-y-3">
+                      {[
+                        {
+                          step: 'Switch to Process Walkthrough mode',
+                          desc: 'Select Process Walkthrough on the main form. Choose your industry and process.',
+                        },
+                        {
+                          step: 'Generate the working paper template',
+                          desc: 'Verifai generates checkpoints for your process — each with an expected control state, design considerations, and suggested interview questions.',
+                        },
+                        {
+                          step: 'Work through each checkpoint during the interview',
+                          desc: 'For each checkpoint, record what was described by management or staff. Expand the Interview Guidance section for suggested questions to ask.',
+                        },
+                        {
+                          step: 'Rate design adequacy',
+                          desc: 'Set the design adequacy for each checkpoint: Adequate, Partially Adequate, Inadequate, or Not Assessed. The badge on each card updates instantly.',
+                        },
+                        {
+                          step: 'Add freeform notes and an overall conclusion',
+                          desc: 'Use the Additional Notes section for anything that doesn\'t fit a specific checkpoint. Write your overall conclusion at the bottom.',
+                        },
+                        {
+                          step: 'Share with the auditee before testing',
+                          desc: 'Best practice: share the notes with the auditee to confirm your understanding is correct before proceeding to testing.',
+                        },
+                        {
+                          step: 'Export to Excel or generate an audit program',
+                          desc: 'Export a 3-tab workbook (Summary, Walkthrough, Freeform Notes). Or click Generate Audit Program from This Walkthrough — Verifai formats your observations as client context and pre-populates the audit program form.',
+                        },
+                      ].map((item, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                          <div>
+                            <p className="font-medium text-gray-900">{item.step}</p>
+                            <p className="text-gray-500 text-xs mt-0.5">{item.desc}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div className="border-t border-gray-100" />
+
                   {/* Audit Report */}
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">Audit Report Generator</h3>
@@ -304,166 +301,6 @@ export default function UserGuide() {
                     </ol>
                   </div>
 
-                </div>
-              )}
-
-              {activeTab === 'featureslist' && (
-                <div className="space-y-5">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-3">Audit Program Generator</h3>
-                    <div className="grid grid-cols-1 gap-2">
-                      {[
-                        { label: 'AI-generated audit program', desc: 'Generates objectives, risks, controls, and procedures tailored to your industry. Usually done in under 15 seconds.' },
-                        { label: 'IIA IPPF & COSO ERM references', desc: 'Every risk and control is tagged with the relevant framework reference.' },
-                        { label: 'Risk-control linkage', desc: 'Controls are explicitly mapped to the risks they mitigate with full traceability.' },
-                        { label: 'Three-phase audit program structure', desc: 'Phase 1: Risk Assessment. Phase 2: Test of Controls (with control-linked analytics). Phase 3: Substantive Analytics (population-level tests).' },
-                        { label: 'Client context enrichment', desc: 'Paste walkthrough notes or interview observations. AI elevates risks with evidence, flags control gaps, and adds client-specific annotations. Import RMGA findings directly.' },
-                        { label: 'Analytics tests library', desc: '35 curated substantive analytics tests across all processes, auto-mapped to relevant risks.' },
-                        { label: 'Engagement details', desc: 'Capture client name, department, period, reference, and auditor. All stamped on every export.' },
-                        { label: 'Full inline edit mode', desc: 'Edit any AI-generated content: add, remove, or rewrite risks, controls, and procedures.' },
-                        { label: 'Excel export', desc: 'Multi-tab workbook: Audit Program, Analytics Tests, and Control Matrix.' },
-                      ].map((f, i) => (
-                        <div key={i} className="flex gap-3 py-2 border-b border-gray-50">
-                          <span className="text-indigo-500 shrink-0 mt-0.5">✓</span>
-                          <div>
-                            <p className="font-medium text-gray-900">{f.label}</p>
-                            <p className="text-gray-500 text-xs">{f.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-3">Data Analytics Execution</h3>
-                    <div className="grid grid-cols-1 gap-2">
-                      {[
-                        { label: 'In-app analytics execution', desc: 'Upload a CSV or XLSX (max 4.5 MB) in Phase 3 and run 5 pre-built tests — no Excel formulas required.' },
-                        { label: 'Smart column mapping', desc: 'Fuzzy pre-fill matches your file\'s column headers to what each test needs. Confirm or adjust before running.' },
-                        { label: 'Duplicate invoice detection (RC-001, PP-002)', desc: 'Finds invoice numbers appearing more than once on the revenue and AP sides.' },
-                        { label: 'Duplicate bank account detection (HR-002)', desc: 'Flags two employees sharing the same bank account — a ghost employee indicator.' },
-                        { label: 'Negative inventory (INV-001)', desc: 'Surfaces items with quantity below zero — timing or recording errors.' },
-                        { label: 'Privileged access review (IT-003)', desc: 'Lists all users with Admin or Super User access level.' },
-                        { label: 'Audit Work Done + Conclusion fields', desc: 'Document observations and interviews directly against each test result. Exports to working paper.' },
-                        { label: 'Raise as Finding', desc: 'One click pre-populates an audit finding in the Report tab — ref, description, risk rating, and root cause from your work done notes.' },
-                        { label: '3-tab working paper export', desc: 'Raw Data · Exceptions · Working paper tab named after the test ID with methodology for manual reperformance.' },
-                      ].map((f, i) => (
-                        <div key={i} className="flex gap-3 py-2 border-b border-gray-50">
-                          <span className="text-emerald-500 shrink-0 mt-0.5">✓</span>
-                          <div>
-                            <p className="font-medium text-gray-900">{f.label}</p>
-                            <p className="text-gray-500 text-xs">{f.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-3">Audit Report Generator</h3>
-                    <div className="grid grid-cols-1 gap-2">
-                      {[
-                        { label: 'Excel findings upload', desc: 'Upload your fieldwork findings file. Verifai parses finding descriptions, risk ratings, root causes, management responses, and due dates.' },
-                        { label: 'Finding quality hints', desc: 'Weak or incomplete findings are flagged before generation so you can fix them first.' },
-                        { label: 'Full CCCE report draft', desc: 'AI writes condition, criteria, cause, and effect for every finding in formal audit report language.' },
-                        { label: 'Tabbed findings review', desc: 'Each finding gets its own tab. Edit any field inline before exporting.' },
-                        { label: 'Management response QC flags', desc: 'Vague responses ("will monitor", no action owner, no due date) are flagged in amber.' },
-                        { label: 'Word export (.docx)', desc: 'Formatted report ready to share, with AI disclosure footer.' },
-                      ].map((f, i) => (
-                        <div key={i} className="flex gap-3 py-2 border-b border-gray-50">
-                          <span className="text-rose-500 shrink-0 mt-0.5">✓</span>
-                          <div>
-                            <p className="font-medium text-gray-900">{f.label}</p>
-                            <p className="text-gray-500 text-xs">{f.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-3">Risk Management & Governance Assessment (RMGA)</h3>
-                    <div className="grid grid-cols-1 gap-2">
-                      {[
-                        { label: 'Entity-level governance working paper', desc: 'Covers Risk Management Framework, Control Environment & Risk Culture, Training & Awareness, and Risk Reporting & Oversight.' },
-                        { label: 'Walkthrough steps & documents to obtain', desc: 'Specific steps the auditor performs and a list of documents to request, broken out per area.' },
-                        { label: 'Inquiry questions with purpose notes', desc: 'Structured questions for management, each with a note explaining why it matters.' },
-                        { label: 'Red flags per area', desc: 'Governance-specific red flags to watch for during fieldwork.' },
-                        { label: 'Fieldwork documentation', desc: 'Management Response and Auditor Assessment fields for every inquiry question.' },
-                        { label: 'Per-area conclusions', desc: 'Write and save your conclusion for each governance area.' },
-                        { label: 'On-demand Overall Assessment', desc: 'AI-synthesised maturity rating (Level 1 to 5) based on your completed working paper, or enter your own manually.' },
-                        { label: 'Full inline edit mode', desc: 'Edit all AI-generated content: areas, questions, steps, and documents.' },
-                        { label: 'Excel export', desc: '3-tab workbook: Summary, Working Paper, and Inquiry Responses.' },
-                      ].map((f, i) => (
-                        <div key={i} className="flex gap-3 py-2 border-b border-gray-50">
-                          <span className="text-purple-500 shrink-0 mt-0.5">✓</span>
-                          <div>
-                            <p className="font-medium text-gray-900">{f.label}</p>
-                            <p className="text-gray-500 text-xs">{f.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'coming' && (
-                <div className="space-y-4">
-                  <p className="text-gray-600">Things you will be able to do soon. This is a working tool, not a finished product — it gets better every week.</p>
-                  <div className="space-y-3">
-                    {[
-                      {
-                        label: 'See what changed from the AI draft',
-                        desc: 'Verifai will track every edit you make and include a change summary on export. Your supervisor can see that you engaged with the output, not just downloaded it.',
-                        status: 'Next up',
-                        color: 'bg-indigo-50 text-indigo-700',
-                      },
-                      {
-                        label: 'Prepare for your exit meeting',
-                        desc: 'Generate a structured agenda and talking points from your report findings. Walk into the exit meeting with a plan.',
-                        status: 'Next up',
-                        color: 'bg-indigo-50 text-indigo-700',
-                      },
-                      {
-                        label: 'Run more analytics tests',
-                        desc: 'More tests are coming — date thresholds, round-number clusters, split purchases, and cross-file joins like terminated employees checked against payroll.',
-                        status: 'Planned',
-                        color: 'bg-gray-100 text-gray-600',
-                      },
-                      {
-                        label: 'Upload policies and SOPs',
-                        desc: 'Feed Verifai your procedure documents. It will read them alongside your walkthrough notes and flag where what is written differs from what is happening.',
-                        status: 'Planned',
-                        color: 'bg-gray-100 text-gray-600',
-                      },
-                      {
-                        label: 'Save and come back to your work',
-                        desc: 'Right now everything lives in the session. Saved engagements will let you close the tab and pick up exactly where you left off.',
-                        status: 'Planned',
-                        color: 'bg-gray-100 text-gray-600',
-                      },
-                      {
-                        label: 'Share with your team',
-                        desc: 'Assign sections, leave review comments, and track sign-offs without bouncing Excel files around.',
-                        status: 'Later',
-                        color: 'bg-gray-100 text-gray-500',
-                      },
-                    ].map((item, i) => (
-                      <div key={i} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-100">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-gray-900">{item.label}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.color}`}>{item.status}</span>
-                          </div>
-                          <p className="text-gray-500 text-xs">{item.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    If something here would genuinely help your work, say so. Feedback from actual auditors shapes what gets built.
-                  </p>
                 </div>
               )}
 
