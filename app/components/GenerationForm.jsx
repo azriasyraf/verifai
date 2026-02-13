@@ -151,7 +151,7 @@ export default function GenerationForm({
             <h1 className="text-5xl font-semibold text-gray-900 mb-3 tracking-tight">
               Verif<span className="text-indigo-600">ai</span>
             </h1>
-            <p className="text-gray-400 text-base">
+            <p className="text-gray-500 text-base">
               AI-powered audit program generator
             </p>
           </div>
@@ -175,7 +175,7 @@ export default function GenerationForm({
           {/* Mode selector — two large clickable cards */}
           {/* ---------------------------------------------------------------- */}
           <div className="mb-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">What would you like to generate?</p>
+            <p className="text-sm font-medium text-gray-600 mb-3">What would you like to generate?</p>
             <div className="grid grid-cols-2 gap-3">
               {/* Audit Program card */}
               <button
@@ -273,20 +273,20 @@ export default function GenerationForm({
 
           {/* Framework Info */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Built on professional standards</p>
+            <p className="text-sm font-medium text-gray-600 mb-3">Built on professional standards</p>
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                 <p className="text-xs font-semibold text-gray-900 mb-1">Audit Methodology</p>
                 <p className="text-xs text-gray-600">IIA IPPF</p>
-                <p className="text-xs text-gray-400 mt-1">Plan, execute, and report on internal audits</p>
+                <p className="text-xs text-gray-500 mt-1">Plan, execute, and report on internal audits</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
                 <p className="text-xs font-semibold text-gray-900 mb-1">Control Frameworks</p>
                 <p className="text-xs text-gray-600">COSO 2013, COSO ERM &amp; COBIT 2019</p>
-                <p className="text-xs text-gray-400 mt-1">Risk identification, control design and governance</p>
+                <p className="text-xs text-gray-500 mt-1">Risk identification, control design and governance</p>
               </div>
             </div>
-            <p className="text-xs text-gray-400 mt-3 text-center">
+            <p className="text-xs text-gray-500 mt-3 text-center">
               Audit programs include risk-control linkage, assertions, and data analytics procedures
             </p>
           </div>
@@ -337,7 +337,7 @@ export default function GenerationForm({
                     ) : (
                       <>
                         <p className="text-sm font-semibold text-gray-600">Click to upload your completed audit workbook</p>
-                        <p className="text-xs text-gray-400 mt-1">.xlsx files only. Must be a Verifai-exported workbook with a completed Findings Summary tab.</p>
+                        <p className="text-xs text-gray-500 mt-1">.xlsx files only. Must be a Verifai-exported workbook with a completed Findings Summary tab.</p>
                       </>
                     )}
                   </div>
@@ -346,7 +346,7 @@ export default function GenerationForm({
                   )}
                   {parsedFindings?.findings?.length > 0 && (
                     <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2">
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Findings detected</p>
+                      <p className="text-sm font-medium text-gray-600">Findings detected</p>
                       {parsedFindings.findings.map((f, i) => {
                         const warnings = [];
                         const descWords = (f.findingDescription || '').trim().split(/\s+/).length;
@@ -362,7 +362,7 @@ export default function GenerationForm({
                                 'bg-orange-100 text-orange-700'
                               }`}>{f.riskRating || 'Medium'}</span>
                               <span className="font-medium">{f.ref}</span>
-                              <span className="text-gray-400">·</span>
+                              <span className="text-gray-500">·</span>
                               <span className="truncate">{(f.findingDescription || '').substring(0, 60)}{(f.findingDescription || '').length > 60 ? '...' : ''}</span>
                             </div>
                             {warnings.map((w, wi) => (
@@ -450,8 +450,8 @@ export default function GenerationForm({
           {!isReport &&
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-5">
             <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Engagement Details</h3>
-              <span className="text-xs text-gray-400">optional — persists across programs this session</span>
+              <h3 className="text-sm font-medium text-gray-600">Engagement Details</h3>
+              <span className="text-xs text-gray-500">optional — persists across programs this session</span>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -500,9 +500,9 @@ export default function GenerationForm({
                 <div className="flex items-center gap-2">
                   <span className="text-base">📋</span>
                   <span className="font-medium text-gray-700">Enrich with client context</span>
-                  <span className="text-xs text-gray-400">optional — paste walkthrough notes or interview observations</span>
+                  <span className="text-xs text-gray-500">optional — paste walkthrough notes or interview observations</span>
                 </div>
-                <span className="text-gray-400 text-xs">{showContextPanel ? '▲' : '▼'}</span>
+                <span className="text-gray-500 text-xs">{showContextPanel ? '▲' : '▼'}</span>
               </button>
 
               {showContextPanel && (
@@ -515,10 +515,10 @@ export default function GenerationForm({
                     <p className="text-xs text-indigo-500 mt-0.5">Walkthrough notes only → adjusts risk ratings and adds observations. P&P upload coming soon.</p>
                   </div>
                   {governanceAssessment && (
-                    <div className="flex items-start justify-between gap-3 bg-violet-50 border border-violet-200 rounded-lg px-3 py-2.5">
+                    <div className="flex items-start justify-between gap-3 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2.5">
                       <div>
-                        <p className="text-xs font-semibold text-violet-800">RMGA findings available</p>
-                        <p className="text-xs text-violet-600 mt-0.5">Import entity-level observations from your governance assessment to inform process-level risk ratings and controls.</p>
+                        <p className="text-xs font-semibold text-indigo-800">RMGA findings available</p>
+                        <p className="text-xs text-indigo-600 mt-0.5">Import entity-level observations from your governance assessment to inform process-level risk ratings and controls.</p>
                       </div>
                       <button
                         type="button"
@@ -537,7 +537,7 @@ export default function GenerationForm({
                           setClientContext(lines);
                           setShowContextPanel(true);
                         }}
-                        className="shrink-0 text-xs font-semibold text-violet-700 bg-white border border-violet-300 rounded-lg px-3 py-1.5 hover:bg-violet-50 transition-colors whitespace-nowrap"
+                        className="shrink-0 text-xs font-semibold text-indigo-700 bg-white border border-indigo-300 rounded-lg px-3 py-1.5 hover:bg-indigo-50 transition-colors whitespace-nowrap"
                       >
                         Import findings
                       </button>
@@ -569,7 +569,7 @@ export default function GenerationForm({
                 className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                   canGenerate && !isGenerating
                     ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm'
-                    : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                    : 'bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed'
                 }`}
               >
                 {isGenerating ? (
@@ -583,7 +583,7 @@ export default function GenerationForm({
                 ) : 'Generate Audit Program'}
               </button>
               {!canGenerate && !isGenerating && (
-                <p className="text-center text-xs text-gray-400 mt-2">Select an industry and process to continue</p>
+                <p className="text-center text-xs text-gray-500 mt-2">Select an industry and process to continue</p>
               )}
             </>
           )}
@@ -596,7 +596,7 @@ export default function GenerationForm({
                 className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                   canGenerateGovernance && !isGeneratingGovernance
                     ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm'
-                    : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                    : 'bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed'
                 }`}
               >
                 {isGeneratingGovernance ? (
@@ -610,7 +610,7 @@ export default function GenerationForm({
                 ) : 'Generate Governance Assessment'}
               </button>
               {!canGenerateGovernance && !isGeneratingGovernance && (
-                <p className="text-center text-xs text-gray-400 mt-2">Select industry and company type to continue</p>
+                <p className="text-center text-xs text-gray-500 mt-2">Select industry and company type to continue</p>
               )}
             </>
           )}
@@ -625,7 +625,7 @@ export default function GenerationForm({
                   className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                     canGenerateWalkthrough && !isGeneratingWalkthrough
                       ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm'
-                      : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                      : 'bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed'
                   }`}
                 >
                   {isGeneratingWalkthrough ? (
@@ -639,7 +639,7 @@ export default function GenerationForm({
                   ) : 'Generate Walkthrough Working Paper'}
                 </button>
                 {!canGenerateWalkthrough && !isGeneratingWalkthrough && (
-                  <p className="text-center text-xs text-gray-400 mt-2">Select industry and process to continue</p>
+                  <p className="text-center text-xs text-gray-500 mt-2">Select industry and process to continue</p>
                 )}
               </>
             );
@@ -676,7 +676,7 @@ export default function GenerationForm({
                   className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                     canGenerate && !isGeneratingReport
                       ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm'
-                      : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                      : 'bg-gray-100 text-gray-500 border border-gray-200 cursor-not-allowed'
                   }`}
                 >
                   {isGeneratingReport ? (
@@ -690,7 +690,7 @@ export default function GenerationForm({
                   ) : 'Generate Audit Report'}
                 </button>
                 {!canGenerate && !isGeneratingReport && (
-                  <p className="text-center text-xs text-gray-400 mt-2">Upload a completed Verifai workbook, or raise findings from analytics tests</p>
+                  <p className="text-center text-xs text-gray-500 mt-2">Upload a completed Verifai workbook, or raise findings from analytics tests</p>
                 )}
               </>
             );
@@ -701,7 +701,7 @@ export default function GenerationForm({
 
       {/* Footer */}
       <div className="text-center py-5 border-t border-gray-100">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-gray-500">
           Powered by AI &nbsp;&middot;&nbsp; Built for Internal Auditors &nbsp;&middot;&nbsp;{' '}
           <a href="/about" className="text-indigo-400 hover:text-indigo-600 underline underline-offset-2 transition-colors">Features &amp; updates</a>
         </p>

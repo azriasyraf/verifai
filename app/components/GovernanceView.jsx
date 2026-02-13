@@ -5,7 +5,7 @@ import { useState } from 'react';
 // Document icon used for "Documents to Obtain" lists
 function DocIcon() {
   return (
-    <svg className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <svg className="w-3.5 h-3.5 text-gray-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>
   );
@@ -309,7 +309,7 @@ export default function GovernanceView({
         {/* ------------------------------------------------------------------ */}
         {/* Header bar */}
         {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex justify-between items-start gap-4 flex-wrap">
             <div>
               <div className="flex items-center gap-3 mb-1">
@@ -375,12 +375,12 @@ export default function GovernanceView({
         {/* ------------------------------------------------------------------ */}
         {/* Assessment Overview card */}
         {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <SectionHeader label="Assessment Overview" />
 
           {/* Scope */}
           <div className="mb-5">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Scope</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-1.5">Scope</h3>
             {isEditMode ? (
               <textarea
                 value={editedAssessment.scope || ''}
@@ -395,7 +395,7 @@ export default function GovernanceView({
 
           {/* Objectives */}
           <div className="mb-5">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Objectives</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-2">Objectives</h3>
             {isEditMode ? (
               <EditableList
                 items={editedAssessment.objectives || []}
@@ -419,7 +419,7 @@ export default function GovernanceView({
 
           {/* Approach */}
           <div>
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Approach</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-1.5">Approach</h3>
             {isEditMode ? (
               <textarea
                 value={editedAssessment.approach || ''}
@@ -437,7 +437,7 @@ export default function GovernanceView({
         {/* Governance area cards */}
         {/* ------------------------------------------------------------------ */}
         {(editedAssessment.areas || []).map((area, aIdx) => (
-          <div key={area.areaId || aIdx} className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+          <div key={area.areaId || aIdx} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
 
             {/* Area header */}
             <div className="flex items-center gap-3 mb-4">
@@ -482,7 +482,7 @@ export default function GovernanceView({
 
             {/* Walkthrough Steps */}
             <div className="mb-5">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Walkthrough Steps</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Walkthrough Steps</h3>
               {isEditMode ? (
                 <EditableList
                   items={area.walkthroughSteps || []}
@@ -505,7 +505,7 @@ export default function GovernanceView({
 
             {/* Documents to Obtain */}
             <div className="mb-5">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Documents to Obtain</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Documents to Obtain</h3>
               {isEditMode ? (
                 <EditableList
                   items={area.documentsToObtain || []}
@@ -528,7 +528,7 @@ export default function GovernanceView({
 
             {/* Inquiry Questions */}
             <div className="mb-5">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Inquiry Questions</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-3">Inquiry Questions</h3>
               <div className="space-y-4">
                 {(area.inquiryQuestions || []).map((iq, qIdx) => {
                   const key = `${aIdx}-${qIdx}`;
@@ -569,7 +569,7 @@ export default function GovernanceView({
                         )}
                       </div>
                       {!isEditMode && iq.purpose && (
-                        <p className="text-gray-400 text-xs italic ml-6 mb-3 leading-relaxed">{iq.purpose}</p>
+                        <p className="text-gray-500 text-xs italic ml-6 mb-3 leading-relaxed">{iq.purpose}</p>
                       )}
                       {/* Response fields — always editable */}
                       <div className={`grid grid-cols-2 gap-3 ${isEditMode ? 'mt-2' : 'ml-6'}`}>
@@ -638,7 +638,7 @@ export default function GovernanceView({
 
             {/* Conclusion — always editable */}
             <div>
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Conclusion</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Conclusion</h3>
               <textarea
                 value={conclusions[aIdx] ?? ''}
                 onChange={(e) => updateConclusion(aIdx, e.target.value)}
@@ -666,7 +666,7 @@ export default function GovernanceView({
         {/* ------------------------------------------------------------------ */}
         {/* Overall Assessment — completed after working paper                */}
         {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <SectionHeader label="Overall Assessment" />
 
           {!overallMode && !isGeneratingOverall && (
@@ -728,7 +728,7 @@ export default function GovernanceView({
               )}
 
               <div className="mb-5">
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Overall Maturity Rating</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Overall Maturity Rating</label>
                 <select
                   value={overallData.maturityRating}
                   onChange={(e) => updateOverallField('maturityRating', e.target.value)}
@@ -744,7 +744,7 @@ export default function GovernanceView({
               </div>
 
               <div className="mb-5">
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Maturity Rationale</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Maturity Rationale</label>
                 <textarea
                   value={overallData.rationale}
                   onChange={(e) => updateOverallField('rationale', e.target.value)}
@@ -755,7 +755,7 @@ export default function GovernanceView({
               </div>
 
               <div className="mb-5">
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Key Observations</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Key Observations</label>
                 <div className="space-y-2">
                   {overallData.keyObservations.map((obs, i) => (
                     <div key={i} className="flex items-start gap-2">
@@ -786,7 +786,7 @@ export default function GovernanceView({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recommendations</label>
+                <label className="block text-sm font-medium text-gray-600 mb-2">Recommendations</label>
                 <div className="space-y-2">
                   {overallData.recommendations.map((rec, i) => (
                     <div key={i} className="flex items-start gap-2">
@@ -820,7 +820,7 @@ export default function GovernanceView({
         </div>
 
         {/* Bottom action bar */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-4 mb-5 flex justify-between items-center flex-wrap gap-3">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-5 flex justify-between items-center flex-wrap gap-3">
           <p className="text-sm text-gray-500">
             Review complete? Export this working paper, then use the findings to enrich your audit program generation.
           </p>

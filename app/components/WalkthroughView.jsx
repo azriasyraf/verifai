@@ -237,7 +237,7 @@ export default function WalkthroughView({
         {/* ------------------------------------------------------------------ */}
         {/* Header bar */}
         {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex justify-between items-start gap-4 flex-wrap">
             <div>
               <div className="flex items-center gap-3 mb-1">
@@ -263,7 +263,7 @@ export default function WalkthroughView({
                 </h1>
               )}
               {auditeeDetails?.clientName && (
-                <p className="text-sm text-gray-400 mt-1">{auditeeDetails.clientName}{auditeeDetails.department ? ` — ${auditeeDetails.department}` : ''}</p>
+                <p className="text-sm text-gray-500 mt-1">{auditeeDetails.clientName}{auditeeDetails.department ? ` — ${auditeeDetails.department}` : ''}</p>
               )}
             </div>
 
@@ -305,11 +305,11 @@ export default function WalkthroughView({
         {/* ------------------------------------------------------------------ */}
         {/* Process Overview card */}
         {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <SectionHeader label="Process Overview" />
 
           <div className="mb-5">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Overview</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-1.5">Overview</h3>
             {isEditMode ? (
               <textarea
                 value={editedWalkthrough.processOverview || ''}
@@ -323,7 +323,7 @@ export default function WalkthroughView({
           </div>
 
           <div className="mb-5">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Scope</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-1.5">Scope</h3>
             {isEditMode ? (
               <textarea
                 value={editedWalkthrough.scope || ''}
@@ -337,7 +337,7 @@ export default function WalkthroughView({
           </div>
 
           <div>
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Objectives</h3>
+            <h3 className="text-sm font-medium text-gray-600 mb-2">Objectives</h3>
             {isEditMode ? (
               <EditableList
                 items={editedWalkthrough.objectives || []}
@@ -367,7 +367,7 @@ export default function WalkthroughView({
           const isQuestionsOpen = questionsOpen[cpIdx] ?? false;
 
           return (
-            <div key={cp.id || cpIdx} className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+            <div key={cp.id || cpIdx} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
 
               {/* Checkpoint header */}
               <div className="flex items-center gap-3 mb-4">
@@ -402,7 +402,7 @@ export default function WalkthroughView({
 
               {/* Expected state */}
               <div className="mb-4">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Expected State</h3>
+                <h3 className="text-sm font-medium text-gray-600 mb-1.5">Expected State</h3>
                 {isEditMode ? (
                   <textarea
                     value={cp.expected || ''}
@@ -417,7 +417,7 @@ export default function WalkthroughView({
 
               {/* Design considerations */}
               <div className="mb-4">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Design Considerations</h3>
+                <h3 className="text-sm font-medium text-gray-600 mb-1.5">Design Considerations</h3>
                 {isEditMode ? (
                   <textarea
                     value={cp.designConsiderations || ''}
@@ -435,7 +435,7 @@ export default function WalkthroughView({
                 <button
                   type="button"
                   onClick={() => setQuestionsOpen(prev => ({ ...prev, [cpIdx]: !isQuestionsOpen }))}
-                  className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wide hover:text-teal-600 transition-colors mb-1"
+                  className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-teal-600 transition-colors mb-1"
                 >
                   <svg className={`w-3 h-3 transition-transform ${isQuestionsOpen ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -444,7 +444,7 @@ export default function WalkthroughView({
                 </button>
                 {isQuestionsOpen && (
                   <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 mt-1">
-                    <p className="text-xs text-gray-400 italic mb-2">Guidance only — adapt to your context.</p>
+                    <p className="text-xs text-gray-500 italic mb-2">Guidance only — adapt to your context.</p>
                     {isEditMode ? (
                       <div className="space-y-2">
                         {(cp.suggestedQuestions || []).map((q, qIdx) => (
@@ -488,7 +488,7 @@ export default function WalkthroughView({
 
               {/* Auditor-fillable section */}
               <div className="border-t border-gray-100 pt-4">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Auditor — Complete During Walkthrough</p>
+                <p className="text-sm font-medium text-gray-600 mb-3">Auditor — Complete During Walkthrough</p>
 
                 {/* What was described */}
                 <div className="mb-3">
@@ -551,7 +551,7 @@ export default function WalkthroughView({
         {/* ------------------------------------------------------------------ */}
         {/* Freeform Notes */}
         {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <SectionHeader label="Additional Notes from Interviews" />
           <textarea
             value={freeformNotes}
@@ -577,7 +577,7 @@ export default function WalkthroughView({
         {/* ------------------------------------------------------------------ */}
         {/* Overall Conclusion */}
         {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <SectionHeader label="Overall Conclusion" />
           <textarea
             value={overallConclusion}

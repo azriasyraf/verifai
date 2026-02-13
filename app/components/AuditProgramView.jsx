@@ -131,7 +131,7 @@ export default function AuditProgramView({
       )}
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex justify-between items-center gap-4 flex-wrap">
             <div>
               <div className="flex items-center gap-3 mb-1">
@@ -145,7 +145,7 @@ export default function AuditProgramView({
               <h1 className="text-2xl font-semibold text-gray-900">
                 {processes.find(p => p.id === selectedProcess)?.name}
               </h1>
-              <p className="text-gray-400 text-sm mt-0.5">
+              <p className="text-gray-500 text-sm mt-0.5">
                 {industries.find(i => i.id === selectedIndustry)?.name}
               </p>
             </div>
@@ -213,18 +213,18 @@ export default function AuditProgramView({
 
         {/* Framework */}
         {auditProgram.framework && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-1 h-5 bg-indigo-500 rounded-full"></div>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Frameworks &amp; Methodology</h2>
             </div>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <span className="text-xs text-gray-400 font-medium uppercase tracking-wide block mb-1">Audit Methodology</span>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Audit Methodology</span>
                 <p className="font-semibold text-gray-900 text-sm">{auditProgram.framework.auditMethodology || auditProgram.framework.name}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <span className="text-xs text-gray-400 font-medium uppercase tracking-wide block mb-1">Control Framework</span>
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-1">Control Framework</span>
                 <p className="font-semibold text-gray-900 text-sm">{auditProgram.framework.controlFramework || 'COSO 2013'}</p>
               </div>
             </div>
@@ -240,7 +240,7 @@ export default function AuditProgramView({
         </div>
 
         {/* Process Overview */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-1 h-5 bg-indigo-500 rounded-full"></div>
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Process Overview</h2>
@@ -250,7 +250,7 @@ export default function AuditProgramView({
 
         {/* Risk Management & Governance Assessment */}
         {auditProgram.riskManagementAssessment && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
             <div className="flex items-center gap-2 mb-5">
               <div className="w-1 h-5 bg-indigo-500 rounded-full"></div>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Risk Management &amp; Governance Assessment</h2>
@@ -269,13 +269,13 @@ export default function AuditProgramView({
 
             {/* Governance Structure */}
             <div className="mb-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Governance Structure</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Governance Structure</h3>
               <p className="text-gray-600 text-sm leading-relaxed">{auditProgram.riskManagementAssessment.governanceStructure}</p>
             </div>
 
             {/* Assessment Procedures */}
             <div className="mb-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Assessment Procedures</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Assessment Procedures</h3>
               <ul className="space-y-1.5">
                 {auditProgram.riskManagementAssessment.assessmentProcedures.map((proc, index) => (
                   <li key={index} className="flex items-start text-sm gap-2">
@@ -288,7 +288,7 @@ export default function AuditProgramView({
 
             {/* Key Questions */}
             <div className="mb-4">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Key Questions for Management</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Key Questions for Management</h3>
               <ul className="space-y-1.5">
                 {auditProgram.riskManagementAssessment.keyQuestions.map((question, index) => (
                   <li key={index} className="flex items-start text-sm gap-2">
@@ -317,7 +317,7 @@ export default function AuditProgramView({
             {/* Recommendations */}
             {auditProgram.riskManagementAssessment.recommendations && auditProgram.riskManagementAssessment.recommendations.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Recommendations</h3>
+                <h3 className="text-sm font-medium text-gray-600 mb-2">Recommendations</h3>
                 <ul className="space-y-1.5">
                   {auditProgram.riskManagementAssessment.recommendations.map((rec, index) => (
                     <li key={index} className="flex items-start text-sm gap-2">
@@ -333,7 +333,7 @@ export default function AuditProgramView({
 
         {/* Audit Objectives */}
         {(isEditMode ? editedProgram?.auditObjectives : auditProgram?.auditObjectives) && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
               <div className="w-1 h-5 bg-indigo-500 rounded-full"></div>
@@ -362,7 +362,7 @@ export default function AuditProgramView({
                     />
                     <button
                       onClick={() => deleteObjective(index)}
-                      className="text-gray-400 hover:text-red-500 px-2 py-2 transition-colors text-sm"
+                      className="text-gray-500 hover:text-red-500 px-2 py-2 transition-colors text-sm"
                       title="Delete"
                     >
                       ✕
@@ -379,12 +379,12 @@ export default function AuditProgramView({
 
         {/* Risks */}
         {(isEditMode ? editedProgram?.risks : auditProgram?.risks) && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">
               <div className="w-1 h-5 bg-red-500 rounded-full"></div>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Risk Assessment</h2>
-              <span className="text-xs text-gray-400 ml-1">
+              <span className="text-xs text-gray-500 ml-1">
                 {(isEditMode ? editedProgram.risks : auditProgram.risks).length} risks
               </span>
             </div>
@@ -464,7 +464,7 @@ export default function AuditProgramView({
                   {isEditMode && (
                     <button
                       onClick={() => deleteRisk(index)}
-                      className="text-gray-400 hover:text-red-500 ml-auto transition-colors text-sm"
+                      className="text-gray-500 hover:text-red-500 ml-auto transition-colors text-sm"
                       title="Delete Risk"
                     >
                       ✕
@@ -489,7 +489,7 @@ export default function AuditProgramView({
                     />
                     {/* Link to controls */}
                     <div className="mb-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Link to Controls:</label>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Link to Controls:</label>
                       {editedProgram.controls && editedProgram.controls.length > 0 ? (
                         <div className="space-y-1 max-h-32 overflow-y-auto">
                           {editedProgram.controls.map(ctrl => (
@@ -518,13 +518,13 @@ export default function AuditProgramView({
                                 className="mt-0.5 accent-indigo-500"
                               />
                               <span className="text-xs text-gray-600">
-                                <span className="font-mono text-gray-400">{ctrl.id}</span> — {ctrl.description.substring(0, 60)}...
+                                <span className="font-mono text-gray-500">{ctrl.id}</span> — {ctrl.description.substring(0, 60)}...
                               </span>
                             </label>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-gray-400">No controls available — add controls first</p>
+                        <p className="text-xs text-gray-500">No controls available — add controls first</p>
                       )}
                     </div>
                   </>
@@ -544,7 +544,7 @@ export default function AuditProgramView({
                 )}
                 {risk.relatedControls && risk.relatedControls.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                    <span className="text-xs text-gray-400">Mitigated by:</span>
+                    <span className="text-xs text-gray-500">Mitigated by:</span>
                     {risk.relatedControls.map(id => (
                       <span key={id} className="font-mono text-xs bg-gray-100 text-gray-500 border border-gray-200 rounded px-1.5 py-0.5">{id}</span>
                     ))}
@@ -565,12 +565,12 @@ export default function AuditProgramView({
 
         {/* Controls */}
         {(isEditMode ? editedProgram?.controls : auditProgram?.controls) && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">
               <div className="w-1 h-5 bg-indigo-500 rounded-full"></div>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Control Activities</h2>
-              <span className="text-xs text-gray-400 ml-1">
+              <span className="text-xs text-gray-500 ml-1">
                 {(isEditMode ? editedProgram.controls : auditProgram.controls).length} controls
               </span>
             </div>
@@ -652,7 +652,7 @@ export default function AuditProgramView({
                     </div>
                   ) : (
                     (control.owner || control.ownerRole) && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-500">
                         {control.owner}
                         {control.ownerRole ? ` · ${control.ownerRole}` : ''}
                         {control.ownerDepartment ? ` · ${control.ownerDepartment}` : ''}
@@ -662,7 +662,7 @@ export default function AuditProgramView({
                   {isEditMode && (
                     <button
                       onClick={() => deleteControl(index)}
-                      className="text-gray-400 hover:text-red-500 ml-auto transition-colors text-sm"
+                      className="text-gray-500 hover:text-red-500 ml-auto transition-colors text-sm"
                       title="Delete Control"
                     >
                       ✕
@@ -693,7 +693,7 @@ export default function AuditProgramView({
                     />
                     {/* Link to risks */}
                     <div className="mb-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Link to Risks:</label>
+                      <label className="text-sm font-medium text-gray-600 block mb-2">Link to Risks:</label>
                       {editedProgram.risks && editedProgram.risks.length > 0 ? (
                         <div className="space-y-1 max-h-32 overflow-y-auto">
                           {editedProgram.risks.map(r => (
@@ -722,13 +722,13 @@ export default function AuditProgramView({
                                 className="mt-0.5 accent-indigo-500"
                               />
                               <span className="text-xs text-gray-600">
-                                <span className="font-mono text-gray-400">{r.id}</span> — {r.description.substring(0, 60)}...
+                                <span className="font-mono text-gray-500">{r.id}</span> — {r.description.substring(0, 60)}...
                               </span>
                             </label>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-gray-400">No risks available — add risks first</p>
+                        <p className="text-xs text-gray-500">No risks available — add risks first</p>
                       )}
                     </div>
                   </>
@@ -748,7 +748,7 @@ export default function AuditProgramView({
                 )}
                 {control.mitigatesRisks && control.mitigatesRisks.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                    <span className="text-xs text-gray-400">Mitigates:</span>
+                    <span className="text-xs text-gray-500">Mitigates:</span>
                     {control.mitigatesRisks.map(id => (
                       <span key={id} className="font-mono text-xs bg-gray-100 text-gray-500 border border-gray-200 rounded px-1.5 py-0.5">{id}</span>
                     ))}
@@ -762,12 +762,12 @@ export default function AuditProgramView({
 
         {/* Audit Procedures */}
         {(isEditMode ? editedProgram?.auditProcedures : auditProgram?.auditProcedures) && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex justify-between items-center mb-5">
             <div className="flex items-center gap-2">
               <div className="w-1 h-5 bg-indigo-500 rounded-full"></div>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Audit Procedures</h2>
-              <span className="text-xs text-gray-400 ml-1">
+              <span className="text-xs text-gray-500 ml-1">
                 {(isEditMode ? editedProgram.auditProcedures : auditProgram.auditProcedures).length} procedures
               </span>
             </div>
@@ -789,7 +789,7 @@ export default function AuditProgramView({
                   </span>
                   {isEditMode ? (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-gray-400">Control:</span>
+                      <span className="text-xs text-gray-500">Control:</span>
                       <select
                         value={proc.controlId}
                         onChange={(e) => updateProcedure(index, 'controlId', e.target.value)}
@@ -813,7 +813,7 @@ export default function AuditProgramView({
                   {isEditMode && (
                     <button
                       onClick={() => deleteProcedure(index)}
-                      className="text-gray-400 hover:text-red-500 ml-auto transition-colors text-sm"
+                      className="text-gray-500 hover:text-red-500 ml-auto transition-colors text-sm"
                       title="Delete Procedure"
                     >
                       ✕
@@ -839,7 +839,7 @@ export default function AuditProgramView({
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <span className="text-xs text-gray-400 uppercase tracking-wide font-medium block mb-1">Testing Method</span>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide font-medium block mb-1">Testing Method</span>
                     {isEditMode ? (
                       <select
                         value={proc.testingMethod}
@@ -857,7 +857,7 @@ export default function AuditProgramView({
                     )}
                   </div>
                   <div>
-                    <span className="text-xs text-gray-400 uppercase tracking-wide font-medium block mb-1">Sample Size</span>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide font-medium block mb-1">Sample Size</span>
                     {isEditMode ? (
                       <input
                         type="text"
@@ -870,7 +870,7 @@ export default function AuditProgramView({
                     )}
                   </div>
                   <div>
-                    <span className="text-xs text-gray-400 uppercase tracking-wide font-medium block mb-1">Expected Evidence</span>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide font-medium block mb-1">Expected Evidence</span>
                     {isEditMode ? (
                       <textarea
                         value={proc.expectedEvidence}
@@ -899,7 +899,7 @@ export default function AuditProgramView({
           </div>
 
           {/* File upload area */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-1 h-5 bg-emerald-500 rounded-full"></div>
               <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Upload Client Data File</h2>
@@ -918,7 +918,7 @@ export default function AuditProgramView({
               ) : (
                 <div>
                   <p className="text-sm text-gray-500">Click to upload CSV or XLSX</p>
-                  <p className="text-xs text-gray-400 mt-1">Max 4.5 MB · First row must be headers</p>
+                  <p className="text-xs text-gray-500 mt-1">Max 4.5 MB · First row must be headers</p>
                 </div>
               )}
             </div>
@@ -931,12 +931,12 @@ export default function AuditProgramView({
             />
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow p-5 mb-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-1 h-5 bg-amber-500 rounded-full"></div>
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Substantive Analytics</h2>
             </div>
-            <p className="text-xs text-gray-400 mb-2 ml-3">
+            <p className="text-xs text-gray-500 mb-2 ml-3">
               {analyticsTests.filter(t => t.included).length} population-based tests recommended for this process
             </p>
             <div className="space-y-3">
@@ -957,7 +957,7 @@ export default function AuditProgramView({
                           Testing {test.riskId}
                         </span>
                       ) : (
-                        <span className="text-xs bg-gray-100 text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">Risk not mapped</span>
+                        <span className="text-xs bg-gray-100 text-gray-500 border border-gray-200 px-2 py-0.5 rounded-full">Risk not mapped</span>
                       )}
                       {result && (
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${result.exceptionCount > 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-600 border-green-200'}`}>
@@ -977,7 +977,7 @@ export default function AuditProgramView({
                             {isRunning ? 'Running…' : result ? 'Re-run Test' : 'Run Test'}
                           </button>
                           {!analyticsFile && (
-                            <span className="text-xs text-gray-400 text-right max-w-[180px] leading-tight">Needs: {test.dataneeded.split('—')[1]?.trim() || test.dataneeded}</span>
+                            <span className="text-xs text-gray-500 text-right max-w-[180px] leading-tight">Needs: {test.dataneeded.split('—')[1]?.trim() || test.dataneeded}</span>
                           )}
                           {testError && (
                             <span className="text-xs text-red-600 text-right max-w-[220px] leading-tight">{testError}</span>
@@ -1009,11 +1009,11 @@ export default function AuditProgramView({
                   <p className="text-xs text-gray-600 mb-4 leading-relaxed">{test.purpose}</p>
                   <div className="grid grid-cols-2 gap-4 mb-3">
                     <div>
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block mb-1.5">Data Needed</span>
+                      <span className="text-sm font-medium text-gray-600 block mb-1.5">Data Needed</span>
                       <span className="text-xs text-gray-600 leading-relaxed">{test.dataneeded}</span>
                     </div>
                     <div>
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block mb-1.5">Steps</span>
+                      <span className="text-sm font-medium text-gray-600 block mb-1.5">Steps</span>
                       <ol className="space-y-1.5">
                         {test.steps.map((step, i) => (
                           <li key={i} className="flex gap-2">

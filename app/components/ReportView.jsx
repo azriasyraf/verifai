@@ -4,7 +4,7 @@ import { exportToWord } from '../lib/exportToWord';
 
 const RATING_STYLES = {
   High: 'bg-red-100 text-red-700 border border-red-200',
-  Medium: 'bg-orange-100 text-orange-700 border border-orange-200',
+  Medium: 'bg-amber-100 text-amber-700 border border-amber-200',
   Low: 'bg-green-100 text-green-700 border border-green-200',
 };
 
@@ -27,7 +27,7 @@ function getMgmtResponseIssues(text) {
 
 const OPINION_STYLES = {
   'Needs Improvement': 'bg-red-50 text-red-700 border-red-200',
-  'Satisfactory with Exceptions': 'bg-orange-50 text-orange-700 border-orange-200',
+  'Satisfactory with Exceptions': 'bg-amber-50 text-amber-700 border-amber-200',
   'Satisfactory': 'bg-green-50 text-green-700 border-green-200',
 };
 
@@ -37,7 +37,7 @@ function EditableText({ value, onChange, multiline = false, className = '' }) {
       <textarea
         value={value || ''}
         onChange={e => onChange(e.target.value)}
-        className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-300 ${className}`}
+        className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500 ${className}`}
         rows={4}
       />
     );
@@ -47,7 +47,7 @@ function EditableText({ value, onChange, multiline = false, className = '' }) {
       type="text"
       value={value || ''}
       onChange={e => onChange(e.target.value)}
-      className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 ${className}`}
+      className={`w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${className}`}
     />
   );
 }
@@ -57,7 +57,7 @@ function FindingCard({ finding, index, isEditMode, onChange }) {
 
   const field = (label, key, multiline = false) => (
     <div className="grid grid-cols-[140px_1fr] gap-3 py-2 border-b border-gray-100 last:border-0">
-      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-1">{label}</span>
+      <span className="text-sm font-medium text-gray-600 pt-1">{label}</span>
       {isEditMode ? (
         <EditableText
           value={finding[key]}
@@ -71,7 +71,7 @@ function FindingCard({ finding, index, isEditMode, onChange }) {
   );
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="px-5 py-4 flex items-start justify-between gap-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
@@ -111,7 +111,7 @@ function FindingCard({ finding, index, isEditMode, onChange }) {
         {field('Recommendation', 'recommendation', true)}
         {/* Management Response with QC flags */}
         <div className="grid grid-cols-[140px_1fr] gap-3 py-2 border-b border-gray-100">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide pt-1">Mgmt Response</span>
+          <span className="text-sm font-medium text-gray-600 pt-1">Mgmt Response</span>
           <div className="space-y-1.5">
             {isEditMode ? (
               <EditableText
@@ -200,7 +200,7 @@ export default function ReportView({ report, onReset }) {
             <>
               <button
                 onClick={() => setIsEditMode(false)}
-                className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                className="text-sm px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
               >
                 Done editing
               </button>
@@ -208,7 +208,7 @@ export default function ReportView({ report, onReset }) {
           ) : (
             <button
               onClick={() => setIsEditMode(true)}
-              className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+              className="text-sm px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
             >
               Edit
             </button>
@@ -216,13 +216,13 @@ export default function ReportView({ report, onReset }) {
           <button
             onClick={handleExport}
             disabled={isExporting}
-            className="text-sm px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium disabled:opacity-50"
+            className="text-sm px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium disabled:opacity-50"
           >
             {isExporting ? 'Exporting...' : 'Export to Word'}
           </button>
           <button
             onClick={onReset}
-            className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+            className="text-sm px-4 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
           >
             New report
           </button>
@@ -254,7 +254,7 @@ export default function ReportView({ report, onReset }) {
 
       {/* COVER */}
       {activeSection === 'cover' && (
-        <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100">
           {[
             ['title', 'Report Title'],
             ['client', 'Client'],
@@ -265,7 +265,7 @@ export default function ReportView({ report, onReset }) {
             ['reportDate', 'Report Date'],
           ].map(([key, label]) => (
             <div key={key} className="grid grid-cols-[160px_1fr] gap-4 px-5 py-3 items-center">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
+              <span className="text-sm font-medium text-gray-600">{label}</span>
               {isEditMode ? (
                 <EditableText value={cover[key]} onChange={val => updateCover(key, val)} />
               ) : (
@@ -274,7 +274,7 @@ export default function ReportView({ report, onReset }) {
             </div>
           ))}
           <div className="grid grid-cols-[160px_1fr] gap-4 px-5 py-3 items-center">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Overall Opinion</span>
+            <span className="text-sm font-medium text-gray-600">Overall Opinion</span>
             {isEditMode ? (
               <select
                 value={cover.overallOpinion || ''}
@@ -294,7 +294,7 @@ export default function ReportView({ report, onReset }) {
 
       {/* EXECUTIVE SUMMARY */}
       {activeSection === 'executive' && (
-        <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
           {isEditMode ? (
             <EditableText
               value={editedReport.executiveSummary}
@@ -313,7 +313,7 @@ export default function ReportView({ report, onReset }) {
       {/* SCOPE */}
       {activeSection === 'scope' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Audit Objectives</h3>
             {(scope.objectives || []).map((obj, i) => (
               <div key={i} className="flex gap-3 items-start mb-2">
@@ -326,7 +326,7 @@ export default function ReportView({ report, onReset }) {
               </div>
             ))}
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Scope</h3>
             {isEditMode ? (
               <EditableText value={scope.scope} onChange={val => updateScope('scope', val)} multiline />
@@ -334,7 +334,7 @@ export default function ReportView({ report, onReset }) {
               <p className="text-sm text-gray-700 whitespace-pre-wrap">{scope.scope}</p>
             )}
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">Methodology</h3>
             {isEditMode ? (
               <EditableText value={scope.methodology} onChange={val => updateScope('methodology', val)} multiline />
@@ -349,7 +349,7 @@ export default function ReportView({ report, onReset }) {
       {activeSection === 'findings' && (
         <div className="space-y-4">
           {findings.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No findings in this report.</p>
+            <p className="text-sm text-gray-500 text-center py-8">No findings in this report.</p>
           ) : (
             findings.map((finding, i) => (
               <FindingCard
@@ -366,7 +366,7 @@ export default function ReportView({ report, onReset }) {
 
       {/* CONCLUSION */}
       {activeSection === 'conclusion' && (
-        <div className="bg-white rounded-xl border border-gray-200 px-5 py-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4">
           {isEditMode ? (
             <EditableText
               value={editedReport.conclusion}
