@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import ColumnMapper from './ColumnMapper';
 import { exportAnalyticsToExcel } from '../lib/exportAnalyticsToExcel';
@@ -65,7 +65,34 @@ export default function AuditProgramView({
 }) {
   const [columnMapperTest, setColumnMapperTest] = useState(null); // test object being mapped
   const [runningTestId, setRunningTestId] = useState(null);
+  const [activePhase, setActivePhase] = useState(null);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    const phases = [
+      { id: 'phase-1', label: 'Phase 1 · Risk Assessment', color: 'teal' },
+      { id: 'phase-2', label: 'Phase 2 · Test of Controls', color: 'violet' },
+      { id: 'phase-3', label: 'Phase 3 · Substantive Analytics', color: 'emerald' },
+    ];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setActivePhase(phases.find(p => p.id === entry.target.id) || null);
+          }
+        });
+      },
+      { rootMargin: '-5% 0px -85% 0px', threshold: 0 }
+    );
+
+    phases.forEach(({ id }) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
@@ -129,7 +156,22 @@ export default function AuditProgramView({
           onCancel={() => setColumnMapperTest(null)}
         />
       )}
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-[1fr_192px] gap-6 items-start">
+        <div>
+        {/* Sticky phase indicator */}
+        {activePhase && (
+          <div className={`sticky top-0 z-10 mb-3 -mx-6 px-6 py-2 bg-white border-b border-gray-200 flex items-center gap-2 shadow-sm`}>
+            <span className={`w-2 h-2 rounded-full shrink-0 ${
+              activePhase.color === 'teal' ? 'bg-teal-500' :
+              activePhase.color === 'violet' ? 'bg-violet-500' : 'bg-emerald-500'
+            }`} />
+            <span className={`text-xs font-semibold ${
+              activePhase.color === 'teal' ? 'text-teal-700' :
+              activePhase.color === 'violet' ? 'text-violet-700' : 'text-emerald-700'
+            }`}>{activePhase.label}</span>
+          </div>
+        )}
         {/* Header */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <div className="flex justify-between items-center gap-4 flex-wrap">
@@ -233,7 +275,7 @@ export default function AuditProgramView({
         )}
 
         {/* Phase 1: Risk Assessment */}
-        <div className="mb-4 pl-4 border-l-4 border-teal-500 bg-teal-50 rounded-r-lg py-3 pr-4">
+        <div id="phase-1" className="mb-4 pl-4 border-l-4 border-teal-500 bg-teal-50 rounded-r-lg py-3 pr-4">
           <span className="text-xs font-bold text-teal-500 uppercase tracking-widest">Phase 1</span>
           <h2 className="text-base font-semibold text-teal-900">Risk Assessment</h2>
           <p className="text-xs text-teal-700 mt-0.5">Understand the process, identify what can go wrong, and define audit objectives.</p>
@@ -434,7 +476,7 @@ export default function AuditProgramView({
                   ) : (
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
                       risk.rating === 'High' ? 'bg-red-50 text-red-600 border-red-200' :
-                      risk.rating === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                      risk.rating === 'Medium' ? 'bg-amber-100 text-amber-800 border-amber-200' :
                       'bg-green-50 text-green-600 border-green-200'
                     }`}>
                       {risk.rating}
@@ -557,7 +599,7 @@ export default function AuditProgramView({
         )}
 
         {/* Phase 2: Test of Controls */}
-        <div className="mb-4 pl-4 border-l-4 border-violet-500 bg-violet-50 rounded-r-lg py-3 pr-4">
+        <div id="phase-2" className="mb-4 pl-4 border-l-4 border-violet-500 bg-violet-50 rounded-r-lg py-3 pr-4">
           <span className="text-xs font-bold text-violet-500 uppercase tracking-widest">Phase 2</span>
           <h2 className="text-base font-semibold text-violet-900">Test of Controls</h2>
           <p className="text-xs text-violet-700 mt-0.5">Verify that controls exist and are operating effectively. Analytics tests in this phase are control-linked — they check whether a specific control caught what it should (e.g. "Did the approval workflow flag this exception?").</p>
@@ -892,7 +934,7 @@ export default function AuditProgramView({
         {/* Phase 3: Substantive Analytics */}
         {analyticsTests.length > 0 && (
           <>
-          <div className="mb-4 pl-4 border-l-4 border-emerald-500 bg-emerald-50 rounded-r-lg py-3 pr-4">
+          <div id="phase-3" className="mb-4 pl-4 border-l-4 border-emerald-500 bg-emerald-50 rounded-r-lg py-3 pr-4">
             <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Phase 3</span>
             <h2 className="text-base font-semibold text-emerald-900">Substantive Analytics</h2>
             <p className="text-xs text-emerald-700 mt-0.5">Run directly against the full dataset — not tied to any specific control. Designed to surface anomalies, duplicates, and outliers that control-based testing is not designed to detect.</p>
@@ -1130,6 +1172,84 @@ export default function AuditProgramView({
           </>
         )}
 
+        </div>{/* end left column */}
+
+        {/* Sticky right sidebar */}
+        <div className="sticky top-6">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-2">
+            {/* Editing badge */}
+            {isEditMode && (
+              <div className="pb-2 border-b border-gray-100">
+                <span className="bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 text-xs font-medium">Editing</span>
+              </div>
+            )}
+
+            {/* Primary action */}
+            {!isEditMode ? (
+              <button
+                onClick={exportToExcel}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+              >
+                Export to Excel
+              </button>
+            ) : (
+              <button
+                onClick={saveEdits}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+              >
+                Save Changes
+              </button>
+            )}
+
+            {/* Edit toggle */}
+            {!isEditMode ? (
+              <button
+                onClick={enterEditMode}
+                className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+              >
+                Edit Program
+              </button>
+            ) : (
+              <button
+                onClick={cancelEdit}
+                className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+              >
+                Cancel
+              </button>
+            )}
+
+            {/* Phase navigation */}
+            <div className="pt-2 border-t border-gray-100 space-y-0.5">
+              <p className="text-xs font-medium text-gray-500 mb-1.5">Jump to</p>
+              <a href="#phase-1" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-teal-50 text-teal-700 text-sm transition-colors">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"></span>
+                Phase 1
+              </a>
+              <a href="#phase-2" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-violet-50 text-violet-700 text-sm transition-colors">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span>
+                Phase 2
+              </a>
+              {analyticsTests.length > 0 && (
+                <a href="#phase-3" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-emerald-50 text-emerald-700 text-sm transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                  Phase 3
+                </a>
+              )}
+            </div>
+
+            {/* New Program */}
+            <div className="pt-2 border-t border-gray-100">
+              <button
+                onClick={resetForm}
+                className="w-full text-xs text-gray-500 hover:text-gray-700 py-1 transition-colors"
+              >
+                New Program
+              </button>
+            </div>
+          </div>
+        </div>{/* end sidebar */}
+
+        </div>{/* end grid */}
       </div>
     </div>
   );
