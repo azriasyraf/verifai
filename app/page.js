@@ -86,8 +86,13 @@ export default function Verifai() {
   const [originalProgram, setOriginalProgram] = useState(null);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  // Analytics tests state
+  // Analytics tests state (list of tests from library, with riskId/included)
   const [analyticsTests, setAnalyticsTests] = useState([]);
+
+  // Analytics execution state (Phase 1 MVP)
+  const [analyticsFile, setAnalyticsFile] = useState(null); // { headers, rows }
+  const [analyticsResults, setAnalyticsResults] = useState({}); // testId → { exceptionCount, totalRows, headers, sampleRows, conclusion, notes }
+  const [columnMappings, setColumnMappings] = useState({}); // testId → { fieldName: colIndex }
 
   const canGenerate = selectedIndustry && selectedProcess;
 
@@ -340,6 +345,62 @@ export default function Verifai() {
     });
   };
 
+  // -------------------------------------------------------------------------
+  // Analytics execution handlers (Phase 1 MVP)
+  // -------------------------------------------------------------------------
+
+  const handleAnalyticsFileLoad = (fileData) => {
+    // fileData: { headers: string[], rows: any[][] }
+    setAnalyticsFile(fileData);
+    // Clear previous results when a new file is loaded
+    setAnalyticsResults({});
+    setColumnMappings({});
+  };
+
+  const handleRunAnalyticsTest = async (testId, columns) => {
+    if (!analyticsFile) return;
+    // Store column mapping for re-use / display
+    setColumnMappings(prev => ({ ...prev, [testId]: columns }));
+
+    try {
+      const response = await fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          testId,
+          columns,
+          rows: analyticsFile.rows,
+          headers: analyticsFile.headers,
+        }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        setAnalyticsResults(prev => ({
+          ...prev,
+          [testId]: {
+            exceptionCount: result.exceptionCount,
+            totalRows: result.totalRows,
+            headers: result.headers,
+            sampleRows: result.sampleRows,
+            conclusion: prev[testId]?.conclusion || '',
+            notes: prev[testId]?.notes || '',
+          },
+        }));
+      } else {
+        console.error('Analytics test failed:', result.error);
+      }
+    } catch (err) {
+      console.error('Analytics test error:', err);
+    }
+  };
+
+  const updateAnalyticsConclusion = (testId, field, value) => {
+    setAnalyticsResults(prev => ({
+      ...prev,
+      [testId]: { ...prev[testId], [field]: value },
+    }));
+  };
+
   const resetForm = () => {
     setSelectedIndustry('');
     setSelectedProcess('');
@@ -349,6 +410,9 @@ export default function Verifai() {
     setGovernanceContext('');
     setError(null);
     setAnalyticsTests([]);
+    setAnalyticsFile(null);
+    setAnalyticsResults({});
+    setColumnMappings({});
     // Note: auditeeDetails intentionally NOT reset — persists across multiple generates in same session
   };
 
@@ -521,6 +585,12 @@ export default function Verifai() {
         updateProcedure={updateProcedure}
         updateAnalyticsRisk={updateAnalyticsRisk}
         toggleAnalyticsTest={toggleAnalyticsTest}
+        analyticsFile={analyticsFile}
+        analyticsResults={analyticsResults}
+        onAnalyticsFileLoad={handleAnalyticsFileLoad}
+        onRunAnalyticsTest={handleRunAnalyticsTest}
+        onUpdateAnalyticsConclusion={updateAnalyticsConclusion}
+        auditeeDetails={auditeeDetails}
       />
     );
   }
@@ -551,6 +621,8 @@ export default function Verifai() {
       // report
       handleGenerateReport={handleGenerateReport}
       isGeneratingReport={isGeneratingReport}
+      // rmga enrichment
+      governanceAssessment={governanceAssessment}
     />
   );
 }
