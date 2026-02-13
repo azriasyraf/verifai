@@ -165,44 +165,44 @@ export default function UserGuide() {
                     <ol className="space-y-3">
                       {[
                         {
-                          step: 'Fill in engagement details',
-                          desc: 'Enter client name, department, audit period, engagement reference, and auditor name. These appear on your exported workpaper. Skip if not needed.',
+                          step: 'Fill in engagement details (optional)',
+                          desc: 'Enter client name, department, audit period, engagement reference, and auditor name. These get stamped on every export. You can skip this and fill it in later.',
                         },
                         {
                           step: 'Select your industry and process',
-                          desc: 'Choose the industry context and the specific process you are auditing (e.g. Revenue to Cash, Procurement to Payment). These are the starting options. More will be added.',
+                          desc: 'Choose the industry and the process you are auditing — Revenue to Cash, Procurement to Payment, HR, Inventory, or IT. More will be added over time.',
                         },
                         {
-                          step: 'Enrich with client context (optional)',
-                          desc: 'Paste walkthrough notes or interview observations to personalise the output. Verifai will elevate risks with evidence, flag control gaps, and add client-specific observations. If you have a completed RMGA, import its findings directly.',
+                          step: 'Add context about the client (optional)',
+                          desc: 'Paste in walkthrough notes or interview observations to personalise the output. Verifai will surface risks with supporting evidence, flag control gaps, and add client-specific commentary. If you have a completed RMGA, you can import its findings directly.',
                         },
                         {
-                          step: 'Click Generate',
-                          desc: 'Verifai generates a full three-phase audit program: Phase 1 Risk Assessment (objectives, risks), Phase 2 Test of Controls (controls and procedures), Phase 3 Substantive Analytics (population-level tests). Takes about 10–15 seconds.',
+                          step: 'Generate',
+                          desc: 'Verifai builds a three-phase audit program covering the risk landscape, control tests, and substantive analytics. Takes about 10 to 15 seconds.',
                         },
                         {
-                          step: 'Review and customise',
-                          desc: 'Click Edit Program to modify anything. Add or remove risks, controls, and procedures, or change descriptions. Everything the AI generates is a starting point, not a final answer.',
+                          step: 'Review and edit',
+                          desc: 'Click Edit Program to adjust anything. Add or remove risks, controls, and procedures, or rewrite descriptions. The output is a starting point, not a final answer.',
                         },
                         {
-                          step: 'Check Phase 3 — Substantive Analytics',
-                          desc: 'Verifai auto-suggests 35 data analytics tests mapped to your risks. Toggle tests on/off and re-map them to risks as needed.',
+                          step: 'Review the analytics test plan (optional)',
+                          desc: 'Scroll to Phase 3 to see the substantive analytics tests Verifai has mapped to your risks. Toggle any test off if it is not applicable, or reassign it to a different risk.',
                         },
                         {
-                          step: 'Run analytics tests directly in-app',
-                          desc: 'Upload a CSV or XLSX file at the top of Phase 3. Run Test buttons appear on 5 executable tests (RC-001, PP-002, HR-002, INV-001, IT-003). A column mapper pre-fills your file\'s headers — confirm and results appear inline.',
+                          step: 'Run tests against your client data (optional)',
+                          desc: 'Upload a CSV or XLSX data file at the top of Phase 3. For tests that can run directly, a Run Test button will appear. A quick column-matching step confirms which column is which, then results appear inline.',
                         },
                         {
-                          step: 'Document your work and raise findings',
-                          desc: 'For each test result, fill in Audit Work Done (interviews, observations, anything) and a Conclusion. If exceptions warrant escalation, click Raise as Finding — it pre-populates a finding in the Report tab automatically.',
+                          step: 'Document what you found (optional)',
+                          desc: 'For each result, write up what you did — who you spoke to, what they said, what you concluded. If something needs to become a finding, one click sends it to the Report tab with the details pre-filled.',
                         },
                         {
-                          step: 'Export analytics working paper',
-                          desc: 'Click Export Working Paper per test. Downloads a 3-tab Excel: Raw Data, Exceptions, and a working paper tab named after the test ID with methodology steps for manual reperformance.',
+                          step: 'Export your working paper (optional)',
+                          desc: 'Export a working paper per test. It includes the raw data, the exceptions, and a methodology section so any reviewer can reperform the work manually.',
                         },
                         {
-                          step: 'Export audit program to Excel',
-                          desc: 'Download a multi-tab workbook with your full audit program, analytics test details, and control matrix. Ready to use or share.',
+                          step: 'Export the full audit program',
+                          desc: 'Download a multi-tab workbook with the complete audit program, analytics tests, and control matrix.',
                         },
                       ].map((item, i) => (
                         <li key={i} className="flex gap-3">
@@ -410,49 +410,43 @@ export default function UserGuide() {
 
               {activeTab === 'coming' && (
                 <div className="space-y-4">
-                  <p className="text-gray-500">These features are in design or development. Your feedback shapes the priority.</p>
+                  <p className="text-gray-600">Things you will be able to do soon. This is a working tool, not a finished product — it gets better every week.</p>
                   <div className="space-y-3">
                     {[
                       {
-                        label: 'In-Session Audit Trail',
-                        desc: 'Tracks every change made to the AI output within a session. Export includes a diff summary — showing what was modified, added, or removed — so reviewers can see the auditor engaged with the output.',
+                        label: 'See what changed from the AI draft',
+                        desc: 'Verifai will track every edit you make and include a change summary on export. Your supervisor can see that you engaged with the output, not just downloaded it.',
                         status: 'Next up',
                         color: 'bg-indigo-50 text-indigo-700',
                       },
                       {
-                        label: 'Exit Meeting Talking Points',
-                        desc: 'Generate a structured exit meeting agenda and key talking points from your report findings. Helps auditors lead the auditee discussion before the report is issued.',
+                        label: 'Prepare for your exit meeting',
+                        desc: 'Generate a structured agenda and talking points from your report findings. Walk into the exit meeting with a plan.',
                         status: 'Next up',
                         color: 'bg-indigo-50 text-indigo-700',
                       },
                       {
-                        label: 'Document Enrichment',
-                        desc: 'Upload RMGA working papers, policies, or SOPs to enrich audit program generation. AI compares documents against walkthrough notes and flags gaps between what is documented and what is actually happening.',
-                        status: 'In design',
-                        color: 'bg-blue-50 text-blue-700',
-                      },
-                      {
-                        label: 'More Analytics Tests',
-                        desc: 'Phase 2 tests: date thresholds, round-number analysis, split purchases below approval threshold, and multi-file joins (e.g. terminated employees vs payroll).',
+                        label: 'Run more analytics tests',
+                        desc: 'More tests are coming — date thresholds, round-number clusters, split purchases, and cross-file joins like terminated employees checked against payroll.',
                         status: 'Planned',
                         color: 'bg-gray-100 text-gray-600',
                       },
                       {
-                        label: 'Process Walkthrough Documentation',
-                        desc: 'Structured working paper to document process flows end-to-end: who initiates, what documents are needed, segregation of duties, controls, and GL posting.',
+                        label: 'Upload policies and SOPs',
+                        desc: 'Feed Verifai your procedure documents. It will read them alongside your walkthrough notes and flag where what is written differs from what is happening.',
                         status: 'Planned',
                         color: 'bg-gray-100 text-gray-600',
                       },
                       {
-                        label: 'Saved Engagements',
-                        desc: 'Save and reload your audit programs and governance assessments across sessions. Prerequisite for finding trackers, cross-engagement patterns, and management accountability reports.',
+                        label: 'Save and come back to your work',
+                        desc: 'Right now everything lives in the session. Saved engagements will let you close the tab and pick up exactly where you left off.',
                         status: 'Planned',
                         color: 'bg-gray-100 text-gray-600',
                       },
                       {
-                        label: 'Team Collaboration',
-                        desc: 'Share workpapers with your team, assign controls, and track review status.',
-                        status: 'Future',
+                        label: 'Share with your team',
+                        desc: 'Assign sections, leave review comments, and track sign-offs without bouncing Excel files around.',
+                        status: 'Later',
                         color: 'bg-gray-100 text-gray-500',
                       },
                     ].map((item, i) => (
@@ -468,7 +462,7 @@ export default function UserGuide() {
                     ))}
                   </div>
                   <p className="text-xs text-gray-400">
-                    Using Verifai during this beta phase? Your feedback directly influences what gets built next.
+                    If something here would genuinely help your work, say so. Feedback from actual auditors shapes what gets built.
                   </p>
                 </div>
               )}
