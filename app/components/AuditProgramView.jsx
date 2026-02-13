@@ -55,6 +55,7 @@ export default function AuditProgramView({
   toggleAnalyticsTest,
   analyticsFile,
   analyticsResults,
+  analyticsErrors,
   onAnalyticsFileLoad,
   onRunAnalyticsTest,
   onUpdateAnalyticsField,
@@ -943,6 +944,7 @@ export default function AuditProgramView({
                 const isExecutable = EXECUTABLE_TESTS.has(test.id);
                 const result = analyticsResults[test.id];
                 const isRunning = runningTestId === test.id;
+                const testError = analyticsErrors?.[test.id];
 
                 return (
                 <div key={test.id} className={`border rounded-lg p-4 transition-opacity ${!test.included ? 'opacity-40 bg-gray-50 border-gray-100' : 'bg-gray-50 border-gray-100'}`}>
@@ -976,6 +978,9 @@ export default function AuditProgramView({
                           </button>
                           {!analyticsFile && (
                             <span className="text-xs text-gray-400 text-right max-w-[180px] leading-tight">Needs: {test.dataneeded.split('—')[1]?.trim() || test.dataneeded}</span>
+                          )}
+                          {testError && (
+                            <span className="text-xs text-red-600 text-right max-w-[220px] leading-tight">{testError}</span>
                           )}
                         </div>
                       )}

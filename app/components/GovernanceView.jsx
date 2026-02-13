@@ -341,7 +341,7 @@ export default function GovernanceView({
               {!isEditMode ? (
                 <button
                   onClick={() => setIsEditMode(true)}
-                  className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
                 >
                   Edit Working Paper
                 </button>
@@ -357,7 +357,7 @@ export default function GovernanceView({
 
               <button
                 onClick={handleExport}
-                className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
               >
                 Export to Excel
               </button>
@@ -692,7 +692,7 @@ export default function GovernanceView({
                     setOverallData({ maturityRating: '', rationale: '', keyObservations: [''], recommendations: [''] });
                     setOverallMode('manual');
                   }}
-                  className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
                 >
                   Enter Manually
                 </button>
@@ -826,7 +826,7 @@ export default function GovernanceView({
           </p>
           <button
             onClick={handleExport}
-            className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
           >
             Export to Excel
           </button>

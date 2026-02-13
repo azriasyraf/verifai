@@ -95,6 +95,7 @@ export default function Verifai() {
   const [analyticsFile, setAnalyticsFile] = useState(null); // { headers, rows }
   const [analyticsResults, setAnalyticsResults] = useState({}); // testId → { exceptionCount, totalRows, headers, sampleRows, conclusion, workDone }
   const [columnMappings, setColumnMappings] = useState({}); // testId → { fieldName: colIndex }
+  const [analyticsErrors, setAnalyticsErrors] = useState({}); // testId → error message string
   const [raisedFindings, setRaisedFindings] = useState([]); // findings raised from analytics, NOT cleared on resetForm
 
   const canGenerate = selectedIndustry && selectedProcess;
@@ -385,6 +386,7 @@ export default function Verifai() {
       });
       const result = await response.json();
       if (result.success) {
+        setAnalyticsErrors(prev => ({ ...prev, [testId]: null }));
         setAnalyticsResults(prev => ({
           ...prev,
           [testId]: {
@@ -397,10 +399,10 @@ export default function Verifai() {
           },
         }));
       } else {
-        console.error('Analytics test failed:', result.error);
+        setAnalyticsErrors(prev => ({ ...prev, [testId]: result.error || 'Test failed. Please check your column mapping and try again.' }));
       }
     } catch (err) {
-      console.error('Analytics test error:', err);
+      setAnalyticsErrors(prev => ({ ...prev, [testId]: 'Could not connect to the analytics service. Please try again.' }));
     }
   };
 
@@ -431,6 +433,11 @@ export default function Verifai() {
     });
   };
 
+  const handleStartOver = () => {
+    if (!window.confirm('This will clear your current working paper. Are you sure?')) return;
+    resetForm();
+  };
+
   const resetForm = () => {
     setSelectedIndustry('');
     setSelectedProcess('');
@@ -445,6 +452,7 @@ export default function Verifai() {
     setAnalyticsTests([]);
     setAnalyticsFile(null);
     setAnalyticsResults({});
+    setAnalyticsErrors({});
     setColumnMappings({});
     // Note: auditeeDetails intentionally NOT reset — persists across multiple generates in same session
   };
@@ -622,7 +630,7 @@ export default function Verifai() {
         auditeeDetails={auditeeDetails}
         onExportExcel={handleExportWalkthrough}
         onGenerateAuditProgram={handleGenerateFromWalkthrough}
-        onStartOver={resetForm}
+        onStartOver={handleStartOver}
       />
     );
   }
@@ -635,7 +643,7 @@ export default function Verifai() {
           auditeeDetails={auditeeDetails}
           onExportExcel={handleExportGovernance}
           onGenerateAuditProgram={handleGenerateFromAssessment}
-          onStartOver={resetForm}
+          onStartOver={handleStartOver}
           isGeneratingAudit={isGenerating}
         />
     );
@@ -658,7 +666,7 @@ export default function Verifai() {
         resetToAI={resetToAI}
         setConfirmReset={setConfirmReset}
         exportToExcel={exportToExcel}
-        resetForm={resetForm}
+        resetForm={handleStartOver}
         addObjective={addObjective}
         deleteObjective={deleteObjective}
         updateObjective={updateObjective}
@@ -676,6 +684,7 @@ export default function Verifai() {
         toggleAnalyticsTest={toggleAnalyticsTest}
         analyticsFile={analyticsFile}
         analyticsResults={analyticsResults}
+        analyticsErrors={analyticsErrors}
         onAnalyticsFileLoad={handleAnalyticsFileLoad}
         onRunAnalyticsTest={handleRunAnalyticsTest}
         onUpdateAnalyticsField={updateAnalyticsField}

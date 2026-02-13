@@ -23,7 +23,7 @@ function EditableList({ items, onChange, onAdd, onRemove, placeholder }) {
             value={item}
             onChange={(e) => onChange(i, e.target.value)}
             placeholder={placeholder}
-            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+            className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           />
           {items.length > 1 && (
             <button onClick={() => onRemove(i)} className="mt-1 text-gray-300 hover:text-red-400 transition-colors">
@@ -227,7 +227,7 @@ export default function WalkthroughView({
   // -------------------------------------------------------------------------
   // Shared input styles
   // -------------------------------------------------------------------------
-  const inputCls = 'w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent';
+  const inputCls = 'w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent';
   const textareaCls = `${inputCls} resize-none`;
 
   return (
@@ -279,15 +279,15 @@ export default function WalkthroughView({
               ) : (
                 <button
                   onClick={() => setIsEditMode(false)}
-                  className="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
                 >
-                  Done Editing
+                  Save &amp; Close Edit
                 </button>
               )}
 
               <button
                 onClick={handleExport}
-                className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
               >
                 Export Working Paper
               </button>
@@ -454,7 +454,7 @@ export default function WalkthroughView({
                               value={q}
                               onChange={(e) => updateCheckpointQuestion(cpIdx, qIdx, e.target.value)}
                               placeholder="Add question..."
-                              className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                              className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                             />
                             {(cp.suggestedQuestions || []).length > 1 && (
                               <button onClick={() => removeCheckpointQuestion(cpIdx, qIdx)} className="mt-1 text-gray-300 hover:text-red-400 transition-colors">
@@ -498,7 +498,7 @@ export default function WalkthroughView({
                     onChange={(e) => updateCheckpointResponse(cpIdx, 'described', e.target.value)}
                     placeholder="Describe what management/staff said about this control area during the walkthrough..."
                     rows={3}
-                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                    className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                   />
                 </div>
 
@@ -509,7 +509,7 @@ export default function WalkthroughView({
                     <select
                       value={resp.designAdequacy || 'Not Assessed'}
                       onChange={(e) => updateCheckpointResponse(cpIdx, 'designAdequacy', e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     >
                       <option value="Not Assessed">Not Assessed</option>
                       <option value="Adequate">Adequate</option>
@@ -526,7 +526,7 @@ export default function WalkthroughView({
                       onChange={(e) => updateCheckpointResponse(cpIdx, 'notes', e.target.value)}
                       placeholder="Follow-up items, observations, document references..."
                       rows={2}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                     />
                   </div>
                 </div>
@@ -558,7 +558,7 @@ export default function WalkthroughView({
             onChange={(e) => setFreeformNotes(e.target.value)}
             placeholder="Record any additional observations, context, or notes from the walkthrough interviews that don't fit neatly into the checkpoints above..."
             rows={5}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
           />
         </div>
 
@@ -584,7 +584,7 @@ export default function WalkthroughView({
             onChange={(e) => setOverallConclusion(e.target.value)}
             placeholder="Summarise the overall control design adequacy across the process. Note any material weaknesses, key gaps identified, and whether the process is ready to proceed to testing..."
             rows={4}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
           />
         </div>
 
@@ -605,7 +605,7 @@ export default function WalkthroughView({
             {onGenerateAuditProgram && (
               <button
                 onClick={handleGenerateAuditProgram}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg px-4 py-2 text-sm transition-colors flex items-center gap-2"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-4 py-2 text-sm transition-colors flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />

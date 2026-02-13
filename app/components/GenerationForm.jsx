@@ -156,30 +156,18 @@ export default function GenerationForm({
             </p>
           </div>
 
-          {/* Framework Info */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Built on professional standards</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <p className="text-xs font-semibold text-gray-900 mb-1">Audit Methodology</p>
-                <p className="text-xs text-gray-600">IIA IPPF</p>
-                <p className="text-xs text-gray-400 mt-1">Plan, execute, and report on internal audits</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <p className="text-xs font-semibold text-gray-900 mb-1">Control Frameworks</p>
-                <p className="text-xs text-gray-600">COSO 2013, COSO ERM &amp; COBIT 2019</p>
-                <p className="text-xs text-gray-400 mt-1">Risk identification, control design and governance</p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 mt-3 text-center">
-              Audit programs include risk-control linkage, assertions, and data analytics procedures
-            </p>
-          </div>
-
           {/* Error Display */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-5">
               <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Walkthrough context loaded banner */}
+          {walkthroughClientContext && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 mb-5 flex items-start gap-3">
+              <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <p className="text-xs text-indigo-700">Your walkthrough observations have been loaded into the context panel. Select a process and click <span className="font-semibold">Generate Audit Program</span> to create a program informed by your walkthrough findings.</p>
             </div>
           )}
 
@@ -218,13 +206,13 @@ export default function GenerationForm({
                 onClick={() => setGenerationMode('walkthrough')}
                 className={`text-left rounded-xl border p-4 transition-all ${
                   isWalkthrough
-                    ? 'border-teal-500 bg-teal-50 ring-2 ring-teal-500 ring-offset-1'
+                    ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-1'
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isWalkthrough ? 'border-teal-600' : 'border-gray-300'}`}>
-                    {isWalkthrough && <div className="w-2 h-2 rounded-full bg-teal-600"></div>}
+                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isWalkthrough ? 'border-indigo-600' : 'border-gray-300'}`}>
+                    {isWalkthrough && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900 mb-1">Process Walkthrough</p>
@@ -283,6 +271,26 @@ export default function GenerationForm({
             </div>
           </div>
 
+          {/* Framework Info */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Built on professional standards</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                <p className="text-xs font-semibold text-gray-900 mb-1">Audit Methodology</p>
+                <p className="text-xs text-gray-600">IIA IPPF</p>
+                <p className="text-xs text-gray-400 mt-1">Plan, execute, and report on internal audits</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                <p className="text-xs font-semibold text-gray-900 mb-1">Control Frameworks</p>
+                <p className="text-xs text-gray-600">COSO 2013, COSO ERM &amp; COBIT 2019</p>
+                <p className="text-xs text-gray-400 mt-1">Risk identification, control design and governance</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-3 text-center">
+              Audit programs include risk-control linkage, assertions, and data analytics procedures
+            </p>
+          </div>
+
           {/* ---------------------------------------------------------------- */}
           {/* Configuration card — content changes with mode */}
           {/* ---------------------------------------------------------------- */}
@@ -292,6 +300,16 @@ export default function GenerationForm({
             </h2>
 
             <div className="space-y-4">
+
+              {/* ----- REPORT: raised findings ready banner ----- */}
+              {isReport && raisedFindings?.length > 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <p className="text-xs text-green-700 font-medium">{raisedFindings.length} analytics finding{raisedFindings.length !== 1 ? 's' : ''} ready — scroll down to generate, or upload a workbook to add more.</p>
+                  </div>
+                </div>
+              )}
 
               {/* ----- REPORT UPLOAD fields ----- */}
               {isReport && (
@@ -390,7 +408,7 @@ export default function GenerationForm({
                       <select
                         value={selectedProcess}
                         onChange={(e) => setSelectedProcess(e.target.value)}
-                        className={`w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-transparent transition-colors ${isWalkthrough ? 'focus:ring-2 focus:ring-teal-500' : 'focus:ring-2 focus:ring-indigo-500'}`}
+                        className={`w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:border-transparent transition-colors ${isWalkthrough ? 'focus:ring-2 focus:ring-indigo-500' : 'focus:ring-2 focus:ring-indigo-500'}`}
                       >
                         <option value="">Select a process...</option>
                         {processes.map((process) => (
@@ -606,7 +624,7 @@ export default function GenerationForm({
                   disabled={!canGenerateWalkthrough || isGeneratingWalkthrough}
                   className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                     canGenerateWalkthrough && !isGeneratingWalkthrough
-                      ? 'bg-teal-600 hover:bg-teal-700 text-white cursor-pointer shadow-sm'
+                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm'
                       : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
                   }`}
                 >
