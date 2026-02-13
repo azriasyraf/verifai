@@ -15,6 +15,17 @@ const auditFeatures = [
   { label: 'Excel export', desc: 'Multi-tab workbook: Audit Program, Analytics Tests, and Control Matrix.' },
 ];
 
+const analyticsFeatures = [
+  { label: 'In-app analytics execution', desc: 'Upload a CSV or XLSX file and run 5 pre-built tests directly in Phase 3 — no Excel formulas required.' },
+  { label: 'Duplicate detection', desc: 'Finds duplicate invoice numbers (revenue and AP side) and employees sharing bank accounts.' },
+  { label: 'Negative inventory', desc: 'Flags items with quantity below zero — timing errors or recording failures.' },
+  { label: 'Privileged access review', desc: 'Surfaces users with Admin or Super User access for scrutiny.' },
+  { label: 'Smart column mapping', desc: 'Fuzzy pre-fill matches your file\'s column headers to what each test needs. Confirm or adjust before running.' },
+  { label: 'Audit Work Done field', desc: 'Document observations, interviews, and representations directly against the results.' },
+  { label: 'Raise as Finding', desc: 'One click pre-populates an audit finding in the Report tab — no re-typing.' },
+  { label: '3-tab working paper export', desc: 'Raw Data, Exceptions, and a working paper tab named after the test ID with methodology steps for manual reperformance.' },
+];
+
 const rmgaFeatures = [
   { label: 'Entity-level governance working paper', desc: 'Covers Risk Management Framework, Control Environment & Risk Culture, Training & Awareness, and Risk Reporting & Oversight.' },
   { label: 'Walkthrough steps & documents to obtain', desc: 'Specific steps the auditor performs and a list of documents to request, broken out per area.' },
@@ -29,7 +40,7 @@ const rmgaFeatures = [
 
 const comingSoon = [
   { label: 'AI-Assisted RMGA Completion', desc: 'Feed Verifai your fieldwork notes or voice recordings. The audit engine drafts management responses, assessments, and conclusions for your review.', status: 'Planned' },
-  { label: 'Data Analytics Execution', desc: 'Upload client data (Excel/CSV) and run analytics tests directly in the app. Verifai surfaces anomalies and flags findings.', status: 'In design' },
+  { label: 'More Analytics Tests', desc: 'Phase 2 tests covering date thresholds, round-number analysis, split purchases, and multi-file joins (e.g. terminated employees cross-referenced against payroll).', status: 'Planned' },
   { label: 'Process Walkthrough Documentation', desc: 'Structured working paper to document process flows end-to-end: who initiates, what documents are needed, segregation of duties, controls, and GL posting.', status: 'Planned' },
   { label: 'Policy & Procedure Upload', desc: 'Upload your SOPs. The audit engine reads them and recommends risks, controls, and tests.', status: 'Planned' },
   { label: 'Saved Engagements', desc: 'Save and reload your audit programs and governance assessments across sessions.', status: 'Planned' },
@@ -76,6 +87,23 @@ export default function AboutPage() {
           </div>
         </div>
 
+        {/* Stats */}
+        <div className="bg-indigo-900 rounded-2xl px-8 py-10 text-center space-y-6">
+          <p className="text-indigo-300 text-sm font-semibold uppercase tracking-widest">Why it matters</p>
+          <p className="text-white text-xl font-medium max-w-xl mx-auto leading-relaxed">
+            Internal auditors spend{' '}
+            <span className="text-4xl font-extrabold text-white">2–8 hours</span>
+            {' '}manually drafting working papers.
+          </p>
+          <p className="text-indigo-200 text-lg">
+            Verifai generates structured drafts in{' '}
+            <span className="text-3xl font-extrabold text-emerald-400">under 15 seconds.</span>
+          </p>
+          <p className="text-indigo-400 text-xs max-w-md mx-auto">
+            That&apos;s not replacing the auditor — it&apos;s giving them back the hours they were spending on structure, so they can spend them on judgement.
+          </p>
+        </div>
+
         {/* Feature 1: Audit Program */}
         <div>
           <div className="flex items-center gap-3 mb-6">
@@ -111,6 +139,28 @@ export default function AboutPage() {
             {rmgaFeatures.map((f, i) => (
               <div key={i} className="flex gap-3 px-5 py-3">
                 <span className="text-purple-500 shrink-0 mt-0.5 text-sm">✓</span>
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900">{f.label}</p>
+                  <p className="text-gray-500 text-xs">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Feature 3: Analytics Execution */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-sm">3</div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Data Analytics Execution</h2>
+              <p className="text-sm text-gray-500">Upload client data and run tests directly in the app. No Excel formulas. Results inline, working paper ready to export.</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+            {analyticsFeatures.map((f, i) => (
+              <div key={i} className="flex gap-3 px-5 py-3">
+                <span className="text-emerald-500 shrink-0 mt-0.5 text-sm">✓</span>
                 <div className="text-sm">
                   <p className="font-medium text-gray-900">{f.label}</p>
                   <p className="text-gray-500 text-xs">{f.desc}</p>
