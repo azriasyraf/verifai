@@ -835,26 +835,6 @@ export default function AuditProgramView({
                   </div>
                 )}
 
-                {/* Analytics Test Details */}
-                {proc.analyticsTest && proc.analyticsTest.type && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
-                    <h4 className="text-xs font-semibold text-amber-600 uppercase tracking-wide mb-2">Analytics Test Details</h4>
-                    <div className="space-y-1.5 text-sm">
-                      <div>
-                        <span className="text-amber-600 text-xs font-medium">Type: </span>
-                        <span className="text-gray-600 text-xs">{proc.analyticsTest.type}</span>
-                      </div>
-                      <div>
-                        <span className="text-amber-600 text-xs font-medium">Description: </span>
-                        <span className="text-gray-600 text-xs">{proc.analyticsTest.description}</span>
-                      </div>
-                      <div>
-                        <span className="text-amber-600 text-xs font-medium">Population: </span>
-                        <span className="text-gray-600 text-xs">{proc.analyticsTest.population}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
@@ -971,9 +951,11 @@ export default function AuditProgramView({
                       <span className="font-mono text-xs bg-amber-50 text-amber-600 border border-amber-200 rounded px-1.5 py-0.5">{test.id}</span>
                       <span className="font-semibold text-gray-900 text-sm">{test.name}</span>
                       {test.riskId ? (
-                        <span className="bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-full px-2 py-0.5 text-xs font-medium font-mono">{test.riskId}</span>
+                        <span className="bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-full px-2 py-0.5 text-xs font-medium font-mono" title={`Testing risk ${test.riskId} — exceptions indicate a control deficiency`}>
+                          Testing {test.riskId}
+                        </span>
                       ) : (
-                        <span className="text-xs bg-gray-100 text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">Unassigned</span>
+                        <span className="text-xs bg-gray-100 text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">Risk not mapped</span>
                       )}
                       {result && (
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${result.exceptionCount > 0 ? 'bg-red-50 text-red-600 border-red-200' : 'bg-green-50 text-green-600 border-green-200'}`}>

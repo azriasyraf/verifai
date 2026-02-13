@@ -125,21 +125,20 @@ SCHEMA — return exactly this structure:
   "auditProcedures": [
     {
       "controlId": "C001",
-      "procedure": "Detailed step-by-step audit procedure",
-      "testingMethod": "Inquiry | Observation | Inspection | Reperformance | Data Analytics",
-      "sampleSize": "Practical sample size (auditor adjusts based on risk — e.g. '25 items' or '10% minimum 20')",
-      "expectedEvidence": "Specific documentation or evidence to obtain",
-      "frameworkReference": "IIA Standard — e.g. 'IIA Standard 2310: Identifying Information'",
-      "analyticsTest": {
-        "type": "Duplicate Detection | Cut-off Testing | Outlier Analysis | Trend Analysis | Authorization Testing",
-        "description": "Specific analytics procedure to run",
-        "population": "Dataset to analyze — e.g. 'All purchase invoices for the period'"
-      }
+      "procedure": "Detailed step-by-step audit procedure describing how to test whether this control operated effectively",
+      "testingMethod": "Inquiry | Observation | Inspection | Reperformance",
+      "sampleSize": "Practical sample size based on risk rating — e.g. '25 items' for high risk, '15 items' for medium",
+      "expectedEvidence": "Specific documentation or evidence to obtain from the sample",
+      "frameworkReference": "IIA Standard — e.g. 'IIA Standard 2310: Identifying Information'"
     }
   ]
 }
 
-Note: analyticsTest is only required when testingMethod is "Data Analytics". Omit it for all other testing methods.
+PHASE SEPARATION — this is non-negotiable:
+- auditProcedures are Phase 2 Test of Controls only. They test whether a specific control operated effectively on a sample of transactions.
+- testingMethod must be one of: Inquiry, Observation, Inspection, Reperformance. Never "Data Analytics".
+- Population-level analytics (duplicate detection, outlier analysis, trend analysis) are Phase 3 Substantive Analytics. They are handled separately and must NOT appear in auditProcedures.
+- Every procedure must be executable on a sample — it describes what the auditor does for each item in the sample, not what they run against the full dataset.
 
 REQUIREMENTS — in priority order:
 
@@ -154,18 +153,15 @@ REQUIREMENTS — in priority order:
    - Include all major risk categories: Financial, Operational, Compliance${process === 'it' ? ', IT' : ''}
    - Mix of Preventive, Detective, and Corrective controls
 
-3. DATA ANALYTICS — include at least 5 procedures:
-   - Duplicate detection (same vendor/customer, amount, date, reference number)
-   - Cut-off testing (transactions within 5–7 days of period end)
-   - Outlier/exception analysis (statistically large or unusual transactions)
-   - Trend analysis (month-on-month or period-on-period patterns)
-   - Authorization testing (transactions exceeding approval thresholds)
-   For each: testingMethod = "Data Analytics", populate the analyticsTest object
-
-4. FRAMEWORK REFERENCES:
+3. FRAMEWORK REFERENCES:
    - Every risk: cite the specific ${controlFramework} component or principle
    - Every control: cite the specific ${controlFramework} control activity
    - Every procedure: cite the specific IIA IPPF Standard number and name
+
+4. PROCEDURES — each must describe sampling-based control testing:
+   - What does the auditor physically do for each sample item?
+   - What would a pass look like? What would a fail look like?
+   - Never describe running a query or filter across the full population
 
 5. SPECIFICITY:
    - Make all content highly specific to ${industryLabel} and ${processLabel}

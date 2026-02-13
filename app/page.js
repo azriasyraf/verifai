@@ -404,6 +404,7 @@ export default function Verifai() {
 
   const handleRaiseFinding = (test, result) => {
     const ref = `ANA-${test.id}`;
+    const riskRef = test.riskId ? ` (${test.riskId})` : '';
     // Don't duplicate — remove existing raised finding for this test then re-add
     setRaisedFindings(prev => {
       const filtered = prev.filter(f => f.ref !== ref);
@@ -411,7 +412,7 @@ export default function Verifai() {
         ref,
         controlId: '',
         riskId: test.riskId || '',
-        findingDescription: `${test.name}: ${result.exceptionCount} exception${result.exceptionCount !== 1 ? 's' : ''} identified out of ${result.totalRows} records tested. ${test.purpose}`,
+        findingDescription: `Control Deficiency — ${test.name}: ${result.exceptionCount} exception${result.exceptionCount !== 1 ? 's' : ''} identified out of ${result.totalRows} records tested${riskRef}. ${test.purpose} Exceptions on a population test indicate that the control designed to mitigate this risk is not operating effectively.`,
         riskRating: result.exceptionCount > 0 ? 'High' : 'Low',
         rootCause: result.workDone || '',
         managementResponse: '',
