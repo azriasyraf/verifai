@@ -16,14 +16,12 @@ const auditFeatures = [
 ];
 
 const analyticsFeatures = [
-  { label: 'In-app analytics execution', desc: 'Upload a CSV or XLSX file and run 5 pre-built tests directly in Phase 3 — no Excel formulas required.' },
-  { label: 'Duplicate detection', desc: 'Finds duplicate invoice numbers (revenue and AP side) and employees sharing bank accounts.' },
-  { label: 'Negative inventory', desc: 'Flags items with quantity below zero — timing errors or recording failures.' },
-  { label: 'Privileged access review', desc: 'Surfaces users with Admin or Super User access for scrutiny.' },
-  { label: 'Smart column mapping', desc: 'Fuzzy pre-fill matches your file\'s column headers to what each test needs. Confirm or adjust before running.' },
-  { label: 'Audit Work Done field', desc: 'Document observations, interviews, and representations directly against the results.' },
-  { label: 'Raise as Finding', desc: 'One click pre-populates an audit finding in the Report tab — no re-typing.' },
-  { label: '3-tab working paper export', desc: 'Raw Data, Exceptions, and a working paper tab named after the test ID with methodology steps for manual reperformance.' },
+  { label: 'Run analytics tests directly in the app', desc: 'Upload your client data file and run tests in Phase 3 of the audit program. Results appear inline. No Excel formulas, no switching between tools.' },
+  { label: 'Smart column matching', desc: 'Verifai reads your file headers and pre-fills the column mapping. Confirm or adjust before running.' },
+  { label: 'Document your work against the results', desc: 'Write up what you did, who you spoke to, and what you concluded — directly alongside the exception rows.' },
+  { label: 'Raise exceptions as findings in one click', desc: 'If the results warrant a finding, one click sends it to the Report tab with the details already filled in.' },
+  { label: 'Working paper export per test', desc: 'Each test produces a 3-tab Excel file: the raw data, the exceptions, and a working paper with the methodology documented for manual reperformance.' },
+  { label: 'More tests coming', desc: 'The current set covers the most common single-file tests. Multi-file joins, date thresholds, and statistical tests are on the roadmap.' },
 ];
 
 const rmgaFeatures = [
