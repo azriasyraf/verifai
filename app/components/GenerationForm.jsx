@@ -50,6 +50,10 @@ export default function GenerationForm({
   // report mode
   handleGenerateReport,
   isGeneratingReport,
+  // rmga enrichment
+  governanceAssessment,
+  // analytics raised findings
+  raisedFindings,
 }) {
   const isAudit = generationMode === 'audit';
   const isGovernance = generationMode === 'governance';
@@ -463,6 +467,35 @@ export default function GenerationForm({
                     <p className="text-xs text-indigo-700 font-medium">Best practice: provide both walkthrough notes and a P&P document for gap analysis.</p>
                     <p className="text-xs text-indigo-500 mt-0.5">Walkthrough notes only → adjusts risk ratings and adds observations. P&P upload coming soon.</p>
                   </div>
+                  {governanceAssessment && (
+                    <div className="flex items-start justify-between gap-3 bg-violet-50 border border-violet-200 rounded-lg px-3 py-2.5">
+                      <div>
+                        <p className="text-xs font-semibold text-violet-800">RMGA findings available</p>
+                        <p className="text-xs text-violet-600 mt-0.5">Import entity-level observations from your governance assessment to inform process-level risk ratings and controls.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const lines = [
+                            `Governance Assessment: ${governanceAssessment.assessmentTitle || ''}`,
+                            `Overall Maturity: ${governanceAssessment.overallMaturityRating || ''}`,
+                            governanceAssessment.maturityRationale ? `Rationale: ${governanceAssessment.maturityRationale}` : '',
+                            governanceAssessment.keyObservations?.length
+                              ? 'Key Observations:\n' + governanceAssessment.keyObservations.map(o => `- ${o}`).join('\n')
+                              : '',
+                            governanceAssessment.recommendations?.length
+                              ? 'Governance Recommendations:\n' + governanceAssessment.recommendations.map(r => `- ${r}`).join('\n')
+                              : '',
+                          ].filter(Boolean).join('\n\n');
+                          setClientContext(lines);
+                          setShowContextPanel(true);
+                        }}
+                        className="shrink-0 text-xs font-semibold text-violet-700 bg-white border border-violet-300 rounded-lg px-3 py-1.5 hover:bg-violet-50 transition-colors whitespace-nowrap"
+                      >
+                        Import findings
+                      </button>
+                    </div>
+                  )}
                   <textarea
                     value={clientContext}
                     onChange={e => setClientContext(e.target.value)}
@@ -535,32 +568,56 @@ export default function GenerationForm({
             </>
           )}
 
-          {isReport && (
-            <>
-              <button
-                onClick={() => parsedFindings && handleGenerateReport(parsedFindings)}
-                disabled={!parsedFindings || isGeneratingReport}
-                className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
-                  parsedFindings && !isGeneratingReport
-                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm'
-                    : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
-                }`}
-              >
-                {isGeneratingReport ? (
-                  <span className="flex items-center justify-center gap-2.5">
-                    <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Drafting report...
-                  </span>
-                ) : 'Generate Audit Report'}
-              </button>
-              {!parsedFindings && !isGeneratingReport && (
-                <p className="text-center text-xs text-gray-400 mt-2">Upload a completed Verifai workbook to continue</p>
-              )}
-            </>
-          )}
+          {isReport && (() => {
+            const hasRaised = raisedFindings?.length > 0;
+            const canGenerate = parsedFindings || hasRaised;
+            const allFindings = [
+              ...(parsedFindings?.findings || []),
+              ...(raisedFindings || []),
+            ];
+            const engagementDetails = parsedFindings?.engagementDetails || {};
+            return (
+              <>
+                {/* Raised findings from analytics — shown above the upload area */}
+                {hasRaised && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 space-y-2">
+                    <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Findings from Analytics ({raisedFindings.length})</p>
+                    {raisedFindings.map((f, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-gray-700">
+                        <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700">{f.riskRating}</span>
+                        <span className="font-mono text-gray-500">{f.ref}</span>
+                        <span className="truncate">{f.findingDescription.substring(0, 70)}{f.findingDescription.length > 70 ? '…' : ''}</span>
+                      </div>
+                    ))}
+                    <p className="text-xs text-red-600 mt-1">These will be included when you generate the report. Upload a workbook to add more findings, or generate directly from analytics findings.</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => canGenerate && handleGenerateReport({ engagementDetails, findings: allFindings })}
+                  disabled={!canGenerate || isGeneratingReport}
+                  className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
+                    canGenerate && !isGeneratingReport
+                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer shadow-sm'
+                      : 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                  }`}
+                >
+                  {isGeneratingReport ? (
+                    <span className="flex items-center justify-center gap-2.5">
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Drafting report...
+                    </span>
+                  ) : 'Generate Audit Report'}
+                </button>
+                {!canGenerate && !isGeneratingReport && (
+                  <p className="text-center text-xs text-gray-400 mt-2">Upload a completed Verifai workbook, or raise findings from analytics tests</p>
+                )}
+              </>
+            );
+          })()}
 
         </div>
       </div>

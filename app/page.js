@@ -91,8 +91,9 @@ export default function Verifai() {
 
   // Analytics execution state (Phase 1 MVP)
   const [analyticsFile, setAnalyticsFile] = useState(null); // { headers, rows }
-  const [analyticsResults, setAnalyticsResults] = useState({}); // testId → { exceptionCount, totalRows, headers, sampleRows, conclusion, notes }
+  const [analyticsResults, setAnalyticsResults] = useState({}); // testId → { exceptionCount, totalRows, headers, sampleRows, conclusion, workDone }
   const [columnMappings, setColumnMappings] = useState({}); // testId → { fieldName: colIndex }
+  const [raisedFindings, setRaisedFindings] = useState([]); // findings raised from analytics, NOT cleared on resetForm
 
   const canGenerate = selectedIndustry && selectedProcess;
 
@@ -383,7 +384,7 @@ export default function Verifai() {
             headers: result.headers,
             sampleRows: result.sampleRows,
             conclusion: prev[testId]?.conclusion || '',
-            notes: prev[testId]?.notes || '',
+            workDone: prev[testId]?.workDone || '',
           },
         }));
       } else {
@@ -394,11 +395,30 @@ export default function Verifai() {
     }
   };
 
-  const updateAnalyticsConclusion = (testId, field, value) => {
+  const updateAnalyticsField = (testId, field, value) => {
     setAnalyticsResults(prev => ({
       ...prev,
       [testId]: { ...prev[testId], [field]: value },
     }));
+  };
+
+  const handleRaiseFinding = (test, result) => {
+    const ref = `ANA-${test.id}`;
+    // Don't duplicate — remove existing raised finding for this test then re-add
+    setRaisedFindings(prev => {
+      const filtered = prev.filter(f => f.ref !== ref);
+      return [...filtered, {
+        ref,
+        controlId: '',
+        riskId: test.riskId || '',
+        findingDescription: `${test.name}: ${result.exceptionCount} exception${result.exceptionCount !== 1 ? 's' : ''} identified out of ${result.totalRows} records tested. ${test.purpose}`,
+        riskRating: result.exceptionCount > 0 ? 'High' : 'Low',
+        rootCause: result.workDone || '',
+        managementResponse: '',
+        dueDate: '',
+        status: 'Open',
+      }];
+    });
   };
 
   const resetForm = () => {
@@ -589,7 +609,9 @@ export default function Verifai() {
         analyticsResults={analyticsResults}
         onAnalyticsFileLoad={handleAnalyticsFileLoad}
         onRunAnalyticsTest={handleRunAnalyticsTest}
-        onUpdateAnalyticsConclusion={updateAnalyticsConclusion}
+        onUpdateAnalyticsField={updateAnalyticsField}
+        onRaiseFinding={handleRaiseFinding}
+        raisedFindings={raisedFindings}
         auditeeDetails={auditeeDetails}
       />
     );
@@ -623,6 +645,8 @@ export default function Verifai() {
       isGeneratingReport={isGeneratingReport}
       // rmga enrichment
       governanceAssessment={governanceAssessment}
+      // analytics raised findings
+      raisedFindings={raisedFindings}
     />
   );
 }

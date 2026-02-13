@@ -57,7 +57,9 @@ export default function AuditProgramView({
   analyticsResults,
   onAnalyticsFileLoad,
   onRunAnalyticsTest,
-  onUpdateAnalyticsConclusion,
+  onUpdateAnalyticsField,
+  onRaiseFinding,
+  raisedFindings,
   auditeeDetails,
 }) {
   const [columnMapperTest, setColumnMapperTest] = useState(null); // test object being mapped
@@ -110,7 +112,7 @@ export default function AuditProgramView({
       exceptionCount: result.exceptionCount,
       totalRows: result.totalRows,
       conclusion: result.conclusion || '',
-      notes: result.notes || '',
+      workDone: result.workDone || '',
       auditeeDetails,
     });
   };
@@ -981,14 +983,19 @@ export default function AuditProgramView({
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {isExecutable && (
-                        <button
-                          onClick={() => handleRunTest(test)}
-                          disabled={!analyticsFile || isRunning}
-                          title={!analyticsFile ? 'Upload a file first' : ''}
-                          className="px-3 py-1 rounded-lg text-xs font-medium transition-colors border bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {isRunning ? 'Running…' : result ? 'Re-run Test' : 'Run Test'}
-                        </button>
+                        <div className="flex flex-col items-end gap-1">
+                          <button
+                            onClick={() => handleRunTest(test)}
+                            disabled={!analyticsFile || isRunning}
+                            title={!analyticsFile ? 'Upload a file first' : ''}
+                            className="px-3 py-1 rounded-lg text-xs font-medium transition-colors border bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                          >
+                            {isRunning ? 'Running…' : result ? 'Re-run Test' : 'Run Test'}
+                          </button>
+                          {!analyticsFile && (
+                            <span className="text-xs text-gray-400 text-right max-w-[180px] leading-tight">Needs: {test.dataneeded.split('—')[1]?.trim() || test.dataneeded}</span>
+                          )}
+                        </div>
                       )}
                       {isEditMode && (
                         <>
@@ -1077,36 +1084,54 @@ export default function AuditProgramView({
                         </div>
                       )}
 
-                      {/* Auditor conclusion */}
+                      {/* Audit Work Done */}
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Auditor Conclusion</label>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Audit Work Done</label>
                         <textarea
-                          value={result.conclusion || ''}
-                          onChange={e => onUpdateAnalyticsConclusion(test.id, 'conclusion', e.target.value)}
-                          rows={3}
-                          placeholder="Document your conclusion based on the results above…"
+                          value={result.workDone || ''}
+                          onChange={e => onUpdateAnalyticsField(test.id, 'workDone', e.target.value)}
+                          rows={4}
+                          placeholder="Document what you did — e.g. interviewed Mr X who confirmed these were data entry errors, or noted that controls failed because the system allows changes without approval…"
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold text-gray-600 mb-1">Notes</label>
+                        <label className="block text-xs font-semibold text-gray-600 mb-1">Conclusion</label>
                         <textarea
-                          value={result.notes || ''}
-                          onChange={e => onUpdateAnalyticsConclusion(test.id, 'notes', e.target.value)}
+                          value={result.conclusion || ''}
+                          onChange={e => onUpdateAnalyticsField(test.id, 'conclusion', e.target.value)}
                           rows={2}
-                          placeholder="Any additional notes or follow-up actions…"
+                          placeholder="Summarise your overall conclusion on this test…"
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                         />
                       </div>
 
-                      {/* Export working paper */}
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => handleExportWorkingPaper(test)}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-xs transition-colors"
-                        >
-                          Export Working Paper
-                        </button>
+                      {/* Actions row */}
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        {/* Raise as Finding */}
+                        {result.exceptionCount > 0 && (() => {
+                          const alreadyRaised = (raisedFindings || []).some(f => f.ref === `ANA-${test.id}`);
+                          return alreadyRaised ? (
+                            <span className="text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-3 py-1">
+                              ✓ Finding raised — visible in Report tab
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => onRaiseFinding(test, result)}
+                              className="px-4 py-2 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                            >
+                              Raise as Finding
+                            </button>
+                          );
+                        })()}
+                        <div className="flex gap-2 ml-auto">
+                          <button
+                            onClick={() => handleExportWorkingPaper(test)}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-xs transition-colors"
+                          >
+                            Export Working Paper
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
