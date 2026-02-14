@@ -2,7 +2,6 @@ import {
   Document, Packer, Paragraph, TextRun, HeadingLevel,
   AlignmentType, BorderStyle
 } from 'docx';
-import { saveAs } from 'file-saver';
 
 const COLORS = {
   headerBg: '1E3A5F',
@@ -107,5 +106,11 @@ export async function exportWalkthroughToWord(walkthrough, auditeeDetails) {
   const blob = await Packer.toBlob(doc);
   const clientName = auditeeDetails?.clientName || 'Client';
   const processName = walkthrough.walkthroughTitle || 'Walkthrough';
-  saveAs(blob, `${clientName} — ${processName} Walkthrough.docx`);
+  const filename = `${clientName} — ${processName} Walkthrough.docx`;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
