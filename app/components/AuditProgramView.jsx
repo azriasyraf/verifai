@@ -70,9 +70,9 @@ export default function AuditProgramView({
 
   useEffect(() => {
     const phases = [
-      { id: 'phase-1', label: 'Phase 1 · Risk Assessment', color: 'teal' },
-      { id: 'phase-2', label: 'Phase 2 · Test of Controls', color: 'violet' },
-      { id: 'phase-3', label: 'Phase 3 · Substantive Analytics', color: 'emerald' },
+      { id: 'phase-1', label: 'Risk Assessment', color: 'teal' },
+      { id: 'phase-2', label: 'Test of Controls', color: 'violet' },
+      { id: 'phase-3', label: 'Data Analytics', color: 'emerald' },
     ];
 
     const observer = new IntersectionObserver(
@@ -276,7 +276,7 @@ export default function AuditProgramView({
 
         {/* Phase 1: Risk Assessment */}
         <div id="phase-1" className="mb-4 pl-4 border-l-4 border-teal-500 bg-teal-50 rounded-r-lg py-3 pr-4">
-          <span className="text-xs font-bold text-teal-500 uppercase tracking-widest">Phase 1</span>
+          <span className="text-xs font-bold text-teal-500 uppercase tracking-widest">Risk Assessment</span>
           <h2 className="text-base font-semibold text-teal-900">Risk Assessment</h2>
           <p className="text-xs text-teal-700 mt-0.5">Understand the process, identify what can go wrong, and define audit objectives.</p>
         </div>
@@ -600,7 +600,7 @@ export default function AuditProgramView({
 
         {/* Phase 2: Test of Controls */}
         <div id="phase-2" className="mb-4 pl-4 border-l-4 border-violet-500 bg-violet-50 rounded-r-lg py-3 pr-4">
-          <span className="text-xs font-bold text-violet-500 uppercase tracking-widest">Phase 2</span>
+          <span className="text-xs font-bold text-violet-500 uppercase tracking-widest">Test of Controls</span>
           <h2 className="text-base font-semibold text-violet-900">Test of Controls</h2>
           <p className="text-xs text-violet-700 mt-0.5">Verify that controls exist and are operating effectively. Analytics tests in this phase are control-linked — they check whether a specific control caught what it should (e.g. "Did the approval workflow flag this exception?").</p>
         </div>
@@ -935,7 +935,7 @@ export default function AuditProgramView({
         {analyticsTests.length > 0 && (
           <>
           <div id="phase-3" className="mb-4 pl-4 border-l-4 border-emerald-500 bg-emerald-50 rounded-r-lg py-3 pr-4">
-            <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Phase 3</span>
+            <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Data Analytics</span>
             <h2 className="text-base font-semibold text-emerald-900">Substantive Analytics</h2>
             <p className="text-xs text-emerald-700 mt-0.5">Run directly against the full dataset — not tied to any specific control. Designed to surface anomalies, duplicates, and outliers that control-based testing is not designed to detect.</p>
           </div>
@@ -1223,16 +1223,16 @@ export default function AuditProgramView({
               <p className="text-xs font-medium text-gray-500 mb-1.5">Jump to</p>
               <a href="#phase-1" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-teal-50 text-teal-700 text-sm transition-colors">
                 <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"></span>
-                Phase 1
+                Risk Assessment
               </a>
               <a href="#phase-2" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-violet-50 text-violet-700 text-sm transition-colors">
                 <span className="w-1.5 h-1.5 rounded-full bg-violet-500 shrink-0"></span>
-                Phase 2
+                Test of Controls
               </a>
               {analyticsTests.length > 0 && (
                 <a href="#phase-3" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-emerald-50 text-emerald-700 text-sm transition-colors">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                  Phase 3
+                  Data Analytics
                 </a>
               )}
             </div>

@@ -125,6 +125,9 @@ export default function Verifai() {
   const [isGeneratingWalkthrough, setIsGeneratingWalkthrough] = useState(false);
   const [walkthroughClientContext, setWalkthroughClientContext] = useState('');
 
+  // Walkthrough narrative pasted by the auditor to enrich audit program generation
+  const [walkthroughNarrative, setWalkthroughNarrative] = useState('');
+
   // -------------------------------------------------------------------------
   // Audit Program handlers (existing — unchanged)
   // -------------------------------------------------------------------------
@@ -140,6 +143,7 @@ export default function Verifai() {
           industry: selectedIndustry,
           process: selectedProcess,
           clientContext: extraContext || undefined,
+          walkthroughNarrative: walkthroughNarrative.trim() || undefined,
         })
       });
 
@@ -448,6 +452,7 @@ export default function Verifai() {
     setWalkthroughResults(null);
     setIsGeneratingWalkthrough(false);
     setWalkthroughClientContext('');
+    setWalkthroughNarrative('');
     setError(null);
     setAnalyticsTests([]);
     setAnalyticsFile(null);
@@ -729,6 +734,9 @@ export default function Verifai() {
       isGeneratingWalkthrough={isGeneratingWalkthrough}
       handleGenerateWalkthrough={handleGenerateWalkthrough}
       walkthroughClientContext={walkthroughClientContext}
+      // walkthrough narrative enrichment
+      walkthroughNarrative={walkthroughNarrative}
+      setWalkthroughNarrative={setWalkthroughNarrative}
     />
   );
 }

@@ -18,8 +18,8 @@ NON-NEGOTIABLE OUTPUT RULES:
 
 export async function POST(request) {
   try {
-    const { industry, process, assessmentType, clientContext } = await request.json();
-    const prompt = buildPrompt(industry, process, assessmentType, clientContext);
+    const { industry, process, assessmentType, clientContext, walkthroughNarrative } = await request.json();
+    const prompt = buildPrompt(industry, process, assessmentType, clientContext, walkthroughNarrative);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -57,7 +57,7 @@ export async function POST(request) {
   }
 }
 
-function buildPrompt(industry, process, assessmentType = 'program-only', clientContext = null) {
+function buildPrompt(industry, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null) {
   const industryNames = {
     distribution: 'Distribution & Sales (Import/Export)',
     manufacturing: 'Manufacturing',
@@ -166,7 +166,17 @@ REQUIREMENTS — in priority order:
 5. SPECIFICITY:
    - Make all content highly specific to ${industryLabel} and ${processLabel}
    - Reference industry-specific regulations and standards where relevant
-   - Ensure procedures are practical and executable in the field${clientContext ? `
+   - Ensure procedures are practical and executable in the field${walkthroughNarrative ? `
+
+WALKTHROUGH OBSERVATIONS (what was actually observed in the field):
+---
+${walkthroughNarrative}
+---
+
+Use the above walkthrough observations to:
+- Identify controls that are actually operating in the process
+- Adjust risk ratings based on observed control design adequacy
+- Tailor test procedures to reflect the actual process flow` : ''}${clientContext ? `
 
 CLIENT CONTEXT PROVIDED — WALKTHROUGH / INTERVIEW NOTES:
 ---

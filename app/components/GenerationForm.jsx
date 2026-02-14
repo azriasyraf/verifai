@@ -58,6 +58,9 @@ export default function GenerationForm({
   isGeneratingWalkthrough,
   handleGenerateWalkthrough,
   walkthroughClientContext,
+  // walkthrough narrative enrichment
+  walkthroughNarrative,
+  setWalkthroughNarrative,
 }) {
   const isAudit = generationMode === 'audit';
   const isGovernance = generationMode === 'governance';
@@ -172,99 +175,91 @@ export default function GenerationForm({
           )}
 
           {/* ---------------------------------------------------------------- */}
-          {/* Mode selector — two large clickable cards */}
+          {/* Mode selector — audit pipeline + RMGA secondary               */}
           {/* ---------------------------------------------------------------- */}
           <div className="mb-5">
-            <p className="text-sm font-medium text-gray-600 mb-3">What would you like to generate?</p>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Audit Program card */}
+            <p className="text-sm font-medium text-gray-600 mb-3">What would you like to do?</p>
+
+            {/* Primary pipeline: Audit Program → Walkthrough → Report */}
+            <div className="flex items-stretch gap-2 mb-4">
+
+              {/* Audit Program */}
               <button
                 type="button"
                 onClick={() => setGenerationMode('audit')}
-                className={`text-left rounded-xl border p-4 transition-all ${
+                className={`flex-1 text-left rounded-xl border p-4 transition-all ${
                   isAudit
                     ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-1'
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
-                <div className="flex items-start gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isAudit ? 'border-indigo-600' : 'border-gray-300'}`}>
-                    {isAudit && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Generate Audit Program</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      Risks, controls, and audit procedures for a specific process. Includes data analytics tests.
-                    </p>
-                  </div>
-                </div>
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Planning</span>
+                <p className="text-sm font-semibold text-gray-900 mb-1">Audit Program</p>
+                <p className="text-xs text-gray-500 leading-relaxed">Risks, controls, and procedures for a process.</p>
               </button>
 
-              {/* Process Walkthrough card */}
+              <div className="flex items-center shrink-0">
+                <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+
+              {/* Walkthrough */}
               <button
                 type="button"
                 onClick={() => setGenerationMode('walkthrough')}
-                className={`text-left rounded-xl border p-4 transition-all ${
+                className={`flex-1 text-left rounded-xl border p-4 transition-all ${
                   isWalkthrough
                     ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-1'
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
-                <div className="flex items-start gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isWalkthrough ? 'border-indigo-600' : 'border-gray-300'}`}>
-                    {isWalkthrough && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Process Walkthrough</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      Structured working paper to document walkthrough interviews and assess control design adequacy per checkpoint.
-                    </p>
-                  </div>
-                </div>
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Fieldwork</span>
+                <p className="text-sm font-semibold text-gray-900 mb-1">Walkthrough</p>
+                <p className="text-xs text-gray-500 leading-relaxed">Document process interviews and assess control design.</p>
               </button>
 
-              {/* Governance Assessment card */}
-              <button
-                type="button"
-                onClick={() => setGenerationMode('governance')}
-                className={`text-left rounded-xl border p-4 transition-all ${
-                  isGovernance
-                    ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-1'
-                    : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isGovernance ? 'border-indigo-600' : 'border-gray-300'}`}>
-                    {isGovernance && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Generate Governance Assessment</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      Entity-level RMGA working paper with inquiry questions, walkthrough steps, and red flags. Based on IIA IPPF and COSO ERM.
-                    </p>
-                  </div>
-                </div>
-              </button>
+              <div className="flex items-center shrink-0">
+                <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
 
-              {/* Audit Report card */}
+              {/* Report */}
               <button
                 type="button"
                 onClick={() => setGenerationMode('report')}
-                className={`text-left rounded-xl border p-4 transition-all ${
+                className={`flex-1 text-left rounded-xl border p-4 transition-all ${
                   isReport
                     ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-1'
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
-                <div className="flex items-start gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 mt-0.5 flex items-center justify-center ${isReport ? 'border-indigo-600' : 'border-gray-300'}`}>
-                    {isReport && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Reporting</span>
+                <p className="text-sm font-semibold text-gray-900 mb-1">Audit Report</p>
+                <p className="text-xs text-gray-500 leading-relaxed">Upload findings. Verifai drafts the full report.</p>
+              </button>
+            </div>
+
+            {/* RMGA — secondary, entity-level */}
+            <div className="border-t border-gray-100 pt-3">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Entity-Level Assessment</p>
+              <button
+                type="button"
+                onClick={() => setGenerationMode('governance')}
+                className={`w-full text-left rounded-xl border p-3 transition-all ${
+                  isGovernance
+                    ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-1'
+                    : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${isGovernance ? 'border-indigo-600' : 'border-gray-300'}`}>
+                    {isGovernance && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 mb-1">Generate Audit Report</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      Upload your completed audit workbook. Verifai drafts the full report from your findings.
-                    </p>
+                    <p className="text-sm font-semibold text-gray-700">Governance Assessment (RMGA)</p>
+                    <p className="text-xs text-gray-500">Assessing entity-level governance, risk management practices, and the overall control environment? Use this.</p>
                   </div>
                 </div>
               </button>
@@ -555,6 +550,21 @@ export default function GenerationForm({
                       ✓ Context provided — AI will use this to adjust risks and flag control gaps
                     </p>
                   )}
+
+                  {/* Walkthrough narrative enrichment */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Walkthrough Narrative <span className="text-gray-400 font-normal">(optional)</span>
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">Paste your completed walkthrough narrative here to enrich the audit program with observed controls and process details.</p>
+                    <textarea
+                      value={walkthroughNarrative}
+                      onChange={(e) => setWalkthroughNarrative(e.target.value)}
+                      placeholder="e.g. At month end, the AP accountant performs reconciliation by comparing the GL balance against vendor statements..."
+                      rows={4}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    />
+                  </div>
                 </div>
               )}
             </div>
