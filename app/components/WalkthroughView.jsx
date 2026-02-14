@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { exportWalkthroughToWord } from '../lib/exportWalkthroughToWord';
 
 // Section header with left accent bar
 function SectionHeader({ label, accentColor = 'bg-teal-500' }) {
@@ -187,6 +188,24 @@ export default function WalkthroughView({
   };
 
   // -------------------------------------------------------------------------
+  // Word export — same enriched payload as Excel export
+  // -------------------------------------------------------------------------
+  const handleExportWord = () => {
+    const enriched = {
+      ...editedWalkthrough,
+      overallConclusion,
+      freeformNotes,
+      checkpoints: (editedWalkthrough.checkpoints || []).map((cp, idx) => ({
+        ...cp,
+        described: checkpointResponses[idx]?.described ?? '',
+        designAdequacy: checkpointResponses[idx]?.designAdequacy ?? 'Not Assessed',
+        notes: checkpointResponses[idx]?.notes ?? '',
+      })),
+    };
+    exportWalkthroughToWord(enriched, auditeeDetails);
+  };
+
+  // -------------------------------------------------------------------------
   // Generate Audit Program from walkthrough observations
   // -------------------------------------------------------------------------
   const handleGenerateAuditProgram = () => {
@@ -286,10 +305,17 @@ export default function WalkthroughView({
               )}
 
               <button
-                onClick={handleExport}
+                onClick={handleExportWord}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
               >
-                Export Working Paper
+                Export to Word
+              </button>
+
+              <button
+                onClick={handleExport}
+                className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+              >
+                Export to Excel
               </button>
 
               <button
@@ -593,14 +619,20 @@ export default function WalkthroughView({
         {/* ------------------------------------------------------------------ */}
         <div className="bg-white rounded-xl border border-gray-200 shadow p-4 mb-5 flex justify-between items-center flex-wrap gap-3">
           <p className="text-sm text-gray-500">
-            Working paper complete? Export to Excel, or generate an audit program enriched with your walkthrough findings.
+            Working paper complete? Export to Word or Excel, or generate an audit program enriched with your walkthrough findings.
           </p>
           <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={handleExportWord}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+            >
+              Export to Word
+            </button>
             <button
               onClick={handleExport}
               className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
             >
-              Export Working Paper
+              Export to Excel
             </button>
             {onGenerateAuditProgram && (
               <button
