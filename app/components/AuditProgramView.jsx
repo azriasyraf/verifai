@@ -72,16 +72,21 @@ export default function AuditProgramView({
     const phases = [
       { id: 'phase-1', label: 'Risk Assessment', color: 'teal' },
       { id: 'phase-2', label: 'Test of Controls', color: 'violet' },
-      { id: 'phase-3', label: 'Data Analytics', color: 'emerald' },
+      { id: 'phase-3', label: 'Data Analytics', color: 'amber' },
     ];
 
+    const intersecting = new Set();
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
-            setActivePhase(phases.find(p => p.id === entry.target.id) || null);
+            intersecting.add(entry.target.id);
+          } else {
+            intersecting.delete(entry.target.id);
           }
         });
+        const first = phases.find(p => intersecting.has(p.id));
+        setActivePhase(first || null);
       },
       { rootMargin: '-5% 0px -85% 0px', threshold: 0 }
     );
@@ -164,11 +169,11 @@ export default function AuditProgramView({
           <div className={`sticky top-0 z-10 mb-3 -mx-6 px-6 py-2 bg-white border-b border-gray-200 flex items-center gap-2 shadow-sm`}>
             <span className={`w-2 h-2 rounded-full shrink-0 ${
               activePhase.color === 'teal' ? 'bg-teal-500' :
-              activePhase.color === 'violet' ? 'bg-violet-500' : 'bg-emerald-500'
+              activePhase.color === 'violet' ? 'bg-violet-500' : 'bg-amber-500'
             }`} />
             <span className={`text-xs font-semibold ${
               activePhase.color === 'teal' ? 'text-teal-700' :
-              activePhase.color === 'violet' ? 'text-violet-700' : 'text-emerald-700'
+              activePhase.color === 'violet' ? 'text-violet-700' : 'text-amber-700'
             }`}>{activePhase.label}</span>
           </div>
         )}
@@ -934,8 +939,8 @@ export default function AuditProgramView({
         {/* Phase 3: Substantive Analytics */}
         {analyticsTests.length > 0 && (
           <>
-          <div id="phase-3" className="mb-4 pl-4 border-l-4 border-emerald-500 bg-emerald-50 rounded-r-lg py-3 pr-4">
-            <span className="text-xs font-bold text-emerald-500 uppercase tracking-widest">Data Analytics</span>
+          <div id="phase-3" className="mb-4 pl-4 border-l-4 border-amber-500 bg-amber-50 rounded-r-lg py-3 pr-4">
+            <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Data Analytics</span>
             <h2 className="text-base font-semibold text-emerald-900">Substantive Analytics</h2>
             <p className="text-xs text-emerald-700 mt-0.5">Run directly against the full dataset — not tied to any specific control. Designed to surface anomalies, duplicates, and outliers that control-based testing is not designed to detect.</p>
           </div>
@@ -1230,8 +1235,8 @@ export default function AuditProgramView({
                 Test of Controls
               </a>
               {analyticsTests.length > 0 && (
-                <a href="#phase-3" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-emerald-50 text-emerald-700 text-sm transition-colors">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <a href="#phase-3" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-amber-50 text-amber-700 text-sm transition-colors">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span>
                   Data Analytics
                 </a>
               )}

@@ -58,9 +58,6 @@ export default function GenerationForm({
   isGeneratingWalkthrough,
   handleGenerateWalkthrough,
   walkthroughClientContext,
-  // walkthrough narrative enrichment
-  walkthroughNarrative,
-  setWalkthroughNarrative,
 }) {
   const isAudit = generationMode === 'audit';
   const isGovernance = generationMode === 'governance';
@@ -181,6 +178,7 @@ export default function GenerationForm({
             <p className="text-sm font-medium text-gray-600 mb-3">What would you like to do?</p>
 
             {/* Primary pipeline: Audit Program → Walkthrough → Report */}
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2">Process-Level Assessment</p>
             <div className="flex items-stretch gap-2 mb-4">
 
               {/* Audit Program */}
@@ -193,7 +191,6 @@ export default function GenerationForm({
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Planning</span>
                 <p className="text-sm font-semibold text-gray-900 mb-1">Audit Program</p>
                 <p className="text-xs text-gray-500 leading-relaxed">Risks, controls, and procedures for a process.</p>
               </button>
@@ -214,7 +211,6 @@ export default function GenerationForm({
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Fieldwork</span>
                 <p className="text-sm font-semibold text-gray-900 mb-1">Walkthrough</p>
                 <p className="text-xs text-gray-500 leading-relaxed">Document process interviews and assess control design.</p>
               </button>
@@ -235,7 +231,6 @@ export default function GenerationForm({
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                 }`}
               >
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Reporting</span>
                 <p className="text-sm font-semibold text-gray-900 mb-1">Audit Report</p>
                 <p className="text-xs text-gray-500 leading-relaxed">Upload findings. Verifai drafts the full report.</p>
               </button>
@@ -258,8 +253,8 @@ export default function GenerationForm({
                     {isGovernance && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-700">Governance Assessment (RMGA)</p>
-                    <p className="text-xs text-gray-500">Assessing entity-level governance, risk management practices, and the overall control environment? Use this.</p>
+                    <p className="text-sm font-semibold text-gray-700">Risk Management &amp; Governance Assessment (RMGA)</p>
+                    <p className="text-xs text-gray-500">Assess the entity&apos;s governance framework, risk management maturity, and overall control environment.</p>
                   </div>
                 </div>
               </button>
@@ -507,7 +502,7 @@ export default function GenerationForm({
                   </p>
                   <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
                     <p className="text-xs text-indigo-700 font-medium">Best practice: provide both walkthrough notes and a P&P document for gap analysis.</p>
-                    <p className="text-xs text-indigo-500 mt-0.5">Walkthrough notes only → adjusts risk ratings and adds observations. P&P upload coming soon.</p>
+                    <p className="text-xs text-indigo-500 mt-0.5">Walkthrough notes, interview summaries, or narrative → adjusts risk ratings and adds observations. Document upload (Word/PDF) coming soon.</p>
                   </div>
                   {governanceAssessment && (
                     <div className="flex items-start justify-between gap-3 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2.5">
@@ -541,7 +536,7 @@ export default function GenerationForm({
                   <textarea
                     value={clientContext}
                     onChange={e => setClientContext(e.target.value)}
-                    placeholder="e.g. During the walkthrough, the Finance Manager confirmed that purchase orders are verbally approved and not recorded in the system. The approval matrix document has not been updated since 2022. Staff were unaware of the delegation of authority policy..."
+                    placeholder="e.g. During the walkthrough, the Finance Manager confirmed that purchase orders are verbally approved and not recorded in the system. The approval matrix document has not been updated since 2022. Paste walkthrough observations, interview notes, or completed walkthrough narrative here."
                     className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
                     rows={6}
                   />
@@ -551,20 +546,6 @@ export default function GenerationForm({
                     </p>
                   )}
 
-                  {/* Walkthrough narrative enrichment */}
-                  <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Walkthrough Narrative <span className="text-gray-400 font-normal">(optional)</span>
-                    </label>
-                    <p className="text-xs text-gray-500 mb-2">Paste your completed walkthrough narrative here to enrich the audit program with observed controls and process details.</p>
-                    <textarea
-                      value={walkthroughNarrative}
-                      onChange={(e) => setWalkthroughNarrative(e.target.value)}
-                      placeholder="e.g. At month end, the AP accountant performs reconciliation by comparing the GL balance against vendor statements..."
-                      rows={4}
-                      className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
-                    />
-                  </div>
                 </div>
               )}
             </div>
