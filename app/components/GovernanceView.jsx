@@ -907,18 +907,7 @@ export default function GovernanceView({
               ))}
             </div>
 
-            {/* Generate audit program */}
-            {onGenerateAuditProgram && (
-              <div className="pt-2 border-t border-gray-100">
-                <button
-                  onClick={onGenerateAuditProgram}
-                  disabled={isGeneratingAudit}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-xs transition-colors disabled:opacity-50"
-                >
-                  {isGeneratingAudit ? 'Generating...' : 'Generate Audit Program'}
-                </button>
-              </div>
-            )}
+
 
             {/* Start Over */}
             <div className="pt-2 border-t border-gray-100">
