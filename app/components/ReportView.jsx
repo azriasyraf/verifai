@@ -85,9 +85,11 @@ function SourceField({
 }) {
   const hasOriginal = !!(originalValue && originalValue.trim());
   const isOpen = compareOpen[compareKey];
+  const isEmpty = !value || !value.trim();
 
   const sourceLabel = fieldSource === 'original' ? 'Source: your file'
     : fieldSource === 'ai-suggestion' ? 'Source: AI suggestion'
+    : isEmpty ? 'Required — add your draft here'
     : 'Source: AI draft';
 
   return (
@@ -105,7 +107,7 @@ function SourceField({
 
         {/* Source bar */}
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xs text-gray-400">{sourceLabel}</span>
+          <span className={`text-xs ${isEmpty ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>{sourceLabel}</span>
           {hasOriginal && (
             <button
               onClick={() => onToggleCompare(compareKey)}
@@ -117,8 +119,9 @@ function SourceField({
           {onGetSuggestion && (
             <button
               onClick={onGetSuggestion}
-              disabled={loadingSuggestion}
-              className="text-xs text-indigo-500 hover:text-indigo-700 underline underline-offset-2 disabled:opacity-50"
+              disabled={loadingSuggestion || isEmpty}
+              title={isEmpty ? 'Add your draft first — AI can only polish, not invent' : undefined}
+              className="text-xs text-indigo-500 hover:text-indigo-700 underline underline-offset-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loadingSuggestion ? 'Getting suggestion…' : aiSuggestion ? 'Refresh suggestion' : 'Get AI suggestion'}
             </button>

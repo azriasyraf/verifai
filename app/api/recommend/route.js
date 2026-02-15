@@ -27,8 +27,8 @@ ${f.effect ? `- Effect: ${f.effect}` : ''}
 
 RULES:
 - If "Auditor's existing recommendation" is provided: polish the language only — improve clarity, specificity, and IIA tone. Do NOT change the substance or intent. The auditor knows the client.
-- If no recommendation is provided: generate one from scratch based on the finding description and root cause.
-- Every recommendation must: (1) address the immediate condition, (2) address the root cause to prevent recurrence.
+- If no recommendation is provided: return empty string "" — do not invent. The auditor must supply the substance.
+- Polished recommendations must: (1) address the immediate condition, (2) address the root cause to prevent recurrence.
 - Be specific and actionable. Name the responsible function where obvious. No generic advice.
 - 2–4 sentences maximum per recommendation.
 

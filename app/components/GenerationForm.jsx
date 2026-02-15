@@ -338,37 +338,58 @@ export default function GenerationForm({
                   {parseError && (
                     <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{parseError}</p>
                   )}
-                  {parsedFindings?.findings?.length > 0 && (
-                    <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2">
-                      <p className="text-sm font-medium text-gray-600">Findings detected</p>
-                      {parsedFindings.findings.map((f, i) => {
-                        const warnings = [];
-                        const descWords = (f.findingDescription || '').trim().split(/\s+/).length;
-                        if (!f.findingDescription || descWords < 8) warnings.push('Finding description is too brief');
-                        if (!f.rootCause || f.rootCause.trim().length === 0) warnings.push('Root cause is empty');
-                        if (!f.riskRating || f.riskRating === 'Open') warnings.push('Risk rating not set');
-                        return (
+                  {parsedFindings?.findings?.length > 0 && (() => {
+                    const findingsWithHints = parsedFindings.findings.map(f => {
+                      const hints = [];
+                      const descWords = (f.findingDescription || '').trim().split(/\s+/).filter(Boolean).length;
+                      if (!f.findingDescription || descWords < 8)
+                        hints.push({ text: 'Description too brief — Condition will be blank in the report', field: 'Condition' });
+                      if (!f.rootCause || f.rootCause.trim().length === 0)
+                        hints.push({ text: 'No root cause — Cause will be blank, add your draft in ReportView', field: 'Cause' });
+                      if (!f.managementResponse || f.managementResponse.trim().length === 0)
+                        hints.push({ text: 'No management response — add this in the report before exporting', field: 'Mgmt Response' });
+                      if (!f.dueDate || f.dueDate.trim().length === 0)
+                        hints.push({ text: 'No due date — QC flag will appear in the report', field: 'Due Date' });
+                      if (!f.riskRating || !['High', 'Medium', 'Low'].includes(f.riskRating))
+                        hints.push({ text: 'Risk rating not recognised — will default to Medium', field: 'Risk Rating' });
+                      return { ...f, hints };
+                    });
+                    const flaggedCount = findingsWithHints.filter(f => f.hints.length > 0).length;
+                    return (
+                      <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-gray-600">
+                            {parsedFindings.findings.length} finding{parsedFindings.findings.length !== 1 ? 's' : ''} detected
+                          </p>
+                          {flaggedCount > 0 && (
+                            <p className="text-xs text-amber-600 font-medium">
+                              {flaggedCount} need{flaggedCount === 1 ? 's' : ''} attention
+                            </p>
+                          )}
+                        </div>
+                        {findingsWithHints.map((f, i) => (
                           <div key={i} className="space-y-1">
                             <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
+                              <span className={`px-1.5 py-0.5 rounded text-xs font-medium shrink-0 ${
                                 f.riskRating === 'High' ? 'bg-red-100 text-red-700' :
                                 f.riskRating === 'Low' ? 'bg-green-100 text-green-700' :
                                 'bg-orange-100 text-orange-700'
                               }`}>{f.riskRating || 'Medium'}</span>
-                              <span className="font-medium">{f.ref}</span>
-                              <span className="text-gray-500">·</span>
-                              <span className="truncate">{(f.findingDescription || '').substring(0, 60)}{(f.findingDescription || '').length > 60 ? '...' : ''}</span>
+                              <span className="font-medium shrink-0">{f.ref}</span>
+                              <span className="text-gray-300">·</span>
+                              <span className="truncate text-gray-500">{(f.findingDescription || '').substring(0, 60)}{(f.findingDescription || '').length > 60 ? '…' : ''}</span>
                             </div>
-                            {warnings.map((w, wi) => (
-                              <p key={wi} className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5 ml-1">
-                                {w}
+                            {f.hints.map((h, hi) => (
+                              <p key={hi} className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5 ml-1 flex items-center gap-1.5">
+                                <span className="shrink-0">⚠</span>
+                                <span>{h.text}</span>
                               </p>
                             ))}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
