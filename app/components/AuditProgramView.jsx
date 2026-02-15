@@ -1285,7 +1285,7 @@ export default function AuditProgramView({
               )}
             </div>
 
-            {/* Exit Meeting */}
+            {/* Kick-off Meeting */}
             <div className="pt-2 border-t border-gray-100">
               <button
                 onClick={() => {
@@ -1296,7 +1296,7 @@ export default function AuditProgramView({
                 disabled={isGeneratingExitMeeting}
                 className="w-full text-xs text-indigo-600 hover:text-indigo-800 font-medium py-1 transition-colors disabled:opacity-50"
               >
-                {isGeneratingExitMeeting ? 'Generating...' : 'Exit Meeting Agenda'}
+                {isGeneratingExitMeeting ? 'Generating...' : 'Kick-off Meeting Agenda'}
               </button>
             </div>
 

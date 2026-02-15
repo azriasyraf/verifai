@@ -197,6 +197,9 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
           controlData.push(['Category / Rating:', `${risk.category} / ${risk.rating}`]);
           if (risk.assertion) controlData.push(['Assertion:', risk.assertion]);
           if (risk.frameworkReference) controlData.push(['Framework Reference:', risk.frameworkReference]);
+          if (risk.regulatoryRefs && risk.regulatoryRefs.length > 0) {
+            controlData.push(['Regulatory References:', risk.regulatoryRefs.map(r => `${r.regulation} — ${r.clause}`).join('; ')]);
+          }
           controlData.push([]);
         }
       });
