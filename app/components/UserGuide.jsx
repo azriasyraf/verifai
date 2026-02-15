@@ -54,7 +54,7 @@ export default function UserGuide() {
         className="fixed bottom-6 right-6 z-40 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg transition-colors"
         title="User Guide"
       >
-        ? Guide
+        ⓘ Guide
       </button>
 
       {/* Modal */}
@@ -106,8 +106,26 @@ export default function UserGuide() {
               {activeTab === 'features' && (
                 <div className="space-y-6">
 
+                  {/* Section jump nav */}
+                  <div className="flex flex-wrap gap-2 pb-1">
+                    {[
+                      { id: 'guide-audit', label: 'Audit Program', color: 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100' },
+                      { id: 'guide-walkthrough', label: 'Walkthrough', color: 'text-teal-600 bg-teal-50 hover:bg-teal-100' },
+                      { id: 'guide-rmga', label: 'RMGA', color: 'text-purple-600 bg-purple-50 hover:bg-purple-100' },
+                      { id: 'guide-report', label: 'Audit Report', color: 'text-rose-600 bg-rose-50 hover:bg-rose-100' },
+                    ].map(({ id, label, color }) => (
+                      <button
+                        key={id}
+                        onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                        className={`text-xs font-medium px-3 py-1 rounded-full transition-colors ${color}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+
                   {/* Audit Program */}
-                  <div>
+                  <div id="guide-audit">
                     <h3 className="font-semibold text-gray-900 mb-3">Audit Program Generator</h3>
                     <ol className="space-y-3">
                       {[
@@ -120,20 +138,28 @@ export default function UserGuide() {
                           desc: 'Choose the industry and the process you are auditing — Revenue to Cash, Procurement to Payment, HR, Inventory, or IT. More will be added over time.',
                         },
                         {
+                          step: 'Select your jurisdiction (optional)',
+                          desc: 'Choose International for COSO 2013 and IIA IPPF references, or Malaysia to layer in process-specific statutory requirements (Employment Act, EPF, SOCSO, MACC, ITA, PDPA). Citation chips appear on each risk and control in the output.',
+                        },
+                        {
                           step: 'Add context about the client (optional)',
                           desc: 'Paste in walkthrough notes or interview observations to personalise the output. Verifai will surface risks with supporting evidence, flag control gaps, and add client-specific commentary. If you have a completed RMGA, you can import its findings directly.',
                         },
                         {
                           step: 'Generate',
-                          desc: 'Verifai builds a three-phase audit program covering the risk landscape, control tests, and substantive analytics. Takes about 10 to 15 seconds.',
+                          desc: 'Verifai builds an audit program covering three sections: Risk Assessment, Test of Controls, and Data Analytics. Takes about 10 to 15 seconds.',
                         },
                         {
                           step: 'Review and edit',
                           desc: 'Click Edit Program to adjust anything. Add or remove risks, controls, and procedures, or rewrite descriptions. The output is a starting point, not a final answer.',
                         },
                         {
+                          step: 'Generate a kick-off agenda (optional)',
+                          desc: 'Click Generate Kick-off Agenda after reviewing the program. Verifai produces a structured meeting agenda from the program content, with guidance notes for each item. Copy to clipboard in one click.',
+                        },
+                        {
                           step: 'Review the analytics test plan (optional)',
-                          desc: 'Scroll to Phase 3 to see the substantive analytics tests Verifai has mapped to your risks. Toggle any test off if it is not applicable, or reassign it to a different risk.',
+                          desc: 'Scroll to the Data Analytics section to see the analytics tests Verifai has mapped to your risks. Toggle any test off if it is not applicable, or reassign it to a different risk.',
                         },
                         {
                           step: 'Run tests against your client data (optional)',
@@ -149,7 +175,7 @@ export default function UserGuide() {
                         },
                         {
                           step: 'Export the full audit program',
-                          desc: 'Download a multi-tab workbook with the complete audit program, analytics tests, and control matrix.',
+                          desc: 'Download a multi-tab workbook: a Summary tab with the full program, and one tab per control — each pre-populated with a fieldwork sample table.',
                         },
                       ].map((item, i) => (
                         <li key={i} className="flex gap-3">
@@ -166,7 +192,7 @@ export default function UserGuide() {
                   <div className="border-t border-gray-100" />
 
                   {/* RMGA */}
-                  <div>
+                  <div id="guide-rmga">
                     <h3 className="font-semibold text-gray-900 mb-1">Risk Management & Governance Assessment (RMGA)</h3>
                     <p className="text-xs text-gray-500 mb-3">
                       An entity-level working paper covering the organisation&apos;s governance framework, risk culture, and oversight mechanisms. Not tied to a specific process.
@@ -212,7 +238,7 @@ export default function UserGuide() {
                   <div className="border-t border-gray-100" />
 
                   {/* Process Walkthrough */}
-                  <div>
+                  <div id="guide-walkthrough">
                     <h3 className="font-semibold text-gray-900 mb-1">Process Walkthrough Working Paper</h3>
                     <p className="text-xs text-gray-500 mb-3">
                       Document walkthrough interviews checkpoint by checkpoint. Assess control design adequacy before testing begins. Export to Excel or flow directly into an audit program.
@@ -262,7 +288,7 @@ export default function UserGuide() {
                   <div className="border-t border-gray-100" />
 
                   {/* Audit Report */}
-                  <div>
+                  <div id="guide-report">
                     <h3 className="font-semibold text-gray-900 mb-1">Audit Report Generator</h3>
                     <p className="text-xs text-gray-500 mb-3">
                       Draft a complete internal audit report from your fieldwork findings. Upload your Excel findings file and Verifai writes the full CCCE narrative.
@@ -278,16 +304,20 @@ export default function UserGuide() {
                           desc: 'Export your fieldwork findings from Excel and upload here. Verifai reads the finding descriptions, risk ratings, root causes, management responses, and due dates. Weak findings are flagged before you generate.',
                         },
                         {
+                          step: 'Review and improve recommendations (optional)',
+                          desc: 'Before generating, click Generate Recommendations. For each finding, Verifai generates a recommendation from scratch or polishes the one you uploaded. Two panels appear side by side — your version and the AI suggestion — each with a Use this version button. Select the one you want to start from, then edit freely. You can skip this step entirely.',
+                        },
+                        {
                           step: 'Click Generate Report',
                           desc: 'Verifai drafts a complete report: cover page, executive summary, scope and objectives, full CCCE findings (condition, criteria, cause, effect), and conclusion.',
                         },
                         {
                           step: 'Review in the tabbed view',
-                          desc: 'Each finding gets its own tab. Edit any field inline — condition, criteria, cause, effect, recommendation, management response. Vague management responses are flagged in amber.',
+                          desc: 'Each finding gets its own tab. Edit any field inline — condition, criteria, cause, effect, recommendation, management response. Vague management responses are flagged in amber. Use Discard Changes at any point to revert all edits back to the AI original.',
                         },
                         {
                           step: 'Export to Word',
-                          desc: 'Download a formatted .docx report ready to share. Includes AI disclosure footer.',
+                          desc: 'Download a formatted .docx report ready to share. If QC issues remain, a pre-flight check lists affected findings before the Word file is generated. Includes AI disclosure footer.',
                         },
                       ].map((item, i) => (
                         <li key={i} className="flex gap-3">

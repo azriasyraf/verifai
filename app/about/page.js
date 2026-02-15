@@ -12,7 +12,9 @@ const auditFeatures = [
   { label: 'Analytics tests library', desc: '35 curated data analytics tests across all processes, auto-mapped to relevant risks.' },
   { label: 'Engagement details', desc: 'Capture client name, department, period, reference, and auditor. All stamped on every export.' },
   { label: 'Full inline edit mode', desc: 'Edit any AI-generated content: add, remove, or rewrite risks, controls, and procedures.' },
-  { label: 'Excel export', desc: 'Multi-tab workbook: Audit Program, Analytics Tests, and Control Matrix.' },
+  { label: 'Jurisdiction-specific regulation library', desc: 'Select International (COSO 2013 + IIA IPPF) or Malaysia (adds Employment Act, EPF, SOCSO, MACC, ITA, PDPA per process). Every risk and control is tagged with citation chips.' },
+  { label: 'Kick-off meeting agenda', desc: 'Generate a structured agenda from your audit program in one click, with guidance notes. Copy to clipboard.' },
+  { label: 'Excel export', desc: 'Multi-tab workbook: Summary tab plus one tab per control, each pre-populated with a fieldwork sample table.' },
 ];
 
 const analyticsFeatures = [
@@ -54,13 +56,17 @@ const reportFeatures = [
   { label: 'Full CCCE report draft', desc: 'AI writes condition, criteria, cause, and effect for every finding in formal audit report language.' },
   { label: 'Tabbed findings review', desc: 'Each finding gets its own tab. Edit any field inline before exporting.' },
   { label: 'Management response QC flags', desc: 'Vague responses ("will monitor", no action owner, no due date) are flagged in amber.' },
-  { label: 'Word export (.docx)', desc: 'Formatted report ready to share, with AI disclosure footer.' },
+  { label: 'Recommendation review panel', desc: 'Before generating, click Generate Recommendations. AI generates from scratch or polishes your existing text. Two side-by-side panels — your version vs AI suggestion — each with Use this version. You choose, then edit freely. Optional.' },
+  { label: 'Discard changes', desc: 'Revert all edits back to the AI original at any point — useful if you want to restart your review.' },
+  { label: 'Pre-flight QC on export', desc: 'If QC-flagged findings remain unaddressed, a confirmation dialog lists affected findings before the Word file is generated.' },
+  { label: 'Word export (.docx)', desc: 'Formatted report ready to share, with AI disclosure footer and page break per finding.' },
 ];
 
 const comingSoon = [
   { label: 'See what changed from the AI draft', desc: 'Verifai will track every edit you make and include a change summary on export. Your supervisor can see that you engaged with the output, not just downloaded it.', status: 'Next up' },
   { label: 'More analytics tests', desc: 'Date thresholds, round-number clusters, split purchases, and cross-file joins like terminated employees cross-referenced against payroll.', status: 'Planned' },
-  { label: 'Policy & procedure upload', desc: 'Upload your SOPs. Verifai reads them alongside walkthrough notes and flags where what is written differs from what is actually happening.', status: 'Planned' },
+  { label: 'Document enrichment layer', desc: 'Label-tagged file uploads (walkthrough notes, P&P, prior report, RMGA) to enrich generation. Verifai reads each document in context for its document type.', status: 'Planned' },
+  { label: 'Policy & procedure gap detection', desc: 'Upload a P&P alongside your walkthrough notes. Verifai compares what is written against what was described and pre-populates a finding where they diverge.', status: 'Planned' },
   { label: 'Saved engagements', desc: 'Save and reload your working papers across sessions. Right now everything lives in the browser tab.', status: 'Planned' },
   { label: 'Team collaboration', desc: 'Share workpapers with your team, assign sections, and track review status without bouncing Excel files around.', status: 'Future' },
 ];
@@ -241,6 +247,7 @@ export default function AboutPage() {
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <span className="font-medium text-gray-900 text-sm">{item.label}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 font-medium ${
+                    item.status === 'Next up' ? 'bg-amber-50 text-amber-700' :
                     item.status === 'In design' ? 'bg-blue-50 text-blue-700' :
                     item.status === 'Future' ? 'bg-gray-100 text-gray-400' :
                     'bg-gray-100 text-gray-600'
