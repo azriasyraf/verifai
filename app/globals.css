@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 body {
-  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  font-family: var(--font-catamaran), "Catamaran", sans-serif;
   background: #f9fafb;
   color: #111827;
   font-size: 13px;
