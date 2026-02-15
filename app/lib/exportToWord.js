@@ -143,16 +143,6 @@ export async function exportToWord(report) {
     spacing: { before: 1200, after: 400 },
   }));
 
-  sections.push(new Paragraph({
-    children: [new TextRun({
-      text: cover.overallOpinion || '',
-      bold: true, size: 28,
-      color: cover.overallOpinion?.toLowerCase().includes('needs') ? COLORS.high : COLORS.low,
-    })],
-    alignment: AlignmentType.CENTER,
-    spacing: { before: 0, after: 600 },
-  }));
-
   const coverFields = [
     ['Client', cover.client],
     ['Department', cover.department],
