@@ -4,12 +4,12 @@ body {
   font-family: var(--font-catamaran), "Catamaran", sans-serif;
   background: #f9fafb;
   color: #111827;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
   letter-spacing: 0.01em;
 }
 
 /* Font hierarchy */
-h1 { font-size: 20px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; }
-h2 { font-size: 16px; font-weight: 600; line-height: 1.35; }
-h3 { font-size: 14px; font-weight: 700; line-height: 1.4; }
+h1 { font-size: 22px; font-weight: 700; line-height: 1.3; letter-spacing: -0.01em; }
+h2 { font-size: 18px; font-weight: 600; line-height: 1.35; }
+h3 { font-size: 16px; font-weight: 700; line-height: 1.4; }
