@@ -340,10 +340,17 @@ export default function GenerationForm({
                   )}
                   {parsedFindings?.findings?.length > 0 && (() => {
                     const findingsWithHints = parsedFindings.findings.map(f => {
+                      const hasOtherFields = !!(f.rootCause?.trim() || f.recommendation?.trim() || f.managementResponse?.trim() || f.dueDate?.trim());
+                      if (!f.findingDescription?.trim() && !hasOtherFields) return null; // silent drop — empty row
+                      const errors = [];
                       const hints = [];
-                      const descWords = (f.findingDescription || '').trim().split(/\s+/).filter(Boolean).length;
-                      if (!f.findingDescription || descWords < 8)
-                        hints.push({ text: 'Description too brief — AI will expand but Condition may lack specificity', field: 'Condition' });
+                      if (!f.findingDescription?.trim() && hasOtherFields) {
+                        errors.push({ text: 'Finding description is missing — check for accidental deletion', field: 'Condition' });
+                      } else {
+                        const descWords = (f.findingDescription || '').trim().split(/\s+/).filter(Boolean).length;
+                        if (descWords < 8)
+                          hints.push({ text: 'Description too brief — AI will expand but Condition may lack specificity', field: 'Condition' });
+                      }
                       if (!f.rootCause || f.rootCause.trim().length === 0)
                         hints.push({ text: 'No root cause — Cause will be blank, add your draft in ReportView', field: 'Cause' });
                       if (!f.managementResponse || f.managementResponse.trim().length === 0)
@@ -352,20 +359,24 @@ export default function GenerationForm({
                         hints.push({ text: 'No due date — QC flag will appear in the report', field: 'Due Date' });
                       if (!f.riskRating || !['High', 'Medium', 'Low'].includes(f.riskRating))
                         hints.push({ text: 'Risk rating not recognised — will default to Medium', field: 'Risk Rating' });
-                      return { ...f, hints };
-                    });
+                      return { ...f, hints, errors };
+                    }).filter(Boolean);
+                    const errorCount = findingsWithHints.filter(f => f.errors.length > 0).length;
                     const flaggedCount = findingsWithHints.filter(f => f.hints.length > 0).length;
                     return (
                       <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-gray-600">
-                            {parsedFindings.findings.length} finding{parsedFindings.findings.length !== 1 ? 's' : ''} detected
+                            {findingsWithHints.length} finding{findingsWithHints.length !== 1 ? 's' : ''} detected
                           </p>
-                          {flaggedCount > 0 && (
-                            <p className="text-xs text-amber-600 font-medium">
-                              {flaggedCount} need{flaggedCount === 1 ? 's' : ''} attention
-                            </p>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {errorCount > 0 && (
+                              <p className="text-xs text-red-600 font-medium">{errorCount} error{errorCount !== 1 ? 's' : ''} — fix before generating</p>
+                            )}
+                            {flaggedCount > 0 && (
+                              <p className="text-xs text-amber-600 font-medium">{flaggedCount} warning{flaggedCount !== 1 ? 's' : ''}</p>
+                            )}
+                          </div>
                         </div>
                         {findingsWithHints.map((f, i) => (
                           <div key={i} className="space-y-1">
@@ -377,8 +388,14 @@ export default function GenerationForm({
                               }`}>{f.riskRating || 'Medium'}</span>
                               <span className="font-medium shrink-0">{f.ref}</span>
                               <span className="text-gray-300">·</span>
-                              <span className="truncate text-gray-500">{(f.findingDescription || '').substring(0, 60)}{(f.findingDescription || '').length > 60 ? '…' : ''}</span>
+                              <span className="truncate text-gray-500">{(f.findingDescription || '[description missing]').substring(0, 60)}</span>
                             </div>
+                            {f.errors?.map((e, ei) => (
+                              <p key={ei} className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-0.5 ml-1 flex items-center gap-1.5">
+                                <span className="shrink-0">✕</span>
+                                <span>{e.text}</span>
+                              </p>
+                            ))}
                             {f.hints.map((h, hi) => (
                               <p key={hi} className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5 ml-1 flex items-center gap-1.5">
                                 <span className="shrink-0">⚠</span>
@@ -680,9 +697,13 @@ export default function GenerationForm({
 
           {isReport && (() => {
             const hasRaised = raisedFindings?.length > 0;
-            const canGenerate = parsedFindings || hasRaised;
+            const uploadedFindings = (parsedFindings?.findings || []).filter(f =>
+              !!(f.findingDescription?.trim() || f.rootCause?.trim() || f.recommendation?.trim() || f.managementResponse?.trim() || f.dueDate?.trim())
+            );
+            const hasDescriptionErrors = uploadedFindings.some(f => !f.findingDescription?.trim());
+            const canGenerate = (parsedFindings || hasRaised) && !hasDescriptionErrors;
             const allFindings = [
-              ...(parsedFindings?.findings || []),
+              ...uploadedFindings,
               ...(raisedFindings || []),
             ];
             const engagementDetails = parsedFindings?.engagementDetails || {};
