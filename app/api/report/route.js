@@ -94,7 +94,7 @@ SCHEMA — return exactly this structure:
   "findings": [
     {
       "ref": "F001",
-      "title": "Short, descriptive finding title — e.g. 'Approval Authority Limits Not Enforced'",
+      "title": "Factual past-tense statement of what went wrong — e.g. 'Changes to Payroll Master Data Were Not Authorised', 'Terminated Employees Continued to Receive Salary Payments', 'Payroll Reconciliation Was Not Performed for 4 of 12 Months'",
       "riskRating": "High | Medium | Low",
       "condition": "What the auditor observed — specific, factual, quantified where the data supports it",
       "criteria": "The policy, standard, or expectation that was not met — cite the source",
