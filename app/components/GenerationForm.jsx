@@ -343,7 +343,7 @@ export default function GenerationForm({
                       const hints = [];
                       const descWords = (f.findingDescription || '').trim().split(/\s+/).filter(Boolean).length;
                       if (!f.findingDescription || descWords < 8)
-                        hints.push({ text: 'Description too brief — Condition will be blank in the report', field: 'Condition' });
+                        hints.push({ text: 'Description too brief — AI will expand but Condition may lack specificity', field: 'Condition' });
                       if (!f.rootCause || f.rootCause.trim().length === 0)
                         hints.push({ text: 'No root cause — Cause will be blank, add your draft in ReportView', field: 'Cause' });
                       if (!f.managementResponse || f.managementResponse.trim().length === 0)

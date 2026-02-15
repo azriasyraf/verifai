@@ -13,7 +13,7 @@ NON-NEGOTIABLE OUTPUT RULES:
 3. Criteria: always generate — cite the applicable policy, regulation, standard, or framework based on the process and engagement context.
 4. Cause: if auditor root cause is provided, polish it — identify both immediate cause and systemic root cause. If NOT provided, return "".
 5. Effect: always infer from the condition and engagement context — state actual or potential business impact. Never return "".
-6. Recommendation: if auditor-reviewed recommendation is provided, use it exactly — do not rewrite. If NOT provided, return "".
+6. Recommendation: if auditor-reviewed recommendation is provided, use it exactly — do not rewrite. If NOT provided, generate one from the condition, cause, and effect.
 7. Write in formal, professional audit report language throughout.`;
 
 export async function POST(request) {
@@ -58,7 +58,7 @@ Finding ${i + 1}:
 - Description: ${f.findingDescription ? f.findingDescription : '[not provided — return condition as ""]'}
 - Risk Rating: ${f.riskRating || 'Medium'}
 - Root Cause: ${f.rootCause ? f.rootCause : '[not provided — return cause as ""]'}
-- Auditor Recommendation: ${f.recommendation ? `USE THIS EXACTLY — do not rewrite: "${f.recommendation}"` : '[not provided — return recommendation as ""]'}
+- Auditor Recommendation: ${f.recommendation ? `USE THIS EXACTLY — do not rewrite: "${f.recommendation}"` : '[not provided — generate from condition and root cause]'}
 - Management Response: ${f.managementResponse || ''}
 - Due Date: ${f.dueDate || ''}
 - Status: ${f.status || 'Open'}`).join('\n');
@@ -121,7 +121,7 @@ FINDINGS:
 - Criteria: always generate — cite the specific policy, standard, regulation, or leading practice applicable to the process
 - Cause: if provided, identify both the immediate cause and the root cause. If not provided, return empty string — do not invent.
 - Effect: always infer — quantify financial impact where data supports it; state exposure clearly where no real harm has yet occurred
-- Recommendation: if provided, use exactly as written. If not provided, return empty string — do not invent.
+- Recommendation: if provided, use exactly as written. If not provided, generate from the condition and cause — specific, actionable, addresses root cause.
 - Titles: 3–6 words, noun phrase, names the problem (not the procedure tested)
 
 MANAGEMENT RESPONSE:
