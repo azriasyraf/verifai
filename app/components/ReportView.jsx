@@ -14,16 +14,15 @@ const WEAK_RESPONSE_PATTERNS = [
   'will take note', 'will ensure', 'will review'
 ];
 
-function getMgmtResponseIssues(text, dueDate) {
+function getMgmtResponseIssues(text, dueDate, actionOwner) {
   if (!text || text.trim().length === 0) return ['No management response provided'];
   const issues = [];
   const lower = text.toLowerCase();
-  const wordCount = text.trim().split(/\s+/).length;
-  if (wordCount < 25) issues.push('Response is too brief to be actionable');
-  if (WEAK_RESPONSE_PATTERNS.some(p => lower.includes(p))) issues.push('Contains vague language — ensure a specific action, owner, and due date are stated');
+  if (WEAK_RESPONSE_PATTERNS.some(p => lower.includes(p))) issues.push('Contains vague language — specify a concrete action, owner, and due date');
+  if (!actionOwner || actionOwner.trim().length === 0) issues.push('No action owner specified');
   const hasDueDateField = dueDate && dueDate.trim().length > 0;
   const hasDueDateInText = /\d{1,2}[\s/-]\w+[\s/-]\d{2,4}|\w+ \d{4}|q[1-4] \d{4}/i.test(text);
-  if (!hasDueDateField && !hasDueDateInText) issues.push('No due date detected');
+  if (!hasDueDateField && !hasDueDateInText) issues.push('No due date specified');
   return issues;
 }
 
@@ -119,7 +118,7 @@ function FindingCard({ finding, index, isEditMode, onChange }) {
             ) : (
               <p className="text-sm text-gray-700 whitespace-pre-wrap">{finding.managementResponse || ''}</p>
             )}
-            {getMgmtResponseIssues(finding.managementResponse, finding.dueDate).map((issue, i) => (
+            {getMgmtResponseIssues(finding.managementResponse, finding.dueDate, finding.actionOwner).map((issue, i) => (
               <p key={i} className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1">
                 {issue}
               </p>
