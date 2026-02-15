@@ -86,10 +86,12 @@ function SourceField({
   const hasOriginal = !!(originalValue && originalValue.trim());
   const isOpen = compareOpen[compareKey];
   const isEmpty = !value || !value.trim();
+  const matchesOriginal = !!(hasOriginal && value && value.trim() === originalValue.trim());
 
   const sourceLabel = fieldSource === 'original' ? 'Source: your file'
     : fieldSource === 'ai-suggestion' ? 'Source: AI suggestion'
     : isEmpty ? 'Required — add your draft here'
+    : matchesOriginal ? 'Source: your file'
     : 'Source: AI draft';
 
   return (
