@@ -125,6 +125,8 @@ export default function Verifai() {
   const [walkthroughResults, setWalkthroughResults] = useState(null);
   const [isGeneratingWalkthrough, setIsGeneratingWalkthrough] = useState(false);
   const [walkthroughClientContext, setWalkthroughClientContext] = useState('');
+  const [exitMeeting, setExitMeeting] = useState(null);
+  const [isGeneratingExitMeeting, setIsGeneratingExitMeeting] = useState(false);
 
   // -------------------------------------------------------------------------
   // Audit Program handlers (existing — unchanged)
@@ -457,6 +459,7 @@ export default function Verifai() {
     setAnalyticsResults({});
     setAnalyticsErrors({});
     setColumnMappings({});
+    setExitMeeting(null);
     // Note: auditeeDetails intentionally NOT reset — persists across multiple generates in same session
   };
 
@@ -597,6 +600,30 @@ export default function Verifai() {
     exportWalkthroughToExcel(enriched || walkthroughResults, auditeeDetails);
   };
 
+  const handleGenerateExitMeeting = async (programToUse) => {
+    setIsGeneratingExitMeeting(true);
+    try {
+      const processNames = { revenue: 'Revenue to Cash', hr: 'HR (Recruitment & Payroll)', procurement: 'Procurement to Payment', inventory: 'Inventory', it: 'IT/Cybersecurity' };
+      const industryNames = { distribution: 'Distribution & Sales (Import/Export)', manufacturing: 'Manufacturing', services: 'Services', construction: 'Construction' };
+      const res = await fetch('/api/exitmeeting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auditProgram: programToUse,
+          auditeeDetails,
+          processName: processNames[selectedProcess] || selectedProcess,
+          industryName: industryNames[selectedIndustry] || selectedIndustry,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) setExitMeeting(result.data);
+    } catch (err) {
+      console.error('Exit meeting generation failed:', err);
+    } finally {
+      setIsGeneratingExitMeeting(false);
+    }
+  };
+
   // Triggered by "Generate Audit Program from This Walkthrough" in WalkthroughView.
   // Sets clientContext from walkthrough observations, switches to audit form pre-filled.
   const handleGenerateFromWalkthrough = (contextString) => {
@@ -694,6 +721,9 @@ export default function Verifai() {
         onRaiseFinding={handleRaiseFinding}
         raisedFindings={raisedFindings}
         auditeeDetails={auditeeDetails}
+        exitMeeting={exitMeeting}
+        isGeneratingExitMeeting={isGeneratingExitMeeting}
+        onGenerateExitMeeting={handleGenerateExitMeeting}
       />
     );
   }

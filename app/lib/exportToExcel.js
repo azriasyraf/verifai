@@ -182,6 +182,9 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
     if (control.frameworkReference) {
       controlData.push(['Framework Reference:', control.frameworkReference]);
     }
+    if (control.regulatoryRefs && control.regulatoryRefs.length > 0) {
+      controlData.push(['Regulatory References:', control.regulatoryRefs.map(r => `${r.regulation} — ${r.clause}`).join('; ')]);
+    }
     controlData.push([]);
 
     // Section B: Associated Risks
@@ -211,6 +214,9 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
         controlData.push(['Sample Size:', proc.sampleSize]);
         controlData.push(['Expected Evidence:', proc.expectedEvidence]);
         if (proc.frameworkReference) controlData.push(['IIA Reference:', proc.frameworkReference]);
+        if (proc.regulatoryRefs && proc.regulatoryRefs.length > 0) {
+          controlData.push(['Regulatory References:', proc.regulatoryRefs.map(r => `${r.regulation} — ${r.clause}`).join('; ')]);
+        }
         if (proc.analyticsTest) {
           controlData.push(['Analytics Type:', proc.analyticsTest.type]);
           controlData.push(['Analytics Description:', proc.analyticsTest.description]);
@@ -223,13 +229,25 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
       controlData.push([]);
     }
 
-    // Section D: Testing Execution
+    // Section D: Testing Execution — sample rows table
     controlData.push(['D. TESTING EXECUTION']);
-    controlData.push(['Sample Selected:', '']);
     controlData.push(['Testing Date:', '']);
     controlData.push(['Performed By:', '']);
-    controlData.push(['Results Observed:', '']);
-    controlData.push(['Exceptions Noted:', '']);
+    controlData.push(['Reviewed By:', '']);
+    controlData.push([]);
+    controlData.push([
+      'Sample #', 'Document / Reference', 'Period / Date', 'Amount / Value',
+      'Exception? (Y/N)', 'Exception Description', 'Auditor Initials'
+    ]);
+    const sampleRows = (() => {
+      const proc = controlProcedures[0];
+      if (!proc || !proc.sampleSize) return 10;
+      const match = proc.sampleSize.match(/\d+/);
+      return match ? Math.min(parseInt(match[0]), 30) : 10;
+    })();
+    for (let i = 1; i <= sampleRows; i++) {
+      controlData.push([i, '', '', '', '', '', '']);
+    }
     controlData.push([]);
 
     // Section E: Findings & Conclusion
@@ -242,9 +260,12 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
     controlData.push(['Auditor Notes:', '']);
 
     const controlSheet = XLSX.utils.aoa_to_sheet(controlData);
-    controlSheet['!cols'] = [{ wch: 24 }, { wch: 75 }];
+    controlSheet['!cols'] = [
+      { wch: 14 }, { wch: 38 }, { wch: 16 }, { wch: 16 },
+      { wch: 16 }, { wch: 35 }, { wch: 16 }
+    ];
     controlSheet['!freeze'] = { xSplit: 0, ySplit: 1 };
-    const tabName = `${control.id} - ${control.description.substring(0, 20)}`.replace(/[^a-zA-Z0-9 -]/g, '').substring(0, 31);
+    const tabName = control.id.replace(/[^a-zA-Z0-9 -]/g, '').substring(0, 31);
     XLSX.utils.book_append_sheet(workbook, controlSheet, tabName);
   });
 

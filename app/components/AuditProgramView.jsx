@@ -62,10 +62,14 @@ export default function AuditProgramView({
   onRaiseFinding,
   raisedFindings,
   auditeeDetails,
+  exitMeeting,
+  isGeneratingExitMeeting,
+  onGenerateExitMeeting,
 }) {
   const [columnMapperTest, setColumnMapperTest] = useState(null); // test object being mapped
   const [runningTestId, setRunningTestId] = useState(null);
   const [activePhase, setActivePhase] = useState(null);
+  const [showExitMeeting, setShowExitMeeting] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -1268,6 +1272,21 @@ export default function AuditProgramView({
               )}
             </div>
 
+            {/* Exit Meeting */}
+            <div className="pt-2 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  const prog = isEditMode ? editedProgram : auditProgram;
+                  onGenerateExitMeeting(prog);
+                  setShowExitMeeting(true);
+                }}
+                disabled={isGeneratingExitMeeting}
+                className="w-full text-xs text-indigo-600 hover:text-indigo-800 font-medium py-1 transition-colors disabled:opacity-50"
+              >
+                {isGeneratingExitMeeting ? 'Generating...' : 'Exit Meeting Agenda'}
+              </button>
+            </div>
+
             {/* New Program */}
             <div className="pt-2 border-t border-gray-100">
               <button
@@ -1282,6 +1301,112 @@ export default function AuditProgramView({
 
         </div>{/* end grid */}
       </div>
+
+      {/* Exit Meeting Modal */}
+      {showExitMeeting && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-10 pb-10 px-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Exit Meeting Agenda</h2>
+                <p className="text-xs text-gray-500 mt-0.5">AI-assisted. Review before use in a real meeting.</p>
+              </div>
+              <button onClick={() => setShowExitMeeting(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+            </div>
+
+            {isGeneratingExitMeeting && (
+              <div className="flex items-center gap-3 px-6 py-8 text-sm text-gray-500">
+                <svg className="animate-spin w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                Generating exit meeting agenda...
+              </div>
+            )}
+
+            {!isGeneratingExitMeeting && exitMeeting && (
+              <div className="px-6 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
+
+                {/* Header info */}
+                <div className="flex gap-4 text-xs text-gray-500">
+                  <span className="bg-gray-100 rounded px-2 py-1">{exitMeeting.suggestedDuration}</span>
+                </div>
+
+                {/* Opening */}
+                {exitMeeting.openingStatement && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Opening Statement</h3>
+                    <p className="text-sm text-gray-700 leading-relaxed bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3 italic">{exitMeeting.openingStatement}</p>
+                  </div>
+                )}
+
+                {/* Key Messages */}
+                {exitMeeting.keyMessages?.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Key Messages</h3>
+                    <ul className="space-y-1">
+                      {exitMeeting.keyMessages.map((msg, i) => (
+                        <li key={i} className="flex gap-2 text-sm text-gray-700">
+                          <span className="text-indigo-400 font-bold shrink-0">{i + 1}.</span>
+                          <span>{msg}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Agenda Items */}
+                {exitMeeting.agendaItems?.length > 0 && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Agenda</h3>
+                    <div className="space-y-4">
+                      {exitMeeting.agendaItems.map((item, i) => (
+                        <div key={i} className="border border-gray-200 rounded-xl p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-semibold text-gray-800">{item.order}. {item.title}</span>
+                            <span className="text-xs text-gray-400 bg-gray-100 rounded px-2 py-0.5">{item.duration}</span>
+                          </div>
+                          {item.talkingPoints?.length > 0 && (
+                            <ul className="mb-3 space-y-1">
+                              {item.talkingPoints.map((pt, j) => (
+                                <li key={j} className="text-sm text-gray-600 flex gap-2"><span className="text-indigo-300 shrink-0">•</span>{pt}</li>
+                              ))}
+                            </ul>
+                          )}
+                          {item.managementQuestions?.length > 0 && (
+                            <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">
+                              <p className="text-xs font-semibold text-amber-700 mb-1">Likely management questions</p>
+                              {item.managementQuestions.map((q, j) => (
+                                <p key={j} className="text-xs text-amber-800 mb-0.5">— {q}</p>
+                              ))}
+                              {item.suggestedResponse && (
+                                <p className="text-xs text-amber-700 mt-1.5 italic border-t border-amber-200 pt-1.5">{item.suggestedResponse}</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Closing + Tone Guidance */}
+                {exitMeeting.closingStatement && (
+                  <div>
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Closing Statement</h3>
+                    <p className="text-sm text-gray-700 leading-relaxed bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3 italic">{exitMeeting.closingStatement}</p>
+                  </div>
+                )}
+                {exitMeeting.toneGuidance && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+                    <p className="text-xs font-semibold text-gray-500 mb-1">Tone guidance</p>
+                    <p className="text-sm text-gray-600">{exitMeeting.toneGuidance}</p>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-400 pt-2 border-t border-gray-100">Generated by Verifai — AI-assisted content. Review before use in a formal engagement.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

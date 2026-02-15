@@ -248,7 +248,7 @@ export default function GenerationForm({
                 className={`w-full text-left rounded-xl border p-3 transition-all ${
                   isGovernance
                     ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500 ring-offset-1'
-                    : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:bg-white'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
                 <div className="flex items-center gap-3">
