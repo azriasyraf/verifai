@@ -424,8 +424,8 @@ export default function GenerationForm({
                         onChange={(e) => setJurisdiction(e.target.value)}
                         className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                       >
-                        <option value="International">International (COSO + IIA IPPF only)</option>
-                        <option value="Malaysia">Malaysia</option>
+                        <option value="International">International (COSO + IIA IPPF)</option>
+                        <option value="Malaysia">Malaysia (COSO + IIA IPPF + Malaysian regulations)</option>
                       </select>
                     </div>
                   )}

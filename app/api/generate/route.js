@@ -53,6 +53,14 @@ export async function POST(request) {
       }
     }
 
+    // Collect unique regulation names actually cited in the output
+    const citedRegulations = new Set();
+    [...(auditProgram.risks || []), ...(auditProgram.controls || []), ...(auditProgram.auditProcedures || [])]
+      .forEach(item => (item.regulatoryRefs || []).forEach(r => citedRegulations.add(r.regulation)));
+    if (citedRegulations.size > 0 && auditProgram.framework) {
+      auditProgram.framework.appliedRegulations = [...citedRegulations];
+    }
+
     return NextResponse.json({ success: true, data: auditProgram });
   } catch (error) {
     console.error('Error generating audit program:', error);

@@ -460,8 +460,9 @@ export default function WalkthroughView({
               {cp.regulatoryRefs && cp.regulatoryRefs.length > 0 && (
                 <div className="flex flex-wrap gap-1 mb-4">
                   {cp.regulatoryRefs.map((ref, i) => (
-                    <span key={i} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 font-mono" title={ref.regulation}>
-                      {ref.clause}
+                    <span key={i} className="inline-flex flex-col bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-1 text-xs leading-tight">
+                      <span className="text-blue-400" style={{fontSize:'10px'}}>{ref.regulation}</span>
+                      <span className="font-semibold">{ref.clause}</span>
                     </span>
                   ))}
                 </div>

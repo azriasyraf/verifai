@@ -43,53 +43,47 @@ ${riskSummary}
 CONTROLS IN SCOPE (${controls.length} total):
 ${controlSummary}
 
-Generate a professional exit meeting agenda and talking points as JSON. The exit meeting is where internal audit presents preliminary findings to management before the formal report is issued. The tone should be constructive, collaborative, and professional — not adversarial.
+Generate a kick-off meeting agenda for an internal audit engagement as JSON. This is the opening meeting where the audit team presents the audit scope, objectives, and risk focus areas to the auditee before fieldwork begins.
 
 Return exactly this schema:
 
 {
-  "meetingTitle": "Exit Meeting — [Process] Audit",
-  "suggestedDuration": "45–60 minutes",
-  "openingStatement": "2-3 sentence professional opening the lead auditor reads to set the tone",
+  "meetingTitle": "Kick-off Meeting — [Process] Audit",
   "agendaItems": [
     {
       "order": 1,
       "title": "Agenda item title",
-      "duration": "5 minutes",
-      "talkingPoints": [
-        "Specific point the auditor makes",
-        "Another point"
+      "guidanceNotes": [
+        "Guidance note for the auditor — what to cover or raise at this point",
+        "Another note"
       ],
       "managementQuestions": [
         "Likely question management will ask at this point",
         "Another likely question"
-      ],
-      "suggestedResponse": "How the auditor should respond to the above questions"
+      ]
     }
   ],
   "keyMessages": [
-    "Top-line message 1 — what management should leave the meeting knowing",
+    "Top-line message 1 — what the audit team wants management to understand going into fieldwork",
     "Top-line message 2",
     "Top-line message 3"
-  ],
-  "closingStatement": "2-3 sentence professional close — next steps, report timeline, management response process",
-  "toneGuidance": "2-3 sentences on how to conduct this specific meeting given the risk profile observed"
+  ]
 }
 
 AGENDA STRUCTURE — include these items in order:
-1. Welcome & Purpose (2–3 min) — scope, objectives, methodology reminder
-2. Key Risks Identified — one agenda item per HIGH risk area, grouped if more than 4
-3. Control Observations — summary of controls tested, any design gaps noted
-4. Preliminary Findings & Recommendations — structured, constructive
-5. Management Response Process — explain how management responds, timeline
-6. Next Steps & Report Timeline — draft report, comment period, final report
+1. Welcome & Purpose — audit objectives, scope, period under review
+2. Risk Focus Areas — high and medium risks the audit will examine, why they were prioritised
+3. Controls in Scope — which controls will be tested and the testing approach
+4. Information & Access Requirements — documents, systems, contacts the audit team will need
+5. Fieldwork Timeline & Logistics — key dates, point of contact, how to raise queries
+6. Questions & Discussion
 
 REQUIREMENTS:
-- talkingPoints must be specific to this audit's risks and controls — not generic
-- managementQuestions must reflect realistic pushback or clarification management would raise
-- keyMessages must be the 3 most important things management takes away
-- toneGuidance must be calibrated to the risk profile — more risks = firmer tone guidance
-- Keep it practical and usable in a real meeting`;
+- guidanceNotes are preparation aids for the auditor — key points to cover, not a script to read
+- guidanceNotes must be specific to this audit's risks and controls, not generic
+- managementQuestions reflect realistic questions or concerns management would raise at that point
+- keyMessages are what the audit team wants management to clearly understand before fieldwork begins
+- Keep it concise and practical`;
 
     const completion = await groq.chat.completions.create({
       messages: [

@@ -283,6 +283,16 @@ export default function AuditProgramView({
               </div>
             </div>
             <p className="text-gray-600 leading-relaxed text-sm">{auditProgram.framework.description}</p>
+            {auditProgram.framework.appliedRegulations?.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-gray-100">
+                <span className="text-xs text-gray-500 font-medium uppercase tracking-wide block mb-2">Regulations &amp; Standards Applied</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {auditProgram.framework.appliedRegulations.map((reg, i) => (
+                    <span key={i} className="text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-1">{reg}</span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -591,15 +601,16 @@ export default function AuditProgramView({
                   </div>
                 )}
                 {risk.frameworkReference && (
-                  <div className="text-xs text-indigo-500 mb-2 font-mono">
+                  <div className="text-xs text-indigo-500 mb-2">
                     {risk.frameworkReference}
                   </div>
                 )}
                 {risk.regulatoryRefs && risk.regulatoryRefs.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
                     {risk.regulatoryRefs.map((ref, i) => (
-                      <span key={i} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 font-mono" title={ref.regulation}>
-                        {ref.clause}
+                      <span key={i} className="inline-flex flex-col bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-1 text-xs leading-tight">
+                        <span className="text-blue-400" style={{fontSize:'10px'}}>{ref.regulation}</span>
+                        <span className="font-semibold">{ref.clause}</span>
                       </span>
                     ))}
                   </div>
@@ -803,15 +814,16 @@ export default function AuditProgramView({
                   </div>
                 )}
                 {control.frameworkReference && (
-                  <div className="text-xs text-indigo-500 mb-2 font-mono">
+                  <div className="text-xs text-indigo-500 mb-2">
                     {control.frameworkReference}
                   </div>
                 )}
                 {control.regulatoryRefs && control.regulatoryRefs.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
                     {control.regulatoryRefs.map((ref, i) => (
-                      <span key={i} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 font-mono" title={ref.regulation}>
-                        {ref.clause}
+                      <span key={i} className="inline-flex flex-col bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-1 text-xs leading-tight">
+                        <span className="text-blue-400" style={{fontSize:'10px'}}>{ref.regulation}</span>
+                        <span className="font-semibold">{ref.clause}</span>
                       </span>
                     ))}
                   </div>
@@ -901,15 +913,16 @@ export default function AuditProgramView({
                   <p className="text-gray-900 text-sm leading-relaxed mb-3 font-medium">{proc.procedure}</p>
                 )}
                 {proc.frameworkReference && (
-                  <div className="text-xs text-indigo-500 mb-2 font-mono">
+                  <div className="text-xs text-indigo-500 mb-2">
                     {proc.frameworkReference}
                   </div>
                 )}
                 {proc.regulatoryRefs && proc.regulatoryRefs.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
                     {proc.regulatoryRefs.map((ref, i) => (
-                      <span key={i} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 font-mono" title={ref.regulation}>
-                        {ref.clause}
+                      <span key={i} className="inline-flex flex-col bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-1 text-xs leading-tight">
+                        <span className="text-blue-400" style={{fontSize:'10px'}}>{ref.regulation}</span>
+                        <span className="font-semibold">{ref.clause}</span>
                       </span>
                     ))}
                   </div>
@@ -1302,40 +1315,60 @@ export default function AuditProgramView({
         </div>{/* end grid */}
       </div>
 
-      {/* Exit Meeting Modal */}
+      {/* Kick-off Meeting Modal */}
       {showExitMeeting && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-10 pb-10 px-4 overflow-y-auto">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Exit Meeting Agenda</h2>
-                <p className="text-xs text-gray-500 mt-0.5">AI-assisted. Review before use in a real meeting.</p>
+                <h2 className="text-base font-semibold text-gray-900">Kick-off Meeting Agenda</h2>
+                <p className="text-xs text-gray-500 mt-0.5">AI-assisted. Review before use.</p>
               </div>
-              <button onClick={() => setShowExitMeeting(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+              <div className="flex items-center gap-2">
+                {exitMeeting && (
+                  <button
+                    onClick={() => {
+                      const lines = [];
+                      lines.push(exitMeeting.meetingTitle || 'Kick-off Meeting Agenda');
+                      lines.push('');
+                      if (exitMeeting.keyMessages?.length) {
+                        lines.push('KEY MESSAGES');
+                        exitMeeting.keyMessages.forEach((m, i) => lines.push(`${i + 1}. ${m}`));
+                        lines.push('');
+                      }
+                      if (exitMeeting.agendaItems?.length) {
+                        lines.push('AGENDA');
+                        exitMeeting.agendaItems.forEach(item => {
+                          lines.push(`${item.order}. ${item.title}`);
+                          (item.guidanceNotes || []).forEach(n => lines.push(`   • ${n}`));
+                          if (item.managementQuestions?.length) {
+                            lines.push('   Anticipated questions:');
+                            item.managementQuestions.forEach(q => lines.push(`   — ${q}`));
+                          }
+                          lines.push('');
+                        });
+                      }
+                      lines.push('Generated by Verifai — AI-assisted content. Review before use.');
+                      navigator.clipboard.writeText(lines.join('\n'));
+                    }}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded-lg px-3 py-1.5 transition-colors"
+                  >
+                    Copy to clipboard
+                  </button>
+                )}
+                <button onClick={() => setShowExitMeeting(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-2">×</button>
+              </div>
             </div>
 
             {isGeneratingExitMeeting && (
               <div className="flex items-center gap-3 px-6 py-8 text-sm text-gray-500">
                 <svg className="animate-spin w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
-                Generating exit meeting agenda...
+                Generating kick-off meeting agenda...
               </div>
             )}
 
             {!isGeneratingExitMeeting && exitMeeting && (
               <div className="px-6 py-5 space-y-6 max-h-[70vh] overflow-y-auto">
-
-                {/* Header info */}
-                <div className="flex gap-4 text-xs text-gray-500">
-                  <span className="bg-gray-100 rounded px-2 py-1">{exitMeeting.suggestedDuration}</span>
-                </div>
-
-                {/* Opening */}
-                {exitMeeting.openingStatement && (
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Opening Statement</h3>
-                    <p className="text-sm text-gray-700 leading-relaxed bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3 italic">{exitMeeting.openingStatement}</p>
-                  </div>
-                )}
 
                 {/* Key Messages */}
                 {exitMeeting.keyMessages?.length > 0 && (
@@ -1356,48 +1389,28 @@ export default function AuditProgramView({
                 {exitMeeting.agendaItems?.length > 0 && (
                   <div>
                     <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Agenda</h3>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {exitMeeting.agendaItems.map((item, i) => (
                         <div key={i} className="border border-gray-200 rounded-xl p-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-semibold text-gray-800">{item.order}. {item.title}</span>
-                            <span className="text-xs text-gray-400 bg-gray-100 rounded px-2 py-0.5">{item.duration}</span>
-                          </div>
-                          {item.talkingPoints?.length > 0 && (
+                          <p className="text-sm font-semibold text-gray-800 mb-2">{item.order}. {item.title}</p>
+                          {item.guidanceNotes?.length > 0 && (
                             <ul className="mb-3 space-y-1">
-                              {item.talkingPoints.map((pt, j) => (
-                                <li key={j} className="text-sm text-gray-600 flex gap-2"><span className="text-indigo-300 shrink-0">•</span>{pt}</li>
+                              {item.guidanceNotes.map((note, j) => (
+                                <li key={j} className="text-sm text-gray-600 flex gap-2"><span className="text-indigo-300 shrink-0">•</span>{note}</li>
                               ))}
                             </ul>
                           )}
                           {item.managementQuestions?.length > 0 && (
                             <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">
-                              <p className="text-xs font-semibold text-amber-700 mb-1">Likely management questions</p>
+                              <p className="text-xs font-semibold text-amber-700 mb-1">Anticipated questions</p>
                               {item.managementQuestions.map((q, j) => (
                                 <p key={j} className="text-xs text-amber-800 mb-0.5">— {q}</p>
                               ))}
-                              {item.suggestedResponse && (
-                                <p className="text-xs text-amber-700 mt-1.5 italic border-t border-amber-200 pt-1.5">{item.suggestedResponse}</p>
-                              )}
                             </div>
                           )}
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {/* Closing + Tone Guidance */}
-                {exitMeeting.closingStatement && (
-                  <div>
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Closing Statement</h3>
-                    <p className="text-sm text-gray-700 leading-relaxed bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3 italic">{exitMeeting.closingStatement}</p>
-                  </div>
-                )}
-                {exitMeeting.toneGuidance && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
-                    <p className="text-xs font-semibold text-gray-500 mb-1">Tone guidance</p>
-                    <p className="text-sm text-gray-600">{exitMeeting.toneGuidance}</p>
                   </div>
                 )}
 
