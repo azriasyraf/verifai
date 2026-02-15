@@ -1224,51 +1224,53 @@ export default function AuditProgramView({
 
         {/* Sticky right sidebar */}
         <div className="sticky top-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-2">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-3">
+
             {/* Editing badge */}
             {isEditMode && (
-              <div className="pb-2 border-b border-gray-100">
+              <div>
                 <span className="bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 text-xs font-medium">Editing</span>
               </div>
             )}
 
-            {/* Primary action */}
-            {!isEditMode ? (
-              <button
-                onClick={exportToExcel}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors"
-              >
-                Export to Excel
-              </button>
-            ) : (
-              <button
-                onClick={saveEdits}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors"
-              >
-                Save Changes
-              </button>
-            )}
+            {/* Primary + secondary actions */}
+            <div className="space-y-2">
+              {!isEditMode ? (
+                <button
+                  onClick={exportToExcel}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+                >
+                  Export to Excel
+                </button>
+              ) : (
+                <button
+                  onClick={saveEdits}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+                >
+                  Save Changes
+                </button>
+              )}
 
-            {/* Edit toggle */}
-            {!isEditMode ? (
-              <button
-                onClick={enterEditMode}
-                className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
-              >
-                Edit Program
-              </button>
-            ) : (
-              <button
-                onClick={cancelEdit}
-                className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
-              >
-                Cancel
-              </button>
-            )}
+              {!isEditMode ? (
+                <button
+                  onClick={enterEditMode}
+                  className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+                >
+                  Edit Program
+                </button>
+              ) : (
+                <button
+                  onClick={cancelEdit}
+                  className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
 
-            {/* Phase navigation */}
-            <div className="pt-2 border-t border-gray-100 space-y-0.5">
-              <p className="text-xs font-medium text-gray-500 mb-1.5">Jump to</p>
+            {/* Section navigation */}
+            <div className="border-t border-gray-100 pt-3 space-y-0.5">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">Jump to</p>
               <a href="#phase-1" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-teal-50 text-teal-700 text-sm transition-colors">
                 <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"></span>
                 Risk Assessment
@@ -1285,8 +1287,8 @@ export default function AuditProgramView({
               )}
             </div>
 
-            {/* Kick-off Meeting */}
-            <div className="pt-2 border-t border-gray-100">
+            {/* Tertiary actions */}
+            <div className="border-t border-gray-100 pt-3 space-y-2">
               <button
                 onClick={() => {
                   const prog = isEditMode ? editedProgram : auditProgram;
@@ -1294,21 +1296,18 @@ export default function AuditProgramView({
                   setShowExitMeeting(true);
                 }}
                 disabled={isGeneratingExitMeeting}
-                className="w-full text-xs text-indigo-600 hover:text-indigo-800 font-medium py-1 transition-colors disabled:opacity-50"
+                className="w-full bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors disabled:opacity-50"
               >
                 {isGeneratingExitMeeting ? 'Generating...' : 'Kick-off Meeting Agenda'}
               </button>
-            </div>
-
-            {/* New Program */}
-            <div className="pt-2 border-t border-gray-100">
               <button
                 onClick={resetForm}
-                className="w-full text-xs text-gray-500 hover:text-gray-700 py-1 transition-colors"
+                className="w-full bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors"
               >
                 New Program
               </button>
             </div>
+
           </div>
         </div>{/* end sidebar */}
 
