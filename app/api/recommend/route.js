@@ -1,0 +1,61 @@
+import Groq from 'groq-sdk';
+import { NextResponse } from 'next/server';
+
+export const maxDuration = 30;
+
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+export async function POST(request) {
+  try {
+    const { findings } = await request.json();
+
+    if (!findings || findings.length === 0) {
+      return NextResponse.json({ success: false, error: 'No findings provided' }, { status: 400 });
+    }
+
+    const findingsList = findings.map((f, i) => `
+Finding ${i + 1}:
+- Ref: ${f.ref || `F${String(i + 1).padStart(3, '0')}`}
+- Description: ${f.findingDescription || ''}
+- Risk Rating: ${f.riskRating || 'Medium'}
+- Root Cause: ${f.rootCause || ''}
+- Auditor's existing recommendation: ${f.recommendation || '[none provided]'}`).join('\n');
+
+    const prompt = `You are an expert internal auditor. For each finding below, produce a recommendation.
+
+RULES:
+- If "Auditor's existing recommendation" is provided: polish the language only — improve clarity, specificity, and IIA tone. Do NOT change the substance or intent. The auditor knows the client.
+- If no recommendation is provided: generate one from scratch based on the finding description and root cause.
+- Every recommendation must: (1) address the immediate condition, (2) address the root cause to prevent recurrence.
+- Be specific and actionable. Name the responsible function where obvious. No generic advice.
+- 2–4 sentences maximum per recommendation.
+
+FINDINGS:
+${findingsList}
+
+Return JSON exactly:
+{
+  "recommendations": [
+    { "ref": "F001", "recommendation": "..." },
+    { "ref": "F002", "recommendation": "..." }
+  ]
+}`;
+
+    const completion = await groq.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'You are an expert internal auditor. Return only valid JSON. No markdown, no commentary.' },
+        { role: 'user', content: prompt }
+      ],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.3,
+      max_tokens: 2000,
+      response_format: { type: 'json_object' },
+    });
+
+    const result = JSON.parse(completion.choices[0].message.content);
+    return NextResponse.json({ success: true, data: result.recommendations });
+  } catch (error) {
+    console.error('Error generating recommendations:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}

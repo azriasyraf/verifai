@@ -256,9 +256,10 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
     // Section E: Findings & Conclusion
     controlData.push(['E. FINDINGS & CONCLUSION']);
     controlData.push(['Finding Identified?', 'Yes [ ]  No [ ]']);
-    controlData.push(['Finding Description:', '']);
-    controlData.push(['Root Cause:', '']);
-    controlData.push(['Risk Rating:', 'High [ ]  Medium [ ]  Low [ ]']);
+    controlData.push([]);
+    controlData.push(['Finding #', 'Control ID', 'Risk ID', 'Finding Description', 'Risk Rating', 'Root Cause', 'Recommendation', 'Management Response', 'Due Date', 'Status']);
+    controlData.push([`F001`, control.id, control.mitigatesRisks?.[0] || '', '', 'High [ ] Medium [ ] Low [ ]', '', '', '', '', 'Open']);
+    controlData.push([]);
     controlData.push(['Control Effectiveness:', 'Effective [ ]  Needs Improvement [ ]  Ineffective [ ]']);
     controlData.push(['Auditor Notes:', '']);
 
@@ -306,16 +307,16 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
   findingsData.push(['FINDINGS SUMMARY']);
   findingsData.push(['(Populate as testing progresses)']);
   findingsData.push([]);
-  findingsData.push(['Finding #', 'Control ID', 'Risk ID', 'Finding Description', 'Risk Rating', 'Root Cause', 'Management Response', 'Due Date', 'Status']);
+  findingsData.push(['Finding #', 'Control ID', 'Risk ID', 'Finding Description', 'Risk Rating', 'Root Cause', 'Recommendation', 'Management Response', 'Due Date', 'Status']);
   // Pre-populate one row per control that has procedures
   controls.filter(c => procedures.some(p => p.controlId === c.id)).forEach((c, i) => {
-    findingsData.push([`F${String(i + 1).padStart(3, '0')}`, c.id, c.mitigatesRisks?.[0] || '', '', '', '', '', '', 'Open']);
+    findingsData.push([`F${String(i + 1).padStart(3, '0')}`, c.id, c.mitigatesRisks?.[0] || '', '', '', '', '', '', '', 'Open']);
   });
 
   const findingsSheet = XLSX.utils.aoa_to_sheet(findingsData);
   findingsSheet['!cols'] = [
     { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 45 },
-    { wch: 12 }, { wch: 30 }, { wch: 35 }, { wch: 12 }, { wch: 12 }
+    { wch: 12 }, { wch: 30 }, { wch: 35 }, { wch: 35 }, { wch: 12 }, { wch: 12 }
   ];
   findingsSheet['!freeze'] = { xSplit: 0, ySplit: 4 };
   XLSX.utils.book_append_sheet(workbook, findingsSheet, 'Findings Summary');

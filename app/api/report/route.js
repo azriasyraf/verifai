@@ -56,6 +56,7 @@ Finding ${i + 1}:
 - Description: ${f.findingDescription || ''}
 - Risk Rating: ${f.riskRating || 'Medium'}
 - Root Cause: ${f.rootCause || ''}
+- Auditor-reviewed Recommendation: ${f.recommendation ? `USE THIS EXACTLY — do not rewrite: "${f.recommendation}"` : '[generate from finding and root cause]'}
 - Management Response: ${f.managementResponse || ''}
 - Due Date: ${f.dueDate || ''}
 - Status: ${f.status || 'Open'}`).join('\n');
