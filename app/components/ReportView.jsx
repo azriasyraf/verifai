@@ -210,7 +210,7 @@ function FindingCard({
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       {/* Card header */}
       <div className="px-5 py-4 flex items-start justify-between gap-4 border-b border-gray-100">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded shrink-0">
             {ref}
           </span>
@@ -400,6 +400,10 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          engagementContext: {
+            client: editedReport.coverPage?.client,
+            department: editedReport.coverPage?.department,
+          },
           findings: [{
             ref,
             condition: finding.condition,
@@ -447,7 +451,13 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
       const res = await fetch('/api/recommend', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ findings: payload }),
+        body: JSON.stringify({
+          engagementContext: {
+            client: editedReport.coverPage?.client,
+            department: editedReport.coverPage?.department,
+          },
+          findings: payload,
+        }),
       });
       const result = await res.json();
       if (result.success) {
@@ -683,7 +693,7 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
                 disabled={isGeneratingAllSuggestions}
                 className="text-xs px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 transition-colors"
               >
-                {isGeneratingAllSuggestions ? 'Generating suggestions…' : 'Suggest all recommendations'}
+                {isGeneratingAllSuggestions ? 'Generating suggestions…' : 'Suggest all Recommendations'}
               </button>
               {suggestionError && (
                 <p className="text-xs text-red-600">{suggestionError}</p>

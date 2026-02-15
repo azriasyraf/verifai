@@ -7,7 +7,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(request) {
   try {
-    const { findings } = await request.json();
+    const { findings, engagementContext } = await request.json();
 
     if (!findings || findings.length === 0) {
       return NextResponse.json({ success: false, error: 'No findings provided' }, { status: 400 });
@@ -23,13 +23,17 @@ ${f.effect ? `- Effect: ${f.effect}` : ''}
 - Risk Rating: ${f.riskRating || 'Medium'}
 - Auditor's existing recommendation: ${f.recommendation || '[none provided]'}`).join('\n');
 
+    const contextLine = engagementContext?.client || engagementContext?.department
+      ? `ENGAGEMENT: Client: ${engagementContext.client || 'not specified'} | Department: ${engagementContext.department || 'not specified'}\nUse the exact department name above when referring to the auditee. Do not invent or substitute department names.\n\n`
+      : '';
+
     const prompt = `You are an expert internal auditor. For each finding below, produce a recommendation.
 
-RULES:
+${contextLine}RULES:
 - If "Auditor's existing recommendation" is provided: polish the language only — improve clarity, specificity, and IIA tone. Do NOT change the substance or intent. The auditor knows the client.
 - If no recommendation is provided: generate one from scratch based on the condition, cause, and effect.
 - Polished recommendations must: (1) address the immediate condition, (2) address the root cause to prevent recurrence.
-- Be specific and actionable. Name the responsible function where obvious. No generic advice.
+- Be specific and actionable. Use the department name from the engagement context when naming the responsible function. No generic advice.
 - 2–4 sentences maximum per recommendation.
 
 FINDINGS:
