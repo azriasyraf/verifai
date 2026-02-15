@@ -60,12 +60,6 @@ Finding ${i + 1}:
 - Due Date: ${f.dueDate || ''}
 - Status: ${f.status || 'Open'}`).join('\n');
 
-  const overallRating = findings.some(f => f.riskRating === 'High')
-    ? 'Needs Improvement'
-    : findings.some(f => f.riskRating === 'Medium')
-    ? 'Satisfactory with Exceptions'
-    : 'Satisfactory';
-
   return `Draft a complete internal audit report as JSON from the fieldwork findings below.
 
 ENGAGEMENT:
@@ -79,8 +73,6 @@ ENGAGEMENT:
 FINDINGS FROM FIELDWORK:
 ${findingsList}
 
-OVERALL OPINION (derived from findings): ${overallRating}
-
 SCHEMA — return exactly this structure:
 
 {
@@ -91,10 +83,9 @@ SCHEMA — return exactly this structure:
     "auditPeriod": "[period]",
     "engagementRef": "[reference]",
     "preparedBy": "[auditor name]",
-    "reportDate": "[today's date]",
-    "overallOpinion": "${overallRating}"
+    "reportDate": "[today's date]"
   },
-  "executiveSummary": "2-3 paragraphs: what was audited, overall opinion, number and severity of findings, management's commitment to remediation",
+  "executiveSummary": "2-3 paragraphs: what was audited, number and severity of findings, management's commitment to remediation",
   "scopeAndObjectives": {
     "objectives": ["Objective 1", "Objective 2", "Objective 3"],
     "scope": "What was included and excluded, population size if relevant",

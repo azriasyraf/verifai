@@ -66,13 +66,14 @@ function findingBlock(finding, index) {
   const color = ratingColor(finding.riskRating);
   const paras = [];
 
-  // Finding header
+  // Finding header — page break before every finding except the first
   paras.push(new Paragraph({
     children: [
       new TextRun({ text: `${finding.ref || `F${String(index + 1).padStart(3, '0')}`}  `, bold: true, size: 26, color: '1E3A5F' }),
       new TextRun({ text: finding.title || 'Untitled Finding', bold: true, size: 26 }),
     ],
-    spacing: { before: 300, after: 100 },
+    spacing: { before: index === 0 ? 300 : 0, after: 100 },
+    pageBreakBefore: index > 0,
   }));
 
   // Risk rating badge
