@@ -58,6 +58,9 @@ export default function GenerationForm({
   isGeneratingWalkthrough,
   handleGenerateWalkthrough,
   walkthroughClientContext,
+  // jurisdiction
+  jurisdiction,
+  setJurisdiction,
 }) {
   const isAudit = generationMode === 'audit';
   const isGovernance = generationMode === 'governance';
@@ -406,6 +409,23 @@ export default function GenerationForm({
                             {process.name}
                           </option>
                         ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* ----- JURISDICTION (audit + walkthrough) ----- */}
+                  {(isAudit || isWalkthrough) && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                        Jurisdiction
+                      </label>
+                      <select
+                        value={jurisdiction}
+                        onChange={(e) => setJurisdiction(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                      >
+                        <option value="International">International (COSO + IIA IPPF only)</option>
+                        <option value="Malaysia">Malaysia</option>
                       </select>
                     </div>
                   )}

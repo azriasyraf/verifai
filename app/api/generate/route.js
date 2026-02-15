@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
+import { getRegulations, formatRegulationsForPrompt } from '../../lib/regulations/index.js';
 
 export const maxDuration = 60;
 
@@ -18,8 +19,10 @@ NON-NEGOTIABLE OUTPUT RULES:
 
 export async function POST(request) {
   try {
-    const { industry, process, assessmentType, clientContext, walkthroughNarrative } = await request.json();
-    const prompt = buildPrompt(industry, process, assessmentType, clientContext, walkthroughNarrative);
+    const { industry, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction } = await request.json();
+    const regs = getRegulations(process, jurisdiction);
+    const regulationsContext = formatRegulationsForPrompt(regs);
+    const prompt = buildPrompt(industry, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -57,7 +60,7 @@ export async function POST(request) {
   }
 }
 
-function buildPrompt(industry, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null) {
+function buildPrompt(industry, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '') {
   const industryNames = {
     distribution: 'Distribution & Sales (Import/Export)',
     manufacturing: 'Manufacturing',
@@ -108,7 +111,8 @@ SCHEMA — return exactly this structure:
       "rating": "High | Medium | Low",
       "assertion": "Completeness | Existence | Accuracy | Valuation | Rights | Presentation | IT objective",
       "relatedControls": ["C001"],
-      "frameworkReference": "Specific ${controlFramework} component — e.g. 'COSO - Risk Assessment Component' or 'COBIT APO12.01'"
+      "frameworkReference": "Specific ${controlFramework} component — e.g. 'COSO - Risk Assessment Component' or 'COBIT APO12.01'",
+      "regulatoryRefs": [{ "regulation": "Employment Act 1955 (Act 265)", "clause": "Section 14" }]
     }
   ],
   "controls": [
@@ -119,7 +123,8 @@ SCHEMA — return exactly this structure:
       "frequency": "Continuous | Daily | Weekly | Monthly | Quarterly | Annual",
       "owner": "Typical role responsible for operating this control",
       "mitigatesRisks": ["R001"],
-      "frameworkReference": "Specific ${controlFramework} principle — e.g. 'COSO - Control Activities: Segregation of Duties'"
+      "frameworkReference": "Specific ${controlFramework} principle — e.g. 'COSO - Control Activities: Segregation of Duties'",
+      "regulatoryRefs": [{ "regulation": "EPF Act 1991 (Act 452)", "clause": "Section 44" }]
     }
   ],
   "auditProcedures": [
@@ -129,7 +134,8 @@ SCHEMA — return exactly this structure:
       "testingMethod": "Inquiry | Observation | Inspection | Reperformance",
       "sampleSize": "Practical sample size based on risk rating — e.g. '25 items' for high risk, '15 items' for medium",
       "expectedEvidence": "Specific documentation or evidence to obtain from the sample",
-      "frameworkReference": "IIA Standard — e.g. 'IIA Standard 2310: Identifying Information'"
+      "frameworkReference": "IIA Standard — e.g. 'IIA Standard 2310: Identifying Information'",
+      "regulatoryRefs": [{ "regulation": "COSO 2013 ICIF", "clause": "Principle 10" }]
     }
   ]
 }
@@ -166,7 +172,14 @@ REQUIREMENTS — in priority order:
 5. SPECIFICITY:
    - Make all content highly specific to ${industryLabel} and ${processLabel}
    - Reference industry-specific regulations and standards where relevant
-   - Ensure procedures are practical and executable in the field${walkthroughNarrative ? `
+   - Ensure procedures are practical and executable in the field
+
+6. REGULATORY REFERENCES:
+   - Use ONLY the regulations and clauses listed in the APPLICABLE REGULATIONS section below
+   - Add regulatoryRefs to risks, controls, and procedures where the regulation directly applies
+   - regulatoryRefs is optional — only add it when there is a direct, relevant link to a specific clause
+   - Do not invent regulations or clause numbers not in the provided list
+   - Each ref must be: { "regulation": "exact name from list", "clause": "exact clause from list" }${walkthroughNarrative ? `
 
 WALKTHROUGH OBSERVATIONS (what was actually observed in the field):
 ---
@@ -200,5 +213,8 @@ ADJUSTMENT RULES — apply these when client context is provided:
    Absence of evidence is not absence of risk — keep them at baseline rating.
 
 5. clientEvidence, source, gapFlag, and gapNote are OPTIONAL — only add them when the notes provide specific evidence.
-   Do not fabricate evidence. If the notes are vague, do not add these fields.` : ''}`;
+   Do not fabricate evidence. If the notes are vague, do not add these fields.` : ''}${regulationsContext ? `
+
+${regulationsContext}
+DISCLAIMER: These references are provided as guidance. Verify applicability before use in a formal engagement.` : ''}`;
 }

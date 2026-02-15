@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
+import { getRegulations, formatRegulationsForPrompt } from '../../lib/regulations/index.js';
 
 export const maxDuration = 60;
 
@@ -15,7 +16,7 @@ NON-NEGOTIABLE OUTPUT RULES:
 
 export async function POST(request) {
   try {
-    const { industry, process, auditeeDetails } = await request.json();
+    const { industry, process, auditeeDetails, jurisdiction } = await request.json();
 
     if (!industry || !process) {
       return NextResponse.json(
@@ -24,7 +25,9 @@ export async function POST(request) {
       );
     }
 
-    const prompt = buildWalkthroughPrompt(industry, process, auditeeDetails);
+    const regs = getRegulations(process, jurisdiction);
+    const regulationsContext = formatRegulationsForPrompt(regs);
+    const prompt = buildWalkthroughPrompt(industry, process, auditeeDetails, regulationsContext);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -46,7 +49,7 @@ export async function POST(request) {
   }
 }
 
-function buildWalkthroughPrompt(industry, process, auditeeDetails) {
+function buildWalkthroughPrompt(industry, process, auditeeDetails, regulationsContext = '') {
   const industryNames = {
     distribution: 'Distribution & Sales (Import/Export)',
     manufacturing: 'Manufacturing',
@@ -148,7 +151,8 @@ SCHEMA — return exactly this structure:
       "suggestedQuestions": [
         "Specific interview question 1?",
         "Specific interview question 2?"
-      ]
+      ],
+      "regulatoryRefs": [{ "regulation": "Employment Act 1955 (Act 265)", "clause": "Section 14" }]
     }
   ]
 }
@@ -161,5 +165,14 @@ REQUIREMENTS per checkpoint:
 - suggestedQuestions: minimum 2, maximum 4 — specific and actionable interview questions
 
 Make all content highly specific to the ${processLabel} process in a ${industryLabel} organisation.
-Reference IIA IPPF and COSO 2013 control components where relevant.`;
+Reference IIA IPPF and COSO 2013 control components where relevant.
+
+REGULATORY REFERENCES:
+- Add regulatoryRefs to checkpoints where a specific regulation directly applies (e.g. employment terms, payroll compliance, data protection)
+- Use ONLY the clauses listed in the APPLICABLE REGULATIONS section below — do not invent regulations or clause numbers
+- regulatoryRefs is optional — only add when there is a direct, relevant link to a specific clause
+- Each ref: { "regulation": "exact name from list", "clause": "exact clause from list" }${regulationsContext ? `
+
+${regulationsContext}
+DISCLAIMER: These references are provided as guidance. Verify applicability before use in a formal engagement.` : ''}`;
 }

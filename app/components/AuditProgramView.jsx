@@ -75,20 +75,21 @@ export default function AuditProgramView({
       { id: 'phase-3', label: 'Data Analytics', color: 'amber' },
     ];
 
-    const intersecting = new Set();
+    const passed = new Set(); // phases whose headings have entered or scrolled above viewport
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            intersecting.add(entry.target.id);
+          if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
+            passed.add(entry.target.id);
           } else {
-            intersecting.delete(entry.target.id);
+            passed.delete(entry.target.id);
           }
         });
-        const first = phases.find(p => intersecting.has(p.id));
-        setActivePhase(first || null);
+        // Last passed phase = the section the user is currently scrolling through
+        const last = [...phases].reverse().find(p => passed.has(p.id));
+        setActivePhase(last || null);
       },
-      { rootMargin: '-5% 0px -85% 0px', threshold: 0 }
+      { threshold: 0 }
     );
 
     phases.forEach(({ id }) => {
@@ -589,6 +590,15 @@ export default function AuditProgramView({
                     {risk.frameworkReference}
                   </div>
                 )}
+                {risk.regulatoryRefs && risk.regulatoryRefs.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {risk.regulatoryRefs.map((ref, i) => (
+                      <span key={i} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 font-mono" title={ref.regulation}>
+                        {ref.clause}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {risk.relatedControls && risk.relatedControls.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap mt-2">
                     <span className="text-xs text-gray-500">Mitigated by:</span>
@@ -793,6 +803,15 @@ export default function AuditProgramView({
                     {control.frameworkReference}
                   </div>
                 )}
+                {control.regulatoryRefs && control.regulatoryRefs.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {control.regulatoryRefs.map((ref, i) => (
+                      <span key={i} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 font-mono" title={ref.regulation}>
+                        {ref.clause}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 {control.mitigatesRisks && control.mitigatesRisks.length > 0 && (
                   <div className="flex items-center gap-1.5 flex-wrap mt-2">
                     <span className="text-xs text-gray-500">Mitigates:</span>
@@ -878,11 +897,19 @@ export default function AuditProgramView({
                   <p className="text-gray-900 text-sm leading-relaxed mb-3 font-medium">{proc.procedure}</p>
                 )}
                 {proc.frameworkReference && (
-                  <div className="text-xs text-indigo-500 mb-3 font-mono">
+                  <div className="text-xs text-indigo-500 mb-2 font-mono">
                     {proc.frameworkReference}
                   </div>
                 )}
-
+                {proc.regulatoryRefs && proc.regulatoryRefs.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {proc.regulatoryRefs.map((ref, i) => (
+                      <span key={i} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 font-mono" title={ref.regulation}>
+                        {ref.clause}
+                      </span>
+                    ))}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>

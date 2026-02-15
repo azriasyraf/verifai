@@ -456,6 +456,17 @@ export default function WalkthroughView({
                 )}
               </div>
 
+              {/* Regulatory citation chips */}
+              {cp.regulatoryRefs && cp.regulatoryRefs.length > 0 && (
+                <div className="flex flex-wrap gap-1 mb-4">
+                  {cp.regulatoryRefs.map((ref, i) => (
+                    <span key={i} className="inline-flex items-center text-xs bg-blue-50 text-blue-700 border border-blue-200 rounded px-1.5 py-0.5 font-mono" title={ref.regulation}>
+                      {ref.clause}
+                    </span>
+                  ))}
+                </div>
+              )}
+
               {/* Suggested questions — collapsible */}
               <div className="mb-5">
                 <button

@@ -56,6 +56,7 @@ export default function Verifai() {
   // Shared state
   // -------------------------------------------------------------------------
   const [selectedIndustry, setSelectedIndustry] = useState('');
+  const [jurisdiction, setJurisdiction] = useState('International');
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState(null);
 
@@ -140,6 +141,7 @@ export default function Verifai() {
           industry: selectedIndustry,
           process: selectedProcess,
           clientContext: extraContext || undefined,
+          jurisdiction,
         })
       });
 
@@ -441,6 +443,7 @@ export default function Verifai() {
   const resetForm = () => {
     setSelectedIndustry('');
     setSelectedProcess('');
+    setJurisdiction('International');
     setShowResults(false);
     setAuditProgram(null);
     setGovernanceAssessment(null);
@@ -572,7 +575,7 @@ export default function Verifai() {
       const res = await fetch('/api/walkthrough', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ industry: selectedIndustry, process: selectedProcess, auditeeDetails }),
+        body: JSON.stringify({ industry: selectedIndustry, process: selectedProcess, auditeeDetails, jurisdiction }),
       });
       const result = await res.json();
       if (result.success) {
@@ -729,6 +732,9 @@ export default function Verifai() {
       isGeneratingWalkthrough={isGeneratingWalkthrough}
       handleGenerateWalkthrough={handleGenerateWalkthrough}
       walkthroughClientContext={walkthroughClientContext}
+      // jurisdiction
+      jurisdiction={jurisdiction}
+      setJurisdiction={setJurisdiction}
     />
   );
 }
