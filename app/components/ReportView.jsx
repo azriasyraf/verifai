@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { exportToWord } from '../lib/exportToWord';
 
 const RATING_STYLES = {
@@ -63,11 +63,113 @@ function AiDraftBanner({ sectionKey, dismissed, onDismiss }) {
   );
 }
 
-function FindingCard({ finding, index, isEditMode, onChange }) {
+// SourceField — for Condition, Cause, Recommendation: pre-filled AI draft + compare-on-demand
+function SourceField({
+  label,
+  fieldKey,
+  value,
+  originalValue,      // from Excel upload (may be empty)
+  compareKey,         // unique key for compareOpen state e.g. 'F001-condition'
+  compareOpen,
+  onToggleCompare,
+  onUseOriginal,
+  isEditMode,
+  onChange,
+  highlight = false,
+  // Recommendation-only: AI suggestion
+  aiSuggestion,
+  onGetSuggestion,
+  loadingSuggestion,
+}) {
+  const hasOriginal = !!(originalValue && originalValue.trim());
+  const isOpen = compareOpen[compareKey];
+
+  return (
+    <div className="grid grid-cols-[160px_1fr] gap-3 py-2 border-b border-gray-100 last:border-0">
+      <span className="text-sm font-medium text-gray-600 pt-1">{label}</span>
+      <div className="space-y-1.5">
+        {/* Value — editable in edit mode */}
+        {isEditMode ? (
+          <EditableText value={value} onChange={onChange} multiline />
+        ) : (
+          <p className={`text-sm whitespace-pre-wrap ${highlight ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+            {value || ''}
+          </p>
+        )}
+
+        {/* Source bar */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs text-gray-400">Source: AI draft</span>
+          {hasOriginal && (
+            <button
+              onClick={() => onToggleCompare(compareKey)}
+              className="text-xs text-indigo-500 hover:text-indigo-700 underline underline-offset-2"
+            >
+              {isOpen ? 'Hide original ↑' : 'Compare with original ↓'}
+            </button>
+          )}
+          {onGetSuggestion && (
+            <button
+              onClick={onGetSuggestion}
+              disabled={loadingSuggestion}
+              className="text-xs text-indigo-500 hover:text-indigo-700 underline underline-offset-2 disabled:opacity-50"
+            >
+              {loadingSuggestion ? 'Getting suggestion…' : aiSuggestion ? 'Refresh suggestion' : 'Get AI suggestion'}
+            </button>
+          )}
+        </div>
+
+        {/* Compare / suggestion panels */}
+        {(isOpen || aiSuggestion) && (
+          <div className="space-y-2 mt-1">
+            {isOpen && hasOriginal && (
+              <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                <p className="text-xs font-medium text-gray-500 mb-1">From your file</p>
+                <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{originalValue}</p>
+                <button
+                  onClick={() => onUseOriginal(compareKey, originalValue)}
+                  className="mt-2 text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-white transition-colors"
+                >
+                  Use this
+                </button>
+              </div>
+            )}
+            {aiSuggestion && (
+              <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                <p className="text-xs font-medium text-indigo-600 mb-1">AI suggestion</p>
+                <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{aiSuggestion}</p>
+                <button
+                  onClick={() => onUseOriginal(compareKey, aiSuggestion)}
+                  className="mt-2 text-xs px-2 py-1 rounded border border-indigo-200 text-indigo-600 hover:bg-white transition-colors"
+                >
+                  Use this
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FindingCard({
+  finding,
+  index,
+  isEditMode,
+  onChange,
+  sourceFinding,
+  compareOpen,
+  onToggleCompare,
+  onUseValue,
+  aiSuggestions,
+  onGetSuggestion,
+  loadingSuggestionFor,
+}) {
+  const ref = finding.ref || `F${String(index + 1).padStart(3, '0')}`;
   const ratingStyle = RATING_STYLES[finding.riskRating] || RATING_STYLES.Medium;
   const ratingSelectStyle = RATING_SELECT_STYLES[finding.riskRating] || RATING_SELECT_STYLES.Medium;
 
-  // label: display label, key: field key, multiline, highlight: bolder value for key fields
   const field = (label, key, multiline = false, highlight = false) => (
     <div className="grid grid-cols-[160px_1fr] gap-3 py-2 border-b border-gray-100 last:border-0">
       <span className="text-sm font-medium text-gray-600 pt-1">{label}</span>
@@ -91,7 +193,7 @@ function FindingCard({ finding, index, isEditMode, onChange }) {
       <div className="px-5 py-4 flex items-start justify-between gap-4 border-b border-gray-100">
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded shrink-0">
-            {finding.ref || `F${String(index + 1).padStart(3, '0')}`}
+            {ref}
           </span>
           {isEditMode ? (
             <EditableText
@@ -120,18 +222,65 @@ function FindingCard({ finding, index, isEditMode, onChange }) {
         )}
       </div>
 
-      {/* Fields — reordered: CCRE + Recommendation / Action Owner / Due Date / Status / Mgmt Response */}
       <div className="px-5 py-3">
-        {field('Condition', 'condition', true, true)}
+        {/* Condition — sourced from findingDescription */}
+        <SourceField
+          label="Condition"
+          fieldKey="condition"
+          value={finding.condition}
+          originalValue={sourceFinding?.findingDescription}
+          compareKey={`${ref}-condition`}
+          compareOpen={compareOpen}
+          onToggleCompare={onToggleCompare}
+          onUseOriginal={(key, val) => { onUseValue(index, 'condition', val); onToggleCompare(key, false); }}
+          isEditMode={isEditMode}
+          onChange={val => onChange(index, 'condition', val)}
+          highlight
+        />
+
+        {/* Criteria — pure AI, no source bar */}
         {field('Criteria', 'criteria', true)}
-        {field('Cause', 'cause', true)}
+
+        {/* Cause — sourced from rootCause */}
+        <SourceField
+          label="Cause"
+          fieldKey="cause"
+          value={finding.cause}
+          originalValue={sourceFinding?.rootCause}
+          compareKey={`${ref}-cause`}
+          compareOpen={compareOpen}
+          onToggleCompare={onToggleCompare}
+          onUseOriginal={(key, val) => { onUseValue(index, 'cause', val); onToggleCompare(key, false); }}
+          isEditMode={isEditMode}
+          onChange={val => onChange(index, 'cause', val)}
+        />
+
+        {/* Effect — pure AI, no source bar */}
         {field('Effect', 'effect', true)}
-        {field('Recommendation', 'recommendation', true, true)}
+
+        {/* Recommendation — sourced from recommendation + AI suggestion */}
+        <SourceField
+          label="Recommendation"
+          fieldKey="recommendation"
+          value={finding.recommendation}
+          originalValue={sourceFinding?.recommendation}
+          compareKey={`${ref}-recommendation`}
+          compareOpen={compareOpen}
+          onToggleCompare={onToggleCompare}
+          onUseOriginal={(key, val) => { onUseValue(index, 'recommendation', val); onToggleCompare(key, false); }}
+          isEditMode={isEditMode}
+          onChange={val => onChange(index, 'recommendation', val)}
+          highlight
+          aiSuggestion={aiSuggestions[ref]}
+          onGetSuggestion={() => onGetSuggestion(finding, sourceFinding)}
+          loadingSuggestion={loadingSuggestionFor === ref}
+        />
+
         {field('Action Owner', 'actionOwner')}
         {field('Due Date', 'dueDate')}
         {field('Status', 'status')}
 
-        {/* Management Response with QC flags — shown in read mode only; edit mode keeps it clean */}
+        {/* Management Response with QC flags */}
         <div className="grid grid-cols-[160px_1fr] gap-3 py-2">
           <span className="text-sm font-medium text-gray-600 pt-1">Management Response</span>
           <div className="space-y-1.5">
@@ -156,13 +305,29 @@ function FindingCard({ finding, index, isEditMode, onChange }) {
   );
 }
 
-export default function ReportView({ report, onReset }) {
+export default function ReportView({ report, sourceFindings = [], onReset }) {
   const originalReport = JSON.parse(JSON.stringify(report));
   const [editedReport, setEditedReport] = useState(() => JSON.parse(JSON.stringify(report)));
   const [isEditMode, setIsEditMode] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [activeSection, setActiveSection] = useState('cover');
   const [aiDraftDismissed, setAiDraftDismissed] = useState({});
+
+  // Source compare state
+  const [compareOpen, setCompareOpen] = useState({});
+  const [aiSuggestions, setAiSuggestions] = useState({});
+  const [loadingSuggestionFor, setLoadingSuggestionFor] = useState(null);
+  const [isGeneratingAllSuggestions, setIsGeneratingAllSuggestions] = useState(false);
+  const [suggestionError, setSuggestionError] = useState(null);
+
+  // Build lookup map from sourceFindings by ref
+  const sourceMap = useMemo(() =>
+    Object.fromEntries((sourceFindings || []).map(f => [
+      f.ref || `F${String(sourceFindings.indexOf(f) + 1).padStart(3, '0')}`,
+      f
+    ])),
+    [sourceFindings]
+  );
 
   const cover = editedReport.coverPage || {};
   const scope = editedReport.scopeAndObjectives || {};
@@ -188,9 +353,98 @@ export default function ReportView({ report, onReset }) {
     setEditedReport(prev => ({ ...prev, findings: updated }));
   };
 
+  const toggleCompare = (key, forceState) => {
+    if (forceState === false) {
+      setCompareOpen(prev => ({ ...prev, [key]: false }));
+    } else {
+      setCompareOpen(prev => ({ ...prev, [key]: !prev[key] }));
+    }
+  };
+
+  // Get AI suggestion for a single finding's recommendation
+  const handleGetSuggestion = async (finding, sourceFinding) => {
+    const ref = finding.ref || `F${String(findings.indexOf(finding) + 1).padStart(3, '0')}`;
+    setLoadingSuggestionFor(ref);
+    setSuggestionError(null);
+    try {
+      const res = await fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          findings: [{
+            ref,
+            condition: finding.condition,
+            criteria: finding.criteria,
+            cause: finding.cause,
+            effect: finding.effect,
+            riskRating: finding.riskRating,
+            recommendation: sourceFinding?.recommendation || '',
+          }]
+        }),
+      });
+      const result = await res.json();
+      if (result.success && result.data?.[0]) {
+        setAiSuggestions(prev => ({ ...prev, [ref]: result.data[0].recommendation }));
+        // Auto-open the recommendation compare so the suggestion is visible
+        setCompareOpen(prev => ({ ...prev, [`${ref}-recommendation`]: true }));
+      } else {
+        setSuggestionError('Could not generate suggestion. Try again.');
+      }
+    } catch {
+      setSuggestionError('Failed to connect to suggestion service.');
+    } finally {
+      setLoadingSuggestionFor(null);
+    }
+  };
+
+  // Batch: suggest all recommendations
+  const handleSuggestAll = async () => {
+    setIsGeneratingAllSuggestions(true);
+    setSuggestionError(null);
+    try {
+      const payload = findings.map((f, i) => {
+        const ref = f.ref || `F${String(i + 1).padStart(3, '0')}`;
+        const src = sourceMap[ref];
+        return {
+          ref,
+          condition: f.condition,
+          criteria: f.criteria,
+          cause: f.cause,
+          effect: f.effect,
+          riskRating: f.riskRating,
+          recommendation: src?.recommendation || '',
+        };
+      });
+      const res = await fetch('/api/recommend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ findings: payload }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        const suggestMap = {};
+        const openMap = {};
+        result.data.forEach(r => {
+          suggestMap[r.ref] = r.recommendation;
+          openMap[`${r.ref}-recommendation`] = true;
+        });
+        setAiSuggestions(prev => ({ ...prev, ...suggestMap }));
+        setCompareOpen(prev => ({ ...prev, ...openMap }));
+      } else {
+        setSuggestionError('Could not generate suggestions. Try again.');
+      }
+    } catch {
+      setSuggestionError('Failed to connect to suggestion service.');
+    } finally {
+      setIsGeneratingAllSuggestions(false);
+    }
+  };
+
   const handleDiscard = () => {
-    if (window.confirm('Discard all edits and revert to the AI-generated report?')) {
+    if (window.confirm('Restore all fields to the original report? All edits will be lost.')) {
       setEditedReport(JSON.parse(JSON.stringify(originalReport)));
+      setCompareOpen({});
+      setAiSuggestions({});
       setIsEditMode(false);
     }
   };
@@ -202,7 +456,6 @@ export default function ReportView({ report, onReset }) {
   };
 
   const handleExport = async () => {
-    // Pre-flight QC check
     const qcIssues = findings.reduce((acc, f) => {
       const issues = getMgmtResponseIssues(f.managementResponse, f.dueDate, f.actionOwner);
       if (issues.length > 0) acc.push(`${f.ref || '?'}: ${issues.join('; ')}`);
@@ -224,7 +477,6 @@ export default function ReportView({ report, onReset }) {
     }
   };
 
-  // Compute whether any finding has QC issues (for Findings tab badge)
   const findingsWithQcIssues = findings.filter(f =>
     getMgmtResponseIssues(f.managementResponse, f.dueDate, f.actionOwner).length > 0
   ).length;
@@ -254,7 +506,7 @@ export default function ReportView({ report, onReset }) {
                 onClick={handleDiscard}
                 className="text-sm px-3 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
               >
-                Discard changes
+                Restore to original
               </button>
               <button
                 onClick={() => setIsEditMode(false)}
@@ -355,7 +607,7 @@ export default function ReportView({ report, onReset }) {
         </div>
       )}
 
-      {/* SCOPE — single card with h3 separators */}
+      {/* SCOPE */}
       {activeSection === 'scope' && (
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 space-y-5">
           <div>
@@ -393,18 +645,44 @@ export default function ReportView({ report, onReset }) {
       {/* FINDINGS */}
       {activeSection === 'findings' && (
         <div className="space-y-4">
+          {/* Batch suggest + error */}
+          {findings.length > 0 && (
+            <div className="flex items-center justify-between gap-3">
+              <button
+                onClick={handleSuggestAll}
+                disabled={isGeneratingAllSuggestions}
+                className="text-xs px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 transition-colors"
+              >
+                {isGeneratingAllSuggestions ? 'Generating suggestions…' : 'Suggest all recommendations'}
+              </button>
+              {suggestionError && (
+                <p className="text-xs text-red-600">{suggestionError}</p>
+              )}
+            </div>
+          )}
           {findings.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-8">No findings in this report.</p>
           ) : (
-            findings.map((finding) => (
-              <FindingCard
-                key={finding.ref || finding.title}
-                finding={finding}
-                index={findings.indexOf(finding)}
-                isEditMode={isEditMode}
-                onChange={updateFinding}
-              />
-            ))
+            findings.map((finding) => {
+              const ref = finding.ref || finding.title;
+              const lookupRef = finding.ref || `F${String(findings.indexOf(finding) + 1).padStart(3, '0')}`;
+              return (
+                <FindingCard
+                  key={ref}
+                  finding={finding}
+                  index={findings.indexOf(finding)}
+                  isEditMode={isEditMode}
+                  onChange={updateFinding}
+                  sourceFinding={sourceMap[lookupRef]}
+                  compareOpen={compareOpen}
+                  onToggleCompare={toggleCompare}
+                  onUseValue={updateFinding}
+                  aiSuggestions={aiSuggestions}
+                  onGetSuggestion={handleGetSuggestion}
+                  loadingSuggestionFor={loadingSuggestionFor}
+                />
+              );
+            })
           )}
         </div>
       )}

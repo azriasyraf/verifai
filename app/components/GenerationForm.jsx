@@ -73,44 +73,6 @@ export default function GenerationForm({
   const [parseError, setParseError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Recommendation review panel state
-  const [showReviewPanel, setShowReviewPanel] = useState(false);
-  const [reviewedRecs, setReviewedRecs] = useState({}); // { [ref]: string } — editable textarea value
-  const [aiRecs, setAiRecs] = useState({});             // { [ref]: string } — AI output, read-only reference
-  const [startedFrom, setStartedFrom] = useState({});   // { [ref]: 'ai' | 'original' }
-  const [isGeneratingRecs, setIsGeneratingRecs] = useState(false);
-  const [recsError, setRecsError] = useState(null);
-
-  const handleGenerateRecs = async (findings) => {
-    setIsGeneratingRecs(true);
-    setRecsError(null);
-    try {
-      const res = await fetch('/api/recommend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ findings }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        const aiMap = {};
-        const editMap = {};
-        result.data.forEach(r => {
-          aiMap[r.ref] = r.recommendation;
-          editMap[r.ref] = ''; // empty until auditor selects a version to start from
-        });
-        setAiRecs(aiMap);
-        setReviewedRecs(editMap);
-        setStartedFrom({});
-        setShowReviewPanel(true);
-      } else {
-        setRecsError(result.error || 'Failed to generate recommendations');
-      }
-    } catch {
-      setRecsError('Failed to connect to recommendation service');
-    } finally {
-      setIsGeneratingRecs(false);
-    }
-  };
 
   // Client context enrichment state (audit mode only)
   // Pre-populate from walkthrough if the user came from a walkthrough working paper
@@ -122,12 +84,6 @@ export default function GenerationForm({
     if (!file) return;
     setParseError(null);
     setParsedFindings(null);
-    setShowReviewPanel(false);
-    setReviewedRecs({});
-    setAiRecs({});
-    setStartedFrom({});
-    setRecsError(null);
-
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
@@ -710,12 +666,6 @@ export default function GenerationForm({
             ];
             const engagementDetails = parsedFindings?.engagementDetails || {};
 
-            // Merge reviewed recommendations into findings before generating report
-            const findingsWithRecs = allFindings.map(f => ({
-              ...f,
-              recommendation: reviewedRecs[f.ref] ?? f.recommendation ?? '',
-            }));
-
             return (
               <>
                 {/* Raised findings from analytics */}
@@ -733,153 +683,13 @@ export default function GenerationForm({
                   </div>
                 )}
 
-                {/* Review / Regenerate button — always visible when findings loaded */}
-                {canGenerate && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <button
-                      onClick={() => handleGenerateRecs(allFindings)}
-                      disabled={isGeneratingRecs}
-                      className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 disabled:opacity-50 transition-colors"
-                    >
-                      {isGeneratingRecs ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Generating recommendations...
-                        </span>
-                      ) : showReviewPanel ? 'Regenerate Recommendations' : 'Review Recommendations'}
-                    </button>
-                    {showReviewPanel && (
-                      <button
-                        onClick={() => setShowReviewPanel(false)}
-                        className="px-3 py-2.5 rounded-xl text-sm border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
-                        title="Collapse — your edits are preserved"
-                      >
-                        Collapse ↑
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {!showReviewPanel && canGenerate && (
-                  <p className="text-xs text-gray-400 text-center mb-2">Optional — you can generate without reviewing recommendations</p>
-                )}
-
-                {/* Recommendation review panel */}
-                {canGenerate && showReviewPanel && (
-                  <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-2">
-                    <div className="px-4 py-3 border-b border-gray-100">
-                      <p className="text-sm font-semibold text-gray-800">Review Recommendations</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Compare your recommendation against the AI-generated version. Edit before generating.</p>
-                    </div>
-                    <div className="divide-y divide-gray-100">
-                      {allFindings.map((f, i) => {
-                        const ref = f.ref || `F${String(i + 1).padStart(3, '0')}`;
-                        const hasOriginal = !!(f.recommendation && f.recommendation.trim());
-                        const aiVersion = aiRecs[ref] ?? '';
-                        const current = reviewedRecs[ref] ?? '';
-                        const origin = startedFrom[ref];
-
-                        const useVersion = (version) => {
-                          const text = version === 'original' ? f.recommendation : aiVersion;
-                          setReviewedRecs(prev => ({ ...prev, [ref]: text }));
-                          setStartedFrom(prev => ({ ...prev, [ref]: version }));
-                        };
-
-                        return (
-                          <div key={i} className="px-4 py-4 space-y-3">
-                            {/* Finding header + full context */}
-                            <div className="space-y-1.5">
-                              <div className="flex items-center gap-2">
-                                <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${
-                                  f.riskRating === 'High' ? 'bg-red-100 text-red-700' :
-                                  f.riskRating === 'Low' ? 'bg-green-100 text-green-700' :
-                                  'bg-amber-100 text-amber-700'
-                                }`}>{f.riskRating || 'Medium'}</span>
-                                <span className="text-gray-300">·</span>
-                                <span className="text-xs font-medium text-indigo-600">{ref}</span>
-                              </div>
-                              <p className="text-sm text-gray-800 leading-relaxed">{f.findingDescription}</p>
-                              {f.rootCause && f.rootCause.trim() && (
-                                <p className="text-xs text-gray-500"><span className="font-medium text-gray-600">Root cause:</span> {f.rootCause}</p>
-                              )}
-                            </div>
-
-                            {/* Compare panel — auditor had a recommendation */}
-                            {hasOriginal && (
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className={`rounded-lg border p-3 space-y-2 transition-colors ${origin === 'original' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 bg-gray-50'}`}>
-                                  <p className="text-xs font-semibold text-gray-600">Your recommendation</p>
-                                  <p className="text-xs text-gray-700 leading-relaxed">{f.recommendation}</p>
-                                  <button
-                                    onClick={() => useVersion('original')}
-                                    className="text-xs font-medium border border-indigo-300 text-indigo-600 hover:bg-indigo-50 rounded px-2 py-1 transition-colors"
-                                  >
-                                    Use this version
-                                  </button>
-                                </div>
-                                <div className={`rounded-lg border p-3 space-y-2 transition-colors ${origin === 'ai' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 bg-gray-50'}`}>
-                                  <p className="text-xs font-semibold text-gray-600">AI suggestion</p>
-                                  <p className="text-xs text-gray-700 leading-relaxed">{aiVersion}</p>
-                                  <button
-                                    onClick={() => useVersion('ai')}
-                                    className="text-xs font-medium border border-indigo-300 text-indigo-600 hover:bg-indigo-50 rounded px-2 py-1 transition-colors"
-                                  >
-                                    Use this version
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* AI suggestion only — no auditor recommendation */}
-                            {!hasOriginal && aiVersion && (
-                              <div className={`rounded-lg border p-3 space-y-2 transition-colors ${origin === 'ai' ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 bg-gray-50'}`}>
-                                <p className="text-xs font-semibold text-gray-600">AI suggestion</p>
-                                <p className="text-xs text-gray-700 leading-relaxed">{aiVersion}</p>
-                                <button
-                                  onClick={() => useVersion('ai')}
-                                  className="text-xs font-medium border border-indigo-300 text-indigo-600 hover:bg-indigo-50 rounded px-2 py-1 transition-colors"
-                                >
-                                  Use this version
-                                </button>
-                              </div>
-                            )}
-
-                            {/* Editable textarea */}
-                            <div className="space-y-1">
-                              {origin && (
-                                <p className="text-xs text-gray-400">
-                                  Editing from: <span className="font-medium text-gray-500">{origin === 'original' ? 'your recommendation' : 'AI suggestion'}</span> — edit freely
-                                </p>
-                              )}
-                              <textarea
-                                value={current}
-                                onChange={e => setReviewedRecs(prev => ({ ...prev, [ref]: e.target.value }))}
-                                rows={3}
-                                placeholder="Select a version above or type your recommendation here..."
-                                className="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 text-gray-700 resize-y focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {recsError && (
-                  <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-2">{recsError}</p>
-                )}
-
-                {/* AI disclosure — checkpoint, not footnote */}
+                {/* AI disclosure */}
                 <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-2.5 mb-3">
                   <p className="text-xs text-amber-700">AI-generated content requires review by a competent auditor before issue. Verifai does not replace professional judgement.</p>
                 </div>
 
                 <button
-                  onClick={() => canGenerate && handleGenerateReport({ engagementDetails, findings: findingsWithRecs })}
+                  onClick={() => canGenerate && handleGenerateReport({ engagementDetails, findings: allFindings })}
                   disabled={!canGenerate || isGeneratingReport}
                   className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                     canGenerate && !isGeneratingReport

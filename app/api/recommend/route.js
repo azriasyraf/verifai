@@ -16,9 +16,11 @@ export async function POST(request) {
     const findingsList = findings.map((f, i) => `
 Finding ${i + 1}:
 - Ref: ${f.ref || `F${String(i + 1).padStart(3, '0')}`}
-- Description: ${f.findingDescription || ''}
+${f.condition ? `- Condition: ${f.condition}` : `- Description: ${f.findingDescription || ''}`}
+${f.cause ? `- Cause: ${f.cause}` : `- Root Cause: ${f.rootCause || ''}`}
+${f.criteria ? `- Criteria: ${f.criteria}` : ''}
+${f.effect ? `- Effect: ${f.effect}` : ''}
 - Risk Rating: ${f.riskRating || 'Medium'}
-- Root Cause: ${f.rootCause || ''}
 - Auditor's existing recommendation: ${f.recommendation || '[none provided]'}`).join('\n');
 
     const prompt = `You are an expert internal auditor. For each finding below, produce a recommendation.

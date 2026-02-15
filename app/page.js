@@ -118,6 +118,7 @@ export default function Verifai() {
   // -------------------------------------------------------------------------
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [auditReport, setAuditReport] = useState(null);
+  const [reportSourceFindings, setReportSourceFindings] = useState(null);
 
   // -------------------------------------------------------------------------
   // Walkthrough state
@@ -502,6 +503,7 @@ export default function Verifai() {
   // Report handler
   // -------------------------------------------------------------------------
   const handleGenerateReport = async ({ engagementDetails, findings }) => {
+    setReportSourceFindings(findings);
     setIsGeneratingReport(true);
     setError(null);
 
@@ -645,7 +647,8 @@ export default function Verifai() {
         <div className="max-w-4xl mx-auto px-6 py-10">
           <ReportView
             report={auditReport}
-            onReset={() => { setAuditReport(null); setShowResults(false); setGenerationMode('report'); }}
+            sourceFindings={reportSourceFindings}
+            onReset={() => { setAuditReport(null); setReportSourceFindings(null); setShowResults(false); setGenerationMode('report'); }}
           />
         </div>
       </div>
