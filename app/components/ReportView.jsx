@@ -73,6 +73,8 @@ function SourceField({
   compareOpen,
   onToggleCompare,
   onUseOriginal,
+  fieldSource,        // 'original' | 'ai-suggestion' | undefined (AI draft)
+  onSetFieldSource,
   isEditMode,
   onChange,
   highlight = false,
@@ -83,6 +85,10 @@ function SourceField({
 }) {
   const hasOriginal = !!(originalValue && originalValue.trim());
   const isOpen = compareOpen[compareKey];
+
+  const sourceLabel = fieldSource === 'original' ? 'Source: your file'
+    : fieldSource === 'ai-suggestion' ? 'Source: AI suggestion'
+    : 'Source: AI draft';
 
   return (
     <div className="grid grid-cols-[160px_1fr] gap-3 py-2 border-b border-gray-100 last:border-0">
@@ -99,7 +105,7 @@ function SourceField({
 
         {/* Source bar */}
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-xs text-gray-400">Source: AI draft</span>
+          <span className="text-xs text-gray-400">{sourceLabel}</span>
           {hasOriginal && (
             <button
               onClick={() => onToggleCompare(compareKey)}
@@ -127,7 +133,10 @@ function SourceField({
                 <p className="text-xs font-medium text-gray-500 mb-1">From your file</p>
                 <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{originalValue}</p>
                 <button
-                  onClick={() => onUseOriginal(compareKey, originalValue)}
+                  onClick={() => {
+                    onUseOriginal(compareKey, originalValue);
+                    onSetFieldSource?.(compareKey, 'original');
+                  }}
                   className="mt-2 text-xs px-2 py-1 rounded border border-gray-200 text-gray-600 hover:bg-white transition-colors"
                 >
                   Use this
@@ -139,7 +148,10 @@ function SourceField({
                 <p className="text-xs font-medium text-indigo-600 mb-1">AI suggestion</p>
                 <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap">{aiSuggestion}</p>
                 <button
-                  onClick={() => onUseOriginal(compareKey, aiSuggestion)}
+                  onClick={() => {
+                    onUseOriginal(compareKey, aiSuggestion);
+                    onSetFieldSource?.(compareKey, 'ai-suggestion');
+                  }}
                   className="mt-2 text-xs px-2 py-1 rounded border border-indigo-200 text-indigo-600 hover:bg-white transition-colors"
                 >
                   Use this
@@ -162,6 +174,8 @@ function FindingCard({
   compareOpen,
   onToggleCompare,
   onUseValue,
+  fieldSources,
+  onSetFieldSource,
   aiSuggestions,
   onGetSuggestion,
   loadingSuggestionFor,
@@ -233,6 +247,8 @@ function FindingCard({
           compareOpen={compareOpen}
           onToggleCompare={onToggleCompare}
           onUseOriginal={(key, val) => { onUseValue(index, 'condition', val); onToggleCompare(key, false); }}
+          fieldSource={fieldSources[`${ref}-condition`]}
+          onSetFieldSource={onSetFieldSource}
           isEditMode={isEditMode}
           onChange={val => onChange(index, 'condition', val)}
           highlight
@@ -251,6 +267,8 @@ function FindingCard({
           compareOpen={compareOpen}
           onToggleCompare={onToggleCompare}
           onUseOriginal={(key, val) => { onUseValue(index, 'cause', val); onToggleCompare(key, false); }}
+          fieldSource={fieldSources[`${ref}-cause`]}
+          onSetFieldSource={onSetFieldSource}
           isEditMode={isEditMode}
           onChange={val => onChange(index, 'cause', val)}
         />
@@ -268,6 +286,8 @@ function FindingCard({
           compareOpen={compareOpen}
           onToggleCompare={onToggleCompare}
           onUseOriginal={(key, val) => { onUseValue(index, 'recommendation', val); onToggleCompare(key, false); }}
+          fieldSource={fieldSources[`${ref}-recommendation`]}
+          onSetFieldSource={onSetFieldSource}
           isEditMode={isEditMode}
           onChange={val => onChange(index, 'recommendation', val)}
           highlight
@@ -315,10 +335,14 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
 
   // Source compare state
   const [compareOpen, setCompareOpen] = useState({});
+  const [fieldSources, setFieldSources] = useState({}); // { 'F001-condition': 'original' | 'ai-suggestion' }
   const [aiSuggestions, setAiSuggestions] = useState({});
   const [loadingSuggestionFor, setLoadingSuggestionFor] = useState(null);
   const [isGeneratingAllSuggestions, setIsGeneratingAllSuggestions] = useState(false);
   const [suggestionError, setSuggestionError] = useState(null);
+
+  const setFieldSource = (key, source) =>
+    setFieldSources(prev => ({ ...prev, [key]: source }));
 
   // Build lookup map from sourceFindings by ref
   const sourceMap = useMemo(() =>
@@ -444,6 +468,7 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
     if (window.confirm('Restore all fields to the original report? All edits will be lost.')) {
       setEditedReport(JSON.parse(JSON.stringify(originalReport)));
       setCompareOpen({});
+      setFieldSources({});
       setAiSuggestions({});
       setIsEditMode(false);
     }
@@ -677,6 +702,8 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
                   compareOpen={compareOpen}
                   onToggleCompare={toggleCompare}
                   onUseValue={updateFinding}
+                  fieldSources={fieldSources}
+                  onSetFieldSource={setFieldSource}
                   aiSuggestions={aiSuggestions}
                   onGetSuggestion={handleGetSuggestion}
                   loadingSuggestionFor={loadingSuggestionFor}
