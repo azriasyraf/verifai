@@ -114,19 +114,30 @@ export default function GenerationForm({
 
         const rows = XLSX.utils.sheet_to_json(findingsSheet, { header: 1 });
         // Header row is row index 3 (0-based), data starts at row index 4
-        const dataRows = rows.slice(4).filter(row => row[3] && String(row[3]).trim() !== '');
+        // Include any row with at least one non-blank cell in cols 0-9 — blank description detection happens in the UI
+        const dataRows = rows.slice(4).filter(row =>
+          row.slice(0, 10).some(cell => cell !== undefined && cell !== null && String(cell).trim() !== '')
+        );
 
         if (dataRows.length === 0) {
           setParseError('No findings found in the Findings Summary tab. Please fill in the Finding Description column before uploading.');
           return;
         }
 
+        const normaliseRating = (raw) => {
+          const r = String(raw || '').trim().toLowerCase();
+          if (['high', 'critical', 'very high', 'severe'].includes(r)) return 'High';
+          if (['medium', 'moderate', 'significant', 'med'].includes(r)) return 'Medium';
+          if (['low', 'minor', 'info', 'informational', 'low risk'].includes(r)) return 'Low';
+          return String(raw || '').trim(); // return as-is so hint can show the original value
+        };
+
         const findings = dataRows.map(row => ({
           ref: String(row[0] || ''),
           controlId: String(row[1] || ''),
           riskId: String(row[2] || ''),
           findingDescription: String(row[3] || ''),
-          riskRating: String(row[4] || 'Medium'),
+          riskRating: normaliseRating(row[4]) || 'Medium',
           rootCause: String(row[5] || ''),
           recommendation: String(row[6] || ''),
           managementResponse: String(row[7] || ''),
@@ -339,9 +350,13 @@ export default function GenerationForm({
                     <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{parseError}</p>
                   )}
                   {parsedFindings?.findings?.length > 0 && (() => {
+                    const droppedRefs = [];
                     const findingsWithHints = parsedFindings.findings.map(f => {
                       const hasOtherFields = !!(f.rootCause?.trim() || f.recommendation?.trim() || f.managementResponse?.trim() || f.dueDate?.trim());
-                      if (!f.findingDescription?.trim() && !hasOtherFields) return null; // silent drop — empty row
+                      if (!f.findingDescription?.trim() && !hasOtherFields) {
+                        if (f.ref?.trim()) droppedRefs.push(f.ref.trim());
+                        return null;
+                      }
                       const errors = [];
                       const hints = [];
                       if (!f.findingDescription?.trim() && hasOtherFields) {
@@ -357,12 +372,25 @@ export default function GenerationForm({
                         hints.push({ text: 'No management response — add this in the report before exporting', field: 'Mgmt Response' });
                       if (!f.dueDate || f.dueDate.trim().length === 0)
                         hints.push({ text: 'No due date — QC flag will appear in the report', field: 'Due Date' });
-                      if (!f.riskRating || !['High', 'Medium', 'Low'].includes(f.riskRating))
-                        hints.push({ text: 'Risk rating not recognised — will default to Medium', field: 'Risk Rating' });
+                      if (!['High', 'Medium', 'Low'].includes(f.riskRating))
+                        hints.push({ text: `Risk rating '${f.riskRating}' not recognised — accepted values: High, Medium, Low. Will default to Medium.`, field: 'Risk Rating' });
                       return { ...f, hints, errors };
                     }).filter(Boolean);
+
+                    // Detect numeric gaps in ref sequence (e.g. F005 → F008 skips F006, F007)
+                    const numericRefs = findingsWithHints
+                      .map(f => parseInt((f.ref || '').replace(/\D/g, ''), 10))
+                      .filter(n => !isNaN(n))
+                      .sort((a, b) => a - b);
+                    const gapRefs = [];
+                    for (let i = 1; i < numericRefs.length; i++) {
+                      for (let n = numericRefs[i - 1] + 1; n < numericRefs[i]; n++) {
+                        gapRefs.push(`F${String(n).padStart(3, '0')}`);
+                      }
+                    }
+
                     const errorCount = findingsWithHints.filter(f => f.errors.length > 0).length;
-                    const flaggedCount = findingsWithHints.filter(f => f.hints.length > 0).length;
+                    const hintCount = findingsWithHints.reduce((sum, f) => sum + f.hints.length, 0);
                     return (
                       <div className="bg-gray-50 rounded-lg px-4 py-3 space-y-2">
                         <div className="flex items-center justify-between">
@@ -373,11 +401,23 @@ export default function GenerationForm({
                             {errorCount > 0 && (
                               <p className="text-xs text-red-600 font-medium">{errorCount} error{errorCount !== 1 ? 's' : ''} — fix before generating</p>
                             )}
-                            {flaggedCount > 0 && (
-                              <p className="text-xs text-amber-600 font-medium">{flaggedCount} warning{flaggedCount !== 1 ? 's' : ''}</p>
+                            {hintCount > 0 && (
+                              <p className="text-xs text-amber-600 font-medium">{hintCount} quality hint{hintCount !== 1 ? 's' : ''}</p>
                             )}
                           </div>
                         </div>
+                        {droppedRefs.length > 0 && (
+                          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded px-3 py-2 text-xs text-amber-700">
+                            <span className="shrink-0 mt-0.5">⚠</span>
+                            <span><span className="font-semibold">{droppedRefs.length} row{droppedRefs.length !== 1 ? 's' : ''} dropped — no content found ({droppedRefs.join(', ')}).</span> Check your workbook if these deletions were unintentional.</span>
+                          </div>
+                        )}
+                        {gapRefs.length > 0 && (
+                          <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded px-3 py-2 text-xs text-amber-700">
+                            <span className="shrink-0 mt-0.5">⚠</span>
+                            <span><span className="font-semibold">Ref gap detected — {gapRefs.join(', ')} not found in this workbook.</span> If these findings exist, check your workbook before generating.</span>
+                          </div>
+                        )}
                         {findingsWithHints.map((f, i) => (
                           <div key={i} className="space-y-1">
                             <div className="flex items-center gap-2 text-xs text-gray-600">
@@ -388,7 +428,7 @@ export default function GenerationForm({
                               }`}>{f.riskRating || 'Medium'}</span>
                               <span className="font-medium shrink-0">{f.ref}</span>
                               <span className="text-gray-300">·</span>
-                              <span className="truncate text-gray-500">{(f.findingDescription || '[description missing]').substring(0, 60)}</span>
+                              <span className="truncate text-gray-500">{(f.findingDescription || '[description missing]').substring(0, 60)}{(f.findingDescription?.length > 60) ? '…' : ''}</span>
                             </div>
                             {f.errors?.map((e, ei) => (
                               <p key={ei} className="text-xs text-red-600 bg-red-50 border border-red-200 rounded px-2 py-0.5 ml-1 flex items-center gap-1.5">
@@ -396,12 +436,16 @@ export default function GenerationForm({
                                 <span>{e.text}</span>
                               </p>
                             ))}
-                            {f.hints.map((h, hi) => (
-                              <p key={hi} className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-0.5 ml-1 flex items-center gap-1.5">
-                                <span className="shrink-0">⚠</span>
-                                <span>{h.text}</span>
-                              </p>
-                            ))}
+                            {f.hints.length > 0 && (
+                              <div className="flex flex-wrap items-center gap-1 ml-1 mt-0.5">
+                                {f.hints.map((h, hi) => (
+                                  <span key={hi} title={h.text} className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 cursor-default">
+                                    <span className="shrink-0">⚠</span>
+                                    <span>{h.field}</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
