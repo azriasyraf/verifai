@@ -79,9 +79,11 @@ export default function AuditProgramView({
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
+          if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
+            // Heading has scrolled above the viewport — user is inside this section
             passed.add(entry.target.id);
           } else {
+            // Heading is visible or still below — don't show banner yet
             passed.delete(entry.target.id);
           }
         });
@@ -283,7 +285,6 @@ export default function AuditProgramView({
         {/* Phase 1: Risk Assessment */}
         <div id="phase-1" className="mb-4 pl-4 border-l-4 border-teal-500 bg-teal-50 rounded-r-lg py-3 pr-4">
           <span className="text-xs font-bold text-teal-500 uppercase tracking-widest">Risk Assessment</span>
-          <h2 className="text-base font-semibold text-teal-900">Risk Assessment</h2>
           <p className="text-xs text-teal-700 mt-0.5">Understand the process, identify what can go wrong, and define audit objectives.</p>
         </div>
 
@@ -616,7 +617,6 @@ export default function AuditProgramView({
         {/* Phase 2: Test of Controls */}
         <div id="phase-2" className="mb-4 pl-4 border-l-4 border-violet-500 bg-violet-50 rounded-r-lg py-3 pr-4">
           <span className="text-xs font-bold text-violet-500 uppercase tracking-widest">Test of Controls</span>
-          <h2 className="text-base font-semibold text-violet-900">Test of Controls</h2>
           <p className="text-xs text-violet-700 mt-0.5">Verify that controls exist and are operating effectively. Analytics tests in this phase are control-linked — they check whether a specific control caught what it should (e.g. "Did the approval workflow flag this exception?").</p>
         </div>
 
@@ -968,8 +968,7 @@ export default function AuditProgramView({
           <>
           <div id="phase-3" className="mb-4 pl-4 border-l-4 border-amber-500 bg-amber-50 rounded-r-lg py-3 pr-4">
             <span className="text-xs font-bold text-amber-500 uppercase tracking-widest">Data Analytics</span>
-            <h2 className="text-base font-semibold text-emerald-900">Substantive Analytics</h2>
-            <p className="text-xs text-emerald-700 mt-0.5">Run directly against the full dataset — not tied to any specific control. Designed to surface anomalies, duplicates, and outliers that control-based testing is not designed to detect.</p>
+            <p className="text-xs text-amber-700 mt-0.5">Run directly against the full dataset — not tied to any specific control. Designed to surface anomalies, duplicates, and outliers that control-based testing is not designed to detect.</p>
           </div>
 
           {/* File upload area */}
