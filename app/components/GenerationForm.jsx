@@ -439,9 +439,12 @@ export default function GenerationForm({
                             {f.hints.length > 0 && (
                               <div className="flex flex-wrap items-center gap-1 ml-1 mt-0.5">
                                 {f.hints.map((h, hi) => (
-                                  <span key={hi} title={h.text} className="inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 cursor-default">
+                                  <span key={hi} className="relative group inline-flex items-center gap-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 cursor-default">
                                     <span className="shrink-0">⚠</span>
                                     <span>{h.field}</span>
+                                    <span className="pointer-events-none absolute bottom-full left-0 mb-2 w-max max-w-xs bg-white border border-amber-200 rounded-lg shadow-sm px-2.5 py-1.5 text-xs text-gray-700 leading-snug opacity-0 group-hover:opacity-100 transition-opacity duration-150 z-10">
+                                      {h.text}
+                                    </span>
                                   </span>
                                 ))}
                               </div>
