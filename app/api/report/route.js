@@ -85,38 +85,56 @@ SCHEMA — return exactly this structure:
     "preparedBy": "[auditor name]",
     "reportDate": "[today's date]"
   },
-  "executiveSummary": "2-3 paragraphs: what was audited, number and severity of findings, management's commitment to remediation",
+  "executiveSummary": "One concise page covering: (1) what was audited and why, (2) a findings summary by criticality — e.g. '6 observations were raised: 2 High, 3 Medium, 1 Low', (3) the most significant issues in plain language, (4) management's commitment to remediation. No jargon. Short sentences.",
   "scopeAndObjectives": {
-    "objectives": ["Objective 1", "Objective 2", "Objective 3"],
-    "scope": "What was included and excluded, population size if relevant",
-    "methodology": "Audit methodology referencing IIA IPPF"
+    "objectives": ["Objective 1 — linked to the organisation's operational or strategic goals", "Objective 2", "Objective 3"],
+    "scope": "What activities and periods were included, what was excluded, population size if relevant",
+    "methodology": "Audit methodology referencing IIA IPPF Standards"
   },
   "findings": [
     {
       "ref": "F001",
-      "title": "Factual past-tense statement of what went wrong — e.g. 'Changes to Payroll Master Data Were Not Authorised', 'Terminated Employees Continued to Receive Salary Payments', 'Payroll Reconciliation Was Not Performed for 4 of 12 Months'",
+      "title": "Short declarative noun phrase (3–6 words) that names the problem — reader understands the issue from the title alone. E.g. 'Payroll Master Data Changes Not Authorised', 'Terminated Employees Received Salary Payments', 'Monthly Payroll Reconciliation Not Performed'. Do NOT describe the procedure tested.",
       "riskRating": "High | Medium | Low",
-      "condition": "What the auditor observed — specific, factual, quantified where the data supports it",
-      "criteria": "The policy, standard, or expectation that was not met — cite the source",
-      "cause": "Root cause of the exception — why the control failed or was absent (not a restatement of condition)",
-      "effect": "Business impact or consequence if not addressed",
-      "recommendation": "Specific, actionable recommendation targeting the root cause",
-      "managementResponse": "Management's response and commitment — use fieldwork notes or draft placeholder if blank",
-      "actionOwner": "Role or name responsible for remediation",
-      "dueDate": "Target remediation date",
+      "condition": "What exists — the specific, factual, measurable observation. Quantify where data supports it (e.g. '7 of 25 transactions', 'RM14,760 overpaid'). Do not interpret or conclude here — state facts only.",
+      "criteria": "What should exist — the specific policy, procedure, regulation, law, or leading practice that was not met. Cite the source explicitly (e.g. 'Section 3.2 of the Payroll SOP', 'Employment Act 1955 Section 25'). This is what makes the finding defensible.",
+      "cause": "Why the gap exists — the immediate reason the condition deviates from criteria. Distinguish cause (why it happened) from root cause (the systemic reason that, if fixed, prevents recurrence). State both where identifiable. Do not restate the condition.",
+      "effect": "The actual or potential consequence — financial, operational, compliance, or reputational. Quantify financial impact where data supports it. If no real harm has yet occurred, state the exposure and likelihood.",
+      "recommendation": "Specific, actionable corrective actions — include both: (1) condition-based action to fix the immediate issue, and (2) root cause-based action to prevent recurrence. Practical and feasible. Do not issue generic recommendations.",
+      "managementResponse": "Management's agreed corrective actions addressing both condition and root cause. Draft placeholder if blank: 'Management acknowledges the finding. A formal response and action plan will be provided by [due date].'",
+      "actionOwner": "Named person or role accountable for executing the action — not a generic function",
+      "dueDate": "Specific target completion date appropriate to the risk level",
       "status": "Open"
     }
   ],
-  "conclusion": "Overall conclusion: audit outcome, most significant findings, follow-up plan"
+  "conclusion": "Summary assessment of the engagement: overall control environment posture, the most significant findings and their combined impact, whether management's agreed actions are sufficient to address root causes, and the follow-up plan."
 }
 
-REQUIREMENTS:
-- Expand brief finding descriptions into full professional CCCE narrative
-- Condition: specific and quantified where data supports it
-- Criteria: must cite the relevant policy, standard, or best practice
-- Cause: identify root cause — not a restatement of the condition
-- Effect: clear business impact
-- Recommendations: specific and actionable, not generic
-- If management response is blank: draft placeholder "Management acknowledges the finding and will provide a formal response by [due date]."
-- Executive summary must reflect all findings — write it to summarise the full picture`;
+REQUIREMENTS — apply in priority order:
+
+FINDINGS:
+- List findings in order of significance — High risk first, then Medium, then Low
+- Condition: factual and quantified — never interpretive
+- Criteria: always cite the specific source — a named policy, standard, regulation, or leading practice
+- Cause: identify both the immediate cause and the root cause; they are different things
+- Effect: quantify financial impact where data supports it; state exposure clearly where no real harm has yet occurred
+- Recommendation: must address root cause, not just condition — condition-only fixes will not prevent recurrence
+- Titles: 3–6 words, noun phrase, names the problem (not the procedure tested)
+
+MANAGEMENT RESPONSE:
+- Must address root cause, not just condition
+- If response addresses only the condition (e.g. "access has been removed") without preventing recurrence, draft a more complete placeholder
+- If blank: use the placeholder above
+
+EXECUTIVE SUMMARY:
+- Include a findings count by criticality (e.g. "2 High, 3 Medium, 1 Low")
+- Plain language — no audit methodology jargon
+- Short sentences
+- Constructive tone — not adversarial
+
+TONE throughout:
+- Accurate, objective, clear, concise, constructive, complete
+- Short sentences; precise word choice
+- No technical jargon unless unavoidable
+- Consistent terminology — do not use different words for the same concept`;
 }
