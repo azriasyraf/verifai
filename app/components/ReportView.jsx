@@ -530,58 +530,25 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-[1fr_192px] gap-6 items-start">
+        <div>{/* left column */}
+
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Audit Report Draft</h2>
+          <span className="text-xs font-semibold tracking-widest text-indigo-600 uppercase block mb-1">Audit Report Draft</span>
+          <h2 className="text-2xl font-semibold text-gray-900">{cover.title || 'Internal Audit Report'}</h2>
           <p className="text-sm text-gray-500 mt-0.5">
             {cover.client || 'Client'} · {cover.auditPeriod || 'Period not specified'}
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
-          {isEditMode ? (
-            <>
-              <button
-                onClick={handleDiscard}
-                className="text-sm px-3 py-2 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
-              >
-                Restore to original
-              </button>
-              <button
-                onClick={() => setIsEditMode(false)}
-                className="text-sm px-4 py-2 rounded-lg border border-indigo-200 text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
-              >
-                Close editor
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setIsEditMode(true)}
-              className="text-sm px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
-            >
-              Edit
-            </button>
-          )}
-          <button
-            onClick={handleExport}
-            disabled={isExporting}
-            className="text-sm px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-medium disabled:opacity-50"
-          >
-            {isExporting ? 'Exporting...' : 'Export to Word'}
-          </button>
-          <button
-            onClick={handleReset}
-            className="text-sm px-4 py-2 rounded-lg border border-gray-200 text-red-500 hover:bg-red-50"
-          >
-            New report
-          </button>
-        </div>
       </div>
 
       {/* Section tabs */}
-      <div className="border-t border-gray-100 pt-1">
-        <div className="flex gap-1 border-b border-gray-200 overflow-x-auto">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm mb-4">
+        <div className="flex gap-1 border-b border-gray-200 overflow-x-auto px-2 pt-1">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -750,6 +717,90 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
           </div>
         </div>
       )}
+      </div>{/* end left column */}
+
+        {/* Sticky right sidebar */}
+        <div className="sticky top-6">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-2">
+
+            {/* Editing badge */}
+            {isEditMode && (
+              <div className="pb-2 border-b border-gray-100">
+                <span className="bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 text-xs font-medium">Editing</span>
+              </div>
+            )}
+
+            {/* Primary action */}
+            <button
+              onClick={handleExport}
+              disabled={isExporting}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors disabled:opacity-50"
+            >
+              {isExporting ? 'Exporting...' : 'Export to Word'}
+            </button>
+
+            {/* Edit toggle */}
+            {!isEditMode ? (
+              <button
+                onClick={() => setIsEditMode(true)}
+                className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+              >
+                Edit Report
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => setIsEditMode(false)}
+                  className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+                >
+                  Close editor
+                </button>
+                <button
+                  onClick={handleDiscard}
+                  className="w-full bg-white hover:bg-red-50 text-red-500 border border-red-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+                >
+                  Restore to original
+                </button>
+              </>
+            )}
+
+            {/* Section navigation */}
+            <div className="border-t border-gray-100 pt-3 space-y-0.5">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">Jump to</p>
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveSection(tab.id)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors text-left ${
+                    activeSection === tab.id
+                      ? 'bg-indigo-50 text-indigo-700 font-medium'
+                      : 'hover:bg-indigo-50 text-indigo-700'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${activeSection === tab.id ? 'bg-indigo-600' : 'bg-indigo-300'}`}></span>
+                  <span className="truncate">{tab.label}</span>
+                  {tab.qcCount > 0 && (
+                    <span className="ml-auto w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Tertiary */}
+            <div className="border-t border-gray-100 pt-3">
+              <button
+                onClick={handleReset}
+                className="w-full bg-white hover:bg-gray-50 text-gray-500 border border-gray-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors"
+              >
+                New report
+              </button>
+            </div>
+
+          </div>
+        </div>{/* end sidebar */}
+
+        </div>{/* end grid */}
+      </div>
     </div>
   );
 }

@@ -16,18 +16,18 @@ NON-NEGOTIABLE OUTPUT RULES:
 
 export async function POST(request) {
   try {
-    const { industry, process, auditeeDetails, jurisdiction } = await request.json();
+    const { sectorContext, process, auditeeDetails, jurisdiction } = await request.json();
 
-    if (!industry || !process) {
+    if (!process) {
       return NextResponse.json(
-        { success: false, error: 'Industry and process are required' },
+        { success: false, error: 'Process is required' },
         { status: 400 }
       );
     }
 
     const regs = getRegulations(process, jurisdiction);
     const regulationsContext = formatRegulationsForPrompt(regs);
-    const prompt = buildWalkthroughPrompt(industry, process, auditeeDetails, regulationsContext);
+    const prompt = buildWalkthroughPrompt(sectorContext, process, auditeeDetails, regulationsContext);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -42,6 +42,15 @@ export async function POST(request) {
 
     const walkthrough = JSON.parse(completion.choices[0].message.content);
 
+    // Strip regulatoryRefs the AI invented that aren't in the injected regulations list
+    const allowedRegulations = new Set(regs.map(r => r.regulation));
+    for (const cp of (walkthrough.checkpoints || [])) {
+      if (cp.regulatoryRefs) {
+        cp.regulatoryRefs = cp.regulatoryRefs.filter(r => allowedRegulations.has(r.regulation));
+        if (cp.regulatoryRefs.length === 0) delete cp.regulatoryRefs;
+      }
+    }
+
     return NextResponse.json({ success: true, data: walkthrough });
   } catch (error) {
     console.error('Error generating walkthrough working paper:', error);
@@ -49,20 +58,16 @@ export async function POST(request) {
   }
 }
 
-function buildWalkthroughPrompt(industry, process, auditeeDetails, regulationsContext = '') {
-  const industryNames = {
-    distribution: 'Distribution & Sales (Import/Export)',
-    manufacturing: 'Manufacturing',
-    services: 'Services',
-    construction: 'Construction',
-  };
-
+function buildWalkthroughPrompt(sectorContext, process, auditeeDetails, regulationsContext = '') {
   const processNames = {
-    revenue: 'Revenue to Cash',
-    procurement: 'Procurement to Payment',
-    hr: 'HR (Recruitment & Payroll)',
-    inventory: 'Inventory',
-    it: 'IT/Cybersecurity',
+    revenue: 'Order-to-Cash (O2C)',
+    procurement: 'Procure-to-Pay (P2P)',
+    hr: 'Hire-to-Retire (H2R)',
+    inventory: 'Inventory-to-Manufacture (I2M)',
+    it: 'IT General Controls (ITGC)',
+    r2r: 'Record-to-Report (R2R)',
+    c2r: 'Capital-to-Retire (C2R)',
+    treasury: 'Treasury & Cash Management',
   };
 
   const checkpointGuidance = {
@@ -111,9 +116,35 @@ function buildWalkthroughPrompt(industry, process, auditeeDetails, regulationsCo
       'Privileged Access',
       'Segregation of Duties',
     ],
+    r2r: [
+      'Journal Entry Authorisation',
+      'General Ledger Maintenance',
+      'Account Reconciliations',
+      'Period-end Close Process',
+      'Financial Reporting & Disclosure',
+      'Intercompany Transactions',
+      'Segregation of Duties',
+    ],
+    c2r: [
+      'Capital Expenditure Authorisation',
+      'Asset Acquisition & Capitalisation',
+      'Asset Register Maintenance',
+      'Depreciation Processing',
+      'Asset Transfers & Disposals',
+      'Physical Asset Verification',
+      'Segregation of Duties',
+    ],
+    treasury: [
+      'Cash Flow Forecasting',
+      'Bank Account Management',
+      'Payment Processing & Authorisation',
+      'Investment Management',
+      'Foreign Exchange Management',
+      'Bank Reconciliations',
+      'Segregation of Duties',
+    ],
   };
 
-  const industryLabel = industryNames[industry] || industry;
   const processLabel = processNames[process] || process;
   const checkpoints = (checkpointGuidance[process] || []).join(', ');
 
@@ -131,7 +162,7 @@ function buildWalkthroughPrompt(industry, process, auditeeDetails, regulationsCo
 
   return `Generate a Process Walkthrough Working Paper as JSON.
 
-ENGAGEMENT: ${processLabel} | ${industryLabel}${engagementContext ? `\n${engagementContext}` : ''}
+ENGAGEMENT: ${processLabel}${sectorContext ? ` | ${sectorContext}` : ''}${engagementContext ? `\n${engagementContext}` : ''}
 FRAMEWORK: IIA IPPF + COSO 2013
 PURPOSE: Document what a well-controlled process looks like at each checkpoint, to guide auditor walkthrough interviews and assess control design adequacy.
 
@@ -164,7 +195,7 @@ REQUIREMENTS per checkpoint:
 - designConsiderations: include SoD considerations and consequences of control absence
 - suggestedQuestions: minimum 2, maximum 4 — specific and actionable interview questions
 
-Make all content highly specific to the ${processLabel} process in a ${industryLabel} organisation.
+Make all content highly specific to the ${processLabel} process.${sectorContext ? ` Sector context: ${sectorContext} — apply sector-specific risks, terminology, and considerations.` : ''}
 Reference IIA IPPF and COSO 2013 control components where relevant.
 
 REGULATORY REFERENCES:

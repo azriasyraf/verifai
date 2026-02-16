@@ -252,6 +252,8 @@ export default function WalkthroughView({
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
+        <div className="grid grid-cols-[1fr_192px] gap-6 items-start">
+        <div>{/* left column */}
 
         {/* ------------------------------------------------------------------ */}
         {/* Header bar */}
@@ -286,52 +288,13 @@ export default function WalkthroughView({
               )}
             </div>
 
-            <div className="flex gap-2 flex-wrap items-center">
-              {/* Edit / Done toggle */}
-              {!isEditMode ? (
-                <button
-                  onClick={() => setIsEditMode(true)}
-                  className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
-                >
-                  Edit Working Paper
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsEditMode(false)}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
-                >
-                  Save &amp; Close Edit
-                </button>
-              )}
-
-              <button
-                onClick={handleExportWord}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
-              >
-                Export to Word
-              </button>
-
-              <button
-                onClick={handleExport}
-                className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
-              >
-                Export to Excel
-              </button>
-
-              <button
-                onClick={onStartOver}
-                className="bg-white hover:bg-gray-50 text-gray-500 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
-              >
-                Start Over
-              </button>
-            </div>
           </div>
         </div>
 
         {/* ------------------------------------------------------------------ */}
         {/* Process Overview card */}
         {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
+        <div id="wt-overview" className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
           <SectionHeader label="Process Overview" />
 
           <div className="mb-5">
@@ -393,7 +356,7 @@ export default function WalkthroughView({
           const isQuestionsOpen = questionsOpen[cpIdx] ?? false;
 
           return (
-            <div key={cp.id || cpIdx} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
+            <div key={cp.id || cpIdx} id={`wt-cp-${cpIdx}`} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
 
               {/* Checkpoint header */}
               <div className="flex items-center gap-3 mb-4">
@@ -626,40 +589,96 @@ export default function WalkthroughView({
           />
         </div>
 
-        {/* ------------------------------------------------------------------ */}
-        {/* Bottom action bar */}
-        {/* ------------------------------------------------------------------ */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow p-4 mb-5 flex justify-between items-center flex-wrap gap-3">
-          <p className="text-sm text-gray-500">
-            Working paper complete? Export to Word or Excel, or generate an audit program enriched with your walkthrough findings.
-          </p>
-          <div className="flex gap-2 flex-wrap">
+      </div>{/* end left column */}
+
+        {/* Sticky right sidebar */}
+        <div className="sticky top-6">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 space-y-2">
+
+            {/* Editing badge */}
+            {isEditMode && (
+              <div className="pb-2 border-b border-gray-100">
+                <span className="bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 text-xs font-medium">Editing</span>
+              </div>
+            )}
+
+            {/* Primary actions */}
             <button
               onClick={handleExportWord}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors"
             >
               Export to Word
             </button>
             <button
               onClick={handleExport}
-              className="bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
+              className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
             >
               Export to Excel
             </button>
+
+            {/* Edit toggle */}
+            {!isEditMode ? (
+              <button
+                onClick={() => setIsEditMode(true)}
+                className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+              >
+                Edit
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsEditMode(false)}
+                className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
+              >
+                Done Editing
+              </button>
+            )}
+
+            {/* Generate Audit Program */}
             {onGenerateAuditProgram && (
               <button
                 onClick={handleGenerateAuditProgram}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-4 py-2 text-sm transition-colors flex items-center gap-2"
+                className="w-full bg-white hover:bg-teal-50 text-teal-700 border border-teal-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors flex items-center justify-center gap-1.5"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Generate Audit Program from This Walkthrough
+                Generate Audit Program
               </button>
             )}
-          </div>
-        </div>
 
+            {/* Jump to */}
+            <div className="border-t border-gray-100 pt-3 space-y-0.5">
+              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1.5">Jump to</p>
+              <a href="#wt-overview" className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-teal-50 text-teal-700 text-xs transition-colors">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0"></span>
+                Process Overview
+              </a>
+              {(editedWalkthrough.checkpoints || []).map((cp, idx) => (
+                <a
+                  key={cp.id || idx}
+                  href={`#wt-cp-${idx}`}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-teal-50 text-teal-700 text-xs transition-colors"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-400 shrink-0"></span>
+                  <span className="truncate">{cp.id} {cp.area}</span>
+                </a>
+              ))}
+            </div>
+
+            {/* Tertiary */}
+            <div className="border-t border-gray-100 pt-3">
+              <button
+                onClick={onStartOver}
+                className="w-full bg-white hover:bg-gray-50 text-gray-500 border border-gray-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors"
+              >
+                Start Over
+              </button>
+            </div>
+
+          </div>
+        </div>{/* end sidebar */}
+
+        </div>{/* end grid */}
       </div>
     </div>
   );

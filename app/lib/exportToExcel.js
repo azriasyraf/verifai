@@ -1,31 +1,26 @@
 import * as XLSX from 'xlsx';
 
-const industries = [
-  { id: 'distribution', name: 'Distribution & Sales (Import/Export)' },
-  { id: 'manufacturing', name: 'Manufacturing' },
-  { id: 'services', name: 'Services' },
-  { id: 'construction', name: 'Construction' }
-];
-
 const processes = [
-  { id: 'revenue', name: 'Revenue to Cash' },
-  { id: 'hr', name: 'HR (Recruitment & Payroll)' },
-  { id: 'procurement', name: 'Procurement to Payment' },
-  { id: 'inventory', name: 'Inventory' },
-  { id: 'it', name: 'IT/Cybersecurity' }
+  { id: 'procurement', name: 'Procure-to-Pay (P2P)' },
+  { id: 'revenue', name: 'Order-to-Cash (O2C)' },
+  { id: 'r2r', name: 'Record-to-Report (R2R)' },
+  { id: 'hr', name: 'Hire-to-Retire (H2R)' },
+  { id: 'inventory', name: 'Inventory-to-Manufacture (I2M)' },
+  { id: 'c2r', name: 'Capital-to-Retire (C2R)' },
+  { id: 'treasury', name: 'Treasury & Cash Management' },
+  { id: 'it', name: 'IT General Controls (ITGC)' },
 ];
 
 export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
   isEditMode,
   editedProgram,
-  selectedIndustry,
+  sectorContext,
   selectedProcess,
 }) {
   const programToExport = isEditMode ? editedProgram : auditProgram;
   if (!programToExport) return;
 
   const workbook = XLSX.utils.book_new();
-  const industryName = industries.find(i => i.id === selectedIndustry)?.name || selectedIndustry;
   const processName = processes.find(p => p.id === selectedProcess)?.name || selectedProcess;
   const date = new Date().toISOString().split('T')[0];
 
@@ -44,7 +39,7 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
 
   // Header
   summaryData.push(['AUDIT PROGRAM']);
-  summaryData.push([`${processName} - ${industryName}`]);
+  summaryData.push([`${processName}${sectorContext ? ` — ${sectorContext}` : ''}`]);
   summaryData.push([]);
   summaryData.push(['Client / Company:', auditeeDetails.clientName || '']);
   summaryData.push(['Department Under Audit:', auditeeDetails.department || '']);

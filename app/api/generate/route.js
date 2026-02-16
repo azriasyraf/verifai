@@ -19,10 +19,10 @@ NON-NEGOTIABLE OUTPUT RULES:
 
 export async function POST(request) {
   try {
-    const { industry, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction } = await request.json();
+    const { sectorContext, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction } = await request.json();
     const regs = getRegulations(process, jurisdiction);
     const regulationsContext = formatRegulationsForPrompt(regs);
-    const prompt = buildPrompt(industry, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext);
+    const prompt = buildPrompt(sectorContext, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -53,10 +53,19 @@ export async function POST(request) {
       }
     }
 
+    // Strip regulatoryRefs the AI invented that aren't in the injected regulations list
+    const allowedRegulations = new Set(regs.map(r => r.regulation));
+    const allItems = [...(auditProgram.risks || []), ...(auditProgram.controls || []), ...(auditProgram.auditProcedures || [])];
+    for (const item of allItems) {
+      if (item.regulatoryRefs) {
+        item.regulatoryRefs = item.regulatoryRefs.filter(r => allowedRegulations.has(r.regulation));
+        if (item.regulatoryRefs.length === 0) delete item.regulatoryRefs;
+      }
+    }
+
     // Collect unique regulation names actually cited in the output
     const citedRegulations = new Set();
-    [...(auditProgram.risks || []), ...(auditProgram.controls || []), ...(auditProgram.auditProcedures || [])]
-      .forEach(item => (item.regulatoryRefs || []).forEach(r => citedRegulations.add(r.regulation)));
+    allItems.forEach(item => (item.regulatoryRefs || []).forEach(r => citedRegulations.add(r.regulation)));
     if (citedRegulations.size > 0 && auditProgram.framework) {
       auditProgram.framework.appliedRegulations = [...citedRegulations];
     }
@@ -68,32 +77,27 @@ export async function POST(request) {
   }
 }
 
-function buildPrompt(industry, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '') {
-  const industryNames = {
-    distribution: 'Distribution & Sales (Import/Export)',
-    manufacturing: 'Manufacturing',
-    services: 'Services',
-    construction: 'Construction',
-  };
-
+function buildPrompt(sectorContext, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '') {
   const processNames = {
-    revenue: 'Revenue to Cash',
-    hr: 'HR (Recruitment & Payroll)',
-    procurement: 'Procurement to Payment',
-    inventory: 'Inventory',
-    it: 'IT/Cybersecurity',
+    revenue: 'Order-to-Cash (O2C)',
+    hr: 'Hire-to-Retire (H2R)',
+    procurement: 'Procure-to-Pay (P2P)',
+    inventory: 'Inventory-to-Manufacture (I2M)',
+    it: 'IT General Controls (ITGC)',
+    r2r: 'Record-to-Report (R2R)',
+    c2r: 'Capital-to-Retire (C2R)',
+    treasury: 'Treasury & Cash Management',
   };
 
-  const industryLabel = industryNames[industry] || industry;
   const processLabel = processNames[process] || process;
-  const controlFramework = process === 'it' ? 'COBIT 2019' : 'COSO 2013';
+  const controlFramework = process === 'it' || process === 'itgc' ? 'COBIT 2019' : 'COSO 2013';
   const frameworkGuidance = process === 'it'
     ? 'COBIT 2019 — use EDM, APO, BAI, DSS, MEA domains to identify risks and design controls'
     : 'COSO 2013 — use Control Environment, Risk Assessment, Control Activities, Information & Communication, Monitoring to identify risks and design controls';
 
   return `Generate a comprehensive internal audit program as JSON.
 
-ENGAGEMENT: ${processLabel} process | ${industryLabel} industry
+ENGAGEMENT: ${processLabel}${sectorContext ? ` | ${sectorContext}` : ''}
 FRAMEWORK: ${controlFramework} — ${frameworkGuidance}
 METHODOLOGY: IIA IPPF (Standards 2010–2340)
 
@@ -105,7 +109,7 @@ SCHEMA — return exactly this structure:
     "controlFramework": "${controlFramework}",
     "description": "How IIA IPPF and ${controlFramework} shape this audit approach"
   },
-  "processOverview": "2-3 paragraphs describing the ${processLabel} process in the ${industryLabel} industry — typical workflow, key characteristics, and audit relevance",
+  "processOverview": "2-3 paragraphs describing the ${processLabel} process — typical workflow, key characteristics, and audit relevance${sectorContext ? `. Tailor to: ${sectorContext}` : ''}",
   "auditObjectives": [
     "Objective 1 — link to a financial statement assertion or IT objective",
     "Objective 2",
@@ -178,8 +182,8 @@ REQUIREMENTS — in priority order:
    - Never describe running a query or filter across the full population
 
 5. SPECIFICITY:
-   - Make all content highly specific to ${industryLabel} and ${processLabel}
-   - Reference industry-specific regulations and standards where relevant
+   - Make all content highly specific to the ${processLabel} process
+   ${sectorContext ? `- Sector context: ${sectorContext} — apply sector-specific risks, terminology, and regulatory considerations` : '- Apply best-practice controls applicable across sectors'}
    - Ensure procedures are practical and executable in the field
 
 6. REGULATORY REFERENCES:

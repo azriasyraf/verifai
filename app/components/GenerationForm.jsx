@@ -3,19 +3,15 @@
 import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 
-const industries = [
-  { id: 'distribution', name: 'Distribution & Sales (Import/Export)' },
-  { id: 'manufacturing', name: 'Manufacturing' },
-  { id: 'services', name: 'Services' },
-  { id: 'construction', name: 'Construction' }
-];
-
 const processes = [
-  { id: 'revenue', name: 'Revenue to Cash' },
-  { id: 'hr', name: 'HR (Recruitment & Payroll)' },
-  { id: 'procurement', name: 'Procurement to Payment' },
-  { id: 'inventory', name: 'Inventory' },
-  { id: 'it', name: 'IT/Cybersecurity' }
+  { id: 'procurement', name: 'Procure-to-Pay (P2P)' },
+  { id: 'revenue', name: 'Order-to-Cash (O2C)' },
+  { id: 'r2r', name: 'Record-to-Report (R2R)' },
+  { id: 'hr', name: 'Hire-to-Retire (H2R)' },
+  { id: 'inventory', name: 'Inventory-to-Manufacture (I2M)' },
+  { id: 'c2r', name: 'Capital-to-Retire (C2R)' },
+  { id: 'treasury', name: 'Treasury & Cash Management' },
+  { id: 'it', name: 'IT General Controls (ITGC)' },
 ];
 
 const companyTypes = [
@@ -30,12 +26,12 @@ export default function GenerationForm({
   // shared state
   generationMode,
   setGenerationMode,
-  selectedIndustry,
+  sectorContext,
+  setSectorContext,
   auditeeDetails,
   isGenerating,
   isGeneratingGovernance,
   error,
-  setSelectedIndustry,
   updateAuditeeDetail,
   // audit-program mode
   selectedProcess,
@@ -457,25 +453,20 @@ export default function GenerationForm({
                 </div>
               )}
 
-              {/* Industry, process, company type — audit and governance only */}
+              {/* Process, company type, optional sector — audit and governance only */}
               {!isReport && (
                 <>
                   <div>
                     <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                      Industry
+                      Sector <span className="normal-case font-normal text-gray-400">(optional)</span>
                     </label>
-                    <select
-                      value={selectedIndustry}
-                      onChange={(e) => setSelectedIndustry(e.target.value)}
-                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
-                    >
-                      <option value="">Select an industry...</option>
-                      {industries.map((industry) => (
-                        <option key={industry.id} value={industry.id}>
-                          {industry.name}
-                        </option>
-                      ))}
-                    </select>
+                    <input
+                      type="text"
+                      value={sectorContext}
+                      onChange={(e) => setSectorContext(e.target.value)}
+                      placeholder="e.g. Financial services, Healthcare, Government, Mining..."
+                      className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                    />
                   </div>
 
                   {/* ----- AUDIT PROGRAM + WALKTHROUGH fields ----- */}
@@ -680,7 +671,7 @@ export default function GenerationForm({
                 ) : 'Generate Audit Program'}
               </button>
               {!canGenerate && !isGenerating && (
-                <p className="text-center text-xs text-gray-500 mt-2">Select an industry and process to continue</p>
+                <p className="text-center text-xs text-gray-500 mt-2">Select a process to continue</p>
               )}
             </>
           )}
@@ -707,13 +698,13 @@ export default function GenerationForm({
                 ) : 'Generate Governance Assessment'}
               </button>
               {!canGenerateGovernance && !isGeneratingGovernance && (
-                <p className="text-center text-xs text-gray-500 mt-2">Select industry and company type to continue</p>
+                <p className="text-center text-xs text-gray-500 mt-2">Select a company type to continue</p>
               )}
             </>
           )}
 
           {isWalkthrough && (() => {
-            const canGenerateWalkthrough = !!(selectedIndustry && selectedProcess);
+            const canGenerateWalkthrough = !!selectedProcess;
             return (
               <>
                 <button
@@ -736,7 +727,7 @@ export default function GenerationForm({
                   ) : 'Generate Walkthrough Working Paper'}
                 </button>
                 {!canGenerateWalkthrough && !isGeneratingWalkthrough && (
-                  <p className="text-center text-xs text-gray-500 mt-2">Select industry and process to continue</p>
+                  <p className="text-center text-xs text-gray-500 mt-2">Select a process to continue</p>
                 )}
               </>
             );

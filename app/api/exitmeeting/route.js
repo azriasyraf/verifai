@@ -7,7 +7,7 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(request) {
   try {
-    const { auditProgram, auditeeDetails, processName, industryName } = await request.json();
+    const { auditProgram, auditeeDetails, processName, sectorContext } = await request.json();
 
     if (!auditProgram) {
       return NextResponse.json({ success: false, error: 'Audit program is required' }, { status: 400 });
@@ -27,7 +27,7 @@ export async function POST(request) {
       `${c.id}: ${c.description} (${c.type}, ${c.frequency || 'frequency unspecified'})`
     ).join('\n');
 
-    const prompt = `You are an expert internal auditor preparing an exit meeting agenda and talking points for a ${processName || 'process'} audit in the ${industryName || ''} industry.
+    const prompt = `You are an expert internal auditor preparing an exit meeting agenda and talking points for a ${processName || 'process'} audit${sectorContext ? ` in the ${sectorContext} sector` : ''}.
 
 AUDIT CONTEXT:
 ${auditeeDetails?.clientName ? `Client: ${auditeeDetails.clientName}` : ''}

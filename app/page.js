@@ -55,7 +55,7 @@ export default function Verifai() {
   // -------------------------------------------------------------------------
   // Shared state
   // -------------------------------------------------------------------------
-  const [selectedIndustry, setSelectedIndustry] = useState('');
+  const [sectorContext, setSectorContext] = useState('');
   const [jurisdiction, setJurisdiction] = useState('International');
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState(null);
@@ -99,7 +99,7 @@ export default function Verifai() {
   const [analyticsErrors, setAnalyticsErrors] = useState({}); // testId → error message string
   const [raisedFindings, setRaisedFindings] = useState([]); // findings raised from analytics, NOT cleared on resetForm
 
-  const canGenerate = selectedIndustry && selectedProcess;
+  const canGenerate = !!selectedProcess;
 
   // -------------------------------------------------------------------------
   // Governance Assessment state (new)
@@ -111,7 +111,7 @@ export default function Verifai() {
   // the audit program prompt when "Generate Audit Program from Assessment" is used
   const [governanceContext, setGovernanceContext] = useState('');
 
-  const canGenerateGovernance = selectedIndustry && companyType;
+  const canGenerateGovernance = !!companyType;
 
   // -------------------------------------------------------------------------
   // Report state
@@ -141,7 +141,7 @@ export default function Verifai() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          industry: selectedIndustry,
+          sectorContext: sectorContext || undefined,
           process: selectedProcess,
           clientContext: extraContext || undefined,
           jurisdiction,
@@ -356,7 +356,7 @@ export default function Verifai() {
     exportToExcelLib(auditProgram, analyticsTests, auditeeDetails, {
       isEditMode,
       editedProgram,
-      selectedIndustry,
+      sectorContext,
       selectedProcess,
     });
   };
@@ -444,7 +444,7 @@ export default function Verifai() {
   };
 
   const resetForm = () => {
-    setSelectedIndustry('');
+    setSectorContext('');
     setSelectedProcess('');
     setJurisdiction('International');
     setShowResults(false);
@@ -476,7 +476,7 @@ export default function Verifai() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          industry: selectedIndustry,
+          sectorContext: sectorContext || undefined,
           companyType,
           auditeeDetails,
         })
@@ -580,7 +580,7 @@ export default function Verifai() {
       const res = await fetch('/api/walkthrough', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ industry: selectedIndustry, process: selectedProcess, auditeeDetails, jurisdiction }),
+        body: JSON.stringify({ sectorContext: sectorContext || undefined, process: selectedProcess, auditeeDetails, jurisdiction }),
       });
       const result = await res.json();
       if (result.success) {
@@ -605,8 +605,7 @@ export default function Verifai() {
   const handleGenerateExitMeeting = async (programToUse) => {
     setIsGeneratingExitMeeting(true);
     try {
-      const processNames = { revenue: 'Revenue to Cash', hr: 'HR (Recruitment & Payroll)', procurement: 'Procurement to Payment', inventory: 'Inventory', it: 'IT/Cybersecurity' };
-      const industryNames = { distribution: 'Distribution & Sales (Import/Export)', manufacturing: 'Manufacturing', services: 'Services', construction: 'Construction' };
+      const processNames = { revenue: 'Order-to-Cash (O2C)', hr: 'Hire-to-Retire (H2R)', procurement: 'Procure-to-Pay (P2P)', inventory: 'Inventory-to-Manufacture (I2M)', it: 'IT General Controls (ITGC)', r2r: 'Record-to-Report (R2R)', c2r: 'Capital-to-Retire (C2R)', treasury: 'Treasury & Cash Management' };
       const res = await fetch('/api/exitmeeting', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -614,7 +613,7 @@ export default function Verifai() {
           auditProgram: programToUse,
           auditeeDetails,
           processName: processNames[selectedProcess] || selectedProcess,
-          industryName: industryNames[selectedIndustry] || selectedIndustry,
+          sectorContext: sectorContext || undefined,
         }),
       });
       const result = await res.json();
@@ -643,15 +642,11 @@ export default function Verifai() {
   // Report results view
   if (showResults && generationMode === 'report' && auditReport) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-6 py-10">
-          <ReportView
-            report={auditReport}
-            sourceFindings={reportSourceFindings}
-            onReset={() => { setAuditReport(null); setReportSourceFindings(null); setShowResults(false); setGenerationMode('report'); }}
-          />
-        </div>
-      </div>
+      <ReportView
+        report={auditReport}
+        sourceFindings={reportSourceFindings}
+        onReset={() => { setAuditReport(null); setReportSourceFindings(null); setShowResults(false); setGenerationMode('report'); }}
+      />
     );
   }
 
@@ -692,7 +687,7 @@ export default function Verifai() {
         analyticsTests={analyticsTests}
         confirmReset={confirmReset}
         selectedProcess={selectedProcess}
-        selectedIndustry={selectedIndustry}
+        sectorContext={sectorContext}
         enterEditMode={enterEditMode}
         saveEdits={saveEdits}
         cancelEdit={cancelEdit}
@@ -737,12 +732,12 @@ export default function Verifai() {
       // shared
       generationMode={generationMode}
       setGenerationMode={setGenerationMode}
-      selectedIndustry={selectedIndustry}
+      sectorContext={sectorContext}
+      setSectorContext={setSectorContext}
       auditeeDetails={auditeeDetails}
       isGenerating={isGenerating}
       isGeneratingGovernance={isGeneratingGovernance}
       error={error}
-      setSelectedIndustry={setSelectedIndustry}
       updateAuditeeDetail={updateAuditeeDetail}
       // audit program
       selectedProcess={selectedProcess}

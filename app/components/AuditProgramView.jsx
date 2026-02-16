@@ -8,19 +8,15 @@ import { exportAnalyticsToExcel } from '../lib/exportAnalyticsToExcel';
 // Tests that have executable Phase 1 logic (single-file, simple filter)
 const EXECUTABLE_TESTS = new Set(['RC-001', 'PP-002', 'HR-002', 'INV-001', 'IT-003']);
 
-const industries = [
-  { id: 'distribution', name: 'Distribution & Sales (Import/Export)' },
-  { id: 'manufacturing', name: 'Manufacturing' },
-  { id: 'services', name: 'Services' },
-  { id: 'construction', name: 'Construction' }
-];
-
 const processes = [
-  { id: 'revenue', name: 'Revenue to Cash' },
-  { id: 'hr', name: 'HR (Recruitment & Payroll)' },
-  { id: 'procurement', name: 'Procurement to Payment' },
-  { id: 'inventory', name: 'Inventory' },
-  { id: 'it', name: 'IT/Cybersecurity' }
+  { id: 'procurement', name: 'Procure-to-Pay (P2P)' },
+  { id: 'revenue', name: 'Order-to-Cash (O2C)' },
+  { id: 'r2r', name: 'Record-to-Report (R2R)' },
+  { id: 'hr', name: 'Hire-to-Retire (H2R)' },
+  { id: 'inventory', name: 'Inventory-to-Manufacture (I2M)' },
+  { id: 'c2r', name: 'Capital-to-Retire (C2R)' },
+  { id: 'treasury', name: 'Treasury & Cash Management' },
+  { id: 'it', name: 'IT General Controls (ITGC)' },
 ];
 
 export default function AuditProgramView({
@@ -30,7 +26,7 @@ export default function AuditProgramView({
   analyticsTests,
   confirmReset,
   selectedProcess,
-  selectedIndustry,
+  sectorContext,
   enterEditMode,
   saveEdits,
   cancelEdit,
@@ -199,9 +195,9 @@ export default function AuditProgramView({
               <h1 className="text-2xl font-semibold text-gray-900">
                 {processes.find(p => p.id === selectedProcess)?.name}
               </h1>
-              <p className="text-gray-500 text-sm mt-0.5">
-                {industries.find(i => i.id === selectedIndustry)?.name}
-              </p>
+              {sectorContext && (
+                <p className="text-gray-500 text-sm mt-0.5">{sectorContext}</p>
+              )}
             </div>
             <div className="flex gap-2 flex-wrap">
               {!isEditMode ? (

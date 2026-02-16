@@ -15,16 +15,16 @@ NON-NEGOTIABLE OUTPUT RULES:
 
 export async function POST(request) {
   try {
-    const { industry, companyType, auditeeDetails } = await request.json();
+    const { sectorContext, companyType, auditeeDetails } = await request.json();
 
-    if (!industry || !companyType) {
+    if (!companyType) {
       return NextResponse.json(
-        { success: false, error: 'Industry and company type are required' },
+        { success: false, error: 'Company type is required' },
         { status: 400 }
       );
     }
 
-    const prompt = buildGovernancePrompt(industry, companyType, auditeeDetails);
+    const prompt = buildGovernancePrompt(sectorContext, companyType, auditeeDetails);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -46,16 +46,7 @@ export async function POST(request) {
   }
 }
 
-function buildGovernancePrompt(industry, companyType, auditeeDetails) {
-  const industryNames = {
-    distribution: 'Distribution & Sales (Import/Export)',
-    manufacturing: 'Manufacturing',
-    services: 'Services',
-    construction: 'Construction',
-  };
-
-  const industryLabel = industryNames[industry] || industry;
-
+function buildGovernancePrompt(sectorContext, companyType, auditeeDetails) {
   const engagementContext = auditeeDetails
     ? [
         auditeeDetails.clientName ? `Client: ${auditeeDetails.clientName}` : '',
@@ -70,7 +61,7 @@ function buildGovernancePrompt(industry, companyType, auditeeDetails) {
 
   return `Generate a Risk Management & Governance Assessment working paper as JSON.
 
-ENGAGEMENT: ${industryLabel} | ${companyType}${engagementContext ? `\n${engagementContext}` : ''}
+ENGAGEMENT: ${companyType}${sectorContext ? ` | ${sectorContext}` : ''}${engagementContext ? `\n${engagementContext}` : ''}
 FRAMEWORK: IIA IPPF + COSO ERM
 SCOPE: Entity-level governance backbone — NOT individual process controls
 
@@ -118,6 +109,6 @@ REQUIREMENTS per area:
 - redFlags: minimum 3 — specific warning signs for this area and this organisation type
 - conclusion: always an empty string ""
 
-Make all content highly specific to a ${companyType} in the ${industryLabel} industry.
+Make all content highly specific to a ${companyType}.${sectorContext ? ` Sector context: ${sectorContext} — apply sector-specific governance risks and regulatory considerations.` : ''}
 Reference IIA IPPF and COSO ERM throughout.`;
 }
