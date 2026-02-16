@@ -166,13 +166,6 @@ export default function GenerationForm({
           )}
 
           {/* Walkthrough context loaded banner */}
-          {walkthroughClientContext && (
-            <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 mb-5 flex items-start gap-3">
-              <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              <p className="text-xs text-indigo-700">Your walkthrough observations have been loaded into the context panel. Select a process and click <span className="font-semibold">Generate Audit Program</span> to create a program informed by your walkthrough findings.</p>
-            </div>
-          )}
-
           {/* ---------------------------------------------------------------- */}
           {/* Mode selector — audit pipeline + RMGA secondary               */}
           {/* ---------------------------------------------------------------- */}
@@ -197,12 +190,6 @@ export default function GenerationForm({
                 <p className="text-xs text-gray-500 leading-relaxed">Risks, controls, and procedures for a process.</p>
               </button>
 
-              <div className="flex items-center shrink-0">
-                <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-
               {/* Walkthrough */}
               <button
                 type="button"
@@ -216,12 +203,6 @@ export default function GenerationForm({
                 <p className="text-sm font-semibold text-gray-900 mb-1">Walkthrough</p>
                 <p className="text-xs text-gray-500 leading-relaxed">Document process interviews and assess control design.</p>
               </button>
-
-              <div className="flex items-center shrink-0">
-                <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
 
               {/* Report */}
               <button
@@ -759,6 +740,13 @@ export default function GenerationForm({
               </>
             );
           })()}
+
+          {walkthroughClientContext && (
+            <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 mt-4 flex items-start gap-3">
+              <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+              <p className="text-xs text-indigo-700">Your walkthrough observations have been loaded. Click <span className="font-semibold">Generate Audit Program</span> above to create a program informed by your findings.</p>
+            </div>
+          )}
 
           {/* Framework Info — below generate button as reassurance */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mt-5">
