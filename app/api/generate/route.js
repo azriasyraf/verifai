@@ -1,6 +1,7 @@
 import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
 import { getRegulations, formatRegulationsForPrompt } from '../../lib/regulations/index.js';
+import { getProcessLabel } from '../../lib/processNames.js';
 
 export const maxDuration = 60;
 
@@ -78,18 +79,7 @@ export async function POST(request) {
 }
 
 function buildPrompt(sectorContext, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '') {
-  const processNames = {
-    revenue: 'Order-to-Cash (O2C)',
-    hr: 'Hire-to-Retire (H2R)',
-    procurement: 'Procure-to-Pay (P2P)',
-    inventory: 'Inventory-to-Manufacture (I2M)',
-    it: 'IT General Controls (ITGC)',
-    r2r: 'Record-to-Report (R2R)',
-    c2r: 'Capital-to-Retire (C2R)',
-    treasury: 'Treasury & Cash Management',
-  };
-
-  const processLabel = processNames[process] || process;
+  const processLabel = getProcessLabel(process);
   const controlFramework = process === 'it' || process === 'itgc' ? 'COBIT 2019' : 'COSO 2013';
   const frameworkGuidance = process === 'it'
     ? 'COBIT 2019 — use EDM, APO, BAI, DSS, MEA domains to identify risks and design controls'

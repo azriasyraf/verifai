@@ -1,6 +1,7 @@
 import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
 import { getRegulations, formatRegulationsForPrompt } from '../../lib/regulations/index.js';
+import { getProcessLabel } from '../../lib/processNames.js';
 
 export const maxDuration = 60;
 
@@ -59,16 +60,6 @@ export async function POST(request) {
 }
 
 function buildWalkthroughPrompt(sectorContext, process, auditeeDetails, regulationsContext = '') {
-  const processNames = {
-    revenue: 'Order-to-Cash (O2C)',
-    procurement: 'Procure-to-Pay (P2P)',
-    hr: 'Hire-to-Retire (H2R)',
-    inventory: 'Inventory-to-Manufacture (I2M)',
-    it: 'IT General Controls (ITGC)',
-    r2r: 'Record-to-Report (R2R)',
-    c2r: 'Capital-to-Retire (C2R)',
-    treasury: 'Treasury & Cash Management',
-  };
 
   const checkpointGuidance = {
     revenue: [
@@ -145,7 +136,7 @@ function buildWalkthroughPrompt(sectorContext, process, auditeeDetails, regulati
     ],
   };
 
-  const processLabel = processNames[process] || process;
+  const processLabel = getProcessLabel(process);
   const checkpoints = (checkpointGuidance[process] || []).join(', ');
 
   const engagementContext = auditeeDetails

@@ -3,16 +3,7 @@
 import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 
-const processes = [
-  { id: 'procurement', name: 'Procure-to-Pay (P2P)' },
-  { id: 'revenue', name: 'Order-to-Cash (O2C)' },
-  { id: 'r2r', name: 'Record-to-Report (R2R)' },
-  { id: 'hr', name: 'Hire-to-Retire (H2R)' },
-  { id: 'inventory', name: 'Inventory-to-Manufacture (I2M)' },
-  { id: 'c2r', name: 'Capital-to-Retire (C2R)' },
-  { id: 'treasury', name: 'Treasury & Cash Management' },
-  { id: 'it', name: 'IT General Controls (ITGC)' },
-];
+import { PROCESSES as processes } from '../lib/processNames.js';
 
 const companyTypes = [
   { id: 'public', name: 'Public Company' },
@@ -154,7 +145,7 @@ export default function GenerationForm({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+      <div className="flex-1 flex flex-col items-center px-6 pt-10 pb-16">
         <div className="w-full max-w-2xl">
 
           {/* Header */}
@@ -163,7 +154,7 @@ export default function GenerationForm({
               Verif<span className="text-indigo-600">ai</span>
             </h1>
             <p className="text-gray-500 text-base">
-              AI-powered audit program generator
+              AI-assisted working papers for internal audit teams
             </p>
           </div>
 
@@ -259,37 +250,12 @@ export default function GenerationForm({
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${isGovernance ? 'border-indigo-600' : 'border-gray-300'}`}>
-                    {isGovernance && <div className="w-2 h-2 rounded-full bg-indigo-600"></div>}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-700">Risk Management &amp; Governance Assessment (RMGA)</p>
-                    <p className="text-xs text-gray-500">Assess the entity&apos;s governance framework, risk management maturity, and overall control environment.</p>
-                  </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700">Risk Management &amp; Governance Assessment (RMGA)</p>
+                  <p className="text-xs text-gray-500">Assess the entity&apos;s governance framework, risk management maturity, and overall control environment.</p>
                 </div>
               </button>
             </div>
-          </div>
-
-          {/* Framework Info */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
-            <p className="text-sm font-medium text-gray-600 mb-3">Built on professional standards</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <p className="text-xs font-semibold text-gray-900 mb-1">Audit Methodology</p>
-                <p className="text-xs text-gray-600">IIA IPPF</p>
-                <p className="text-xs text-gray-500 mt-1">Plan, execute, and report on internal audits</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                <p className="text-xs font-semibold text-gray-900 mb-1">Control Frameworks</p>
-                <p className="text-xs text-gray-600">COSO 2013, COSO ERM &amp; COBIT 2019</p>
-                <p className="text-xs text-gray-500 mt-1">Risk identification, control design and governance</p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mt-3 text-center">
-              Audit programs include risk-control linkage, assertions, and data analytics procedures
-            </p>
           </div>
 
           {/* ---------------------------------------------------------------- */}
@@ -297,7 +263,7 @@ export default function GenerationForm({
           {/* ---------------------------------------------------------------- */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-5">
             <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">
-              {isAudit ? 'Configure Audit Program' : isGovernance ? 'Configure Governance Assessment' : isWalkthrough ? 'Configure Walkthrough Working Paper' : 'Upload Completed Workbook'}
+              {isAudit ? 'Configure Audit Program' : isGovernance ? 'Configure Governance Assessment' : isWalkthrough ? 'Configure Walkthrough Working Paper' : 'Configure Audit Report'}
             </h2>
 
             <div className="space-y-4">
@@ -585,7 +551,7 @@ export default function GenerationForm({
                 className="w-full flex items-center justify-between px-4 py-3 bg-white rounded-xl border border-gray-200 shadow-sm text-sm text-gray-600 hover:border-indigo-300 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-base">📋</span>
+                  <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
                   <span className="font-medium text-gray-700">Enrich with client context</span>
                   <span className="text-xs text-gray-500">optional — paste walkthrough notes or interview observations</span>
                 </div>
@@ -793,6 +759,26 @@ export default function GenerationForm({
               </>
             );
           })()}
+
+          {/* Framework Info — below generate button as reassurance */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mt-5">
+            <p className="text-sm font-medium text-gray-600 mb-3">Built on professional standards</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                <p className="text-xs font-semibold text-gray-900 mb-1">Audit Methodology</p>
+                <p className="text-xs text-gray-600">IIA IPPF</p>
+                <p className="text-xs text-gray-500 mt-1">Plan, execute, and report on internal audits</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                <p className="text-xs font-semibold text-gray-900 mb-1">Control Frameworks</p>
+                <p className="text-xs text-gray-600">COSO 2013, COSO ERM &amp; COBIT 2019</p>
+                <p className="text-xs text-gray-500 mt-1">Risk identification, control design and governance</p>
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-3 text-center">
+              Audit programs include risk-control linkage, assertions, and data analytics procedures
+            </p>
+          </div>
 
         </div>
       </div>

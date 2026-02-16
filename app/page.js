@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { analyticsLibrary } from './lib/analyticsLibrary';
+import { getProcessLabel } from './lib/processNames';
 import { exportToExcel as exportToExcelLib } from './lib/exportToExcel';
 import { exportGovernanceToExcel } from './lib/exportGovernanceToExcel';
 import { exportWalkthroughToExcel } from './lib/exportWalkthroughToExcel';
@@ -605,14 +606,13 @@ export default function Verifai() {
   const handleGenerateExitMeeting = async (programToUse) => {
     setIsGeneratingExitMeeting(true);
     try {
-      const processNames = { revenue: 'Order-to-Cash (O2C)', hr: 'Hire-to-Retire (H2R)', procurement: 'Procure-to-Pay (P2P)', inventory: 'Inventory-to-Manufacture (I2M)', it: 'IT General Controls (ITGC)', r2r: 'Record-to-Report (R2R)', c2r: 'Capital-to-Retire (C2R)', treasury: 'Treasury & Cash Management' };
       const res = await fetch('/api/exitmeeting', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           auditProgram: programToUse,
           auditeeDetails,
-          processName: processNames[selectedProcess] || selectedProcess,
+          processName: getProcessLabel(selectedProcess),
           sectorContext: sectorContext || undefined,
         }),
       });

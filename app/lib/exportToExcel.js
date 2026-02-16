@@ -1,15 +1,6 @@
 import * as XLSX from 'xlsx';
 
-const processes = [
-  { id: 'procurement', name: 'Procure-to-Pay (P2P)' },
-  { id: 'revenue', name: 'Order-to-Cash (O2C)' },
-  { id: 'r2r', name: 'Record-to-Report (R2R)' },
-  { id: 'hr', name: 'Hire-to-Retire (H2R)' },
-  { id: 'inventory', name: 'Inventory-to-Manufacture (I2M)' },
-  { id: 'c2r', name: 'Capital-to-Retire (C2R)' },
-  { id: 'treasury', name: 'Treasury & Cash Management' },
-  { id: 'it', name: 'IT General Controls (ITGC)' },
-];
+import { PROCESSES as processes } from './processNames.js';
 
 export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
   isEditMode,

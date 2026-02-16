@@ -8,16 +8,7 @@ import { exportAnalyticsToExcel } from '../lib/exportAnalyticsToExcel';
 // Tests that have executable Phase 1 logic (single-file, simple filter)
 const EXECUTABLE_TESTS = new Set(['RC-001', 'PP-002', 'HR-002', 'INV-001', 'IT-003']);
 
-const processes = [
-  { id: 'procurement', name: 'Procure-to-Pay (P2P)' },
-  { id: 'revenue', name: 'Order-to-Cash (O2C)' },
-  { id: 'r2r', name: 'Record-to-Report (R2R)' },
-  { id: 'hr', name: 'Hire-to-Retire (H2R)' },
-  { id: 'inventory', name: 'Inventory-to-Manufacture (I2M)' },
-  { id: 'c2r', name: 'Capital-to-Retire (C2R)' },
-  { id: 'treasury', name: 'Treasury & Cash Management' },
-  { id: 'it', name: 'IT General Controls (ITGC)' },
-];
+import { PROCESSES as processes } from '../lib/processNames.js';
 
 export default function AuditProgramView({
   auditProgram,
