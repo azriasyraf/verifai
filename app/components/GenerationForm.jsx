@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import mammoth from 'mammoth';
 
 import { PROCESSES as processes } from '../lib/processNames.js';
 
@@ -65,6 +66,78 @@ export default function GenerationForm({
   // Pre-populate from walkthrough if the user came from a walkthrough working paper
   const [clientContext, setClientContext] = useState(walkthroughClientContext || '');
   const [showContextPanel, setShowContextPanel] = useState(!!(walkthroughClientContext));
+
+  // Document upload state (audit mode only)
+  const [docType, setDocType] = useState('pp');
+  const [uploadedDocName, setUploadedDocName] = useState('');
+  const [documentContext, setDocumentContext] = useState('');
+  const [docUploadError, setDocUploadError] = useState('');
+  const [isParsingDoc, setIsParsingDoc] = useState(false);
+  const docInputRef = useRef(null);
+
+  const DOC_TYPES = [
+    { id: 'pp',           label: 'Policies & Procedures' },
+    { id: 'prior-report', label: 'Prior Audit Report' },
+    { id: 'rmga',         label: 'RMGA Assessment' },
+    { id: 'walkthrough',  label: 'Walkthrough Working Paper' },
+  ];
+
+  const MAX_DOC_CHARS = 8000;
+
+  const handleDocUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setDocUploadError('');
+    setDocumentContext('');
+    setUploadedDocName('');
+    setIsParsingDoc(true);
+
+    try {
+      const ext = file.name.split('.').pop().toLowerCase();
+      let text = '';
+
+      if (ext === 'txt') {
+        text = await file.text();
+      } else if (ext === 'docx') {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        text = result.value;
+      } else if (ext === 'xlsx' || ext === 'xls') {
+        const arrayBuffer = await file.arrayBuffer();
+        const wb = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+        text = wb.SheetNames.map(name => {
+          const ws = wb.Sheets[name];
+          return `[Sheet: ${name}]\n${XLSX.utils.sheet_to_csv(ws)}`;
+        }).join('\n\n');
+      } else {
+        setDocUploadError('Unsupported file type. Please upload .txt, .docx, or .xlsx.');
+        setIsParsingDoc(false);
+        return;
+      }
+
+      text = text.trim();
+      if (!text) {
+        setDocUploadError('File appears to be empty or could not be read.');
+        setIsParsingDoc(false);
+        return;
+      }
+
+      const truncated = text.length > MAX_DOC_CHARS ? text.slice(0, MAX_DOC_CHARS) + '\n\n[Document truncated for prompt length]' : text;
+      setDocumentContext(truncated);
+      setUploadedDocName(file.name);
+    } catch (err) {
+      setDocUploadError('Failed to parse file. Check the file is not password-protected.');
+    } finally {
+      setIsParsingDoc(false);
+      if (docInputRef.current) docInputRef.current.value = '';
+    }
+  };
+
+  const clearDocUpload = () => {
+    setDocumentContext('');
+    setUploadedDocName('');
+    setDocUploadError('');
+  };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -546,7 +619,7 @@ export default function GenerationForm({
                   </p>
                   <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
                     <p className="text-xs text-indigo-700 font-medium">Best practice: provide both walkthrough notes and a P&P document for gap analysis.</p>
-                    <p className="text-xs text-indigo-500 mt-0.5">Walkthrough notes, interview summaries, or narrative → adjusts risk ratings and adds observations. Document upload (Word/PDF) coming soon.</p>
+                    <p className="text-xs text-indigo-500 mt-0.5">Paste walkthrough notes or interview summaries above, or upload a document below (P&P, prior report, RMGA, walkthrough) — AI will adjust risks and flag control gaps accordingly.</p>
                   </div>
                   {governanceAssessment && (
                     <div className="flex items-start justify-between gap-3 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2.5">
@@ -590,6 +663,59 @@ export default function GenerationForm({
                     </p>
                   )}
 
+                  {/* Document upload */}
+                  <div className="border-t border-gray-100 pt-3 mt-1">
+                    <p className="text-xs font-medium text-gray-700 mb-2">Upload a reference document</p>
+                    <div className="flex gap-2 items-center flex-wrap">
+                      <select
+                        value={docType}
+                        onChange={e => setDocType(e.target.value)}
+                        className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        {DOC_TYPES.map(d => (
+                          <option key={d.id} value={d.id}>{d.label}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => docInputRef.current?.click()}
+                        disabled={isParsingDoc}
+                        className="flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-white border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        {isParsingDoc ? 'Parsing…' : 'Choose file'}
+                      </button>
+                      <span className="text-xs text-gray-400">.txt · .docx · .xlsx</span>
+                    </div>
+                    <input
+                      ref={docInputRef}
+                      type="file"
+                      accept=".txt,.docx,.xlsx,.xls"
+                      onChange={handleDocUpload}
+                      className="hidden"
+                    />
+                    {docUploadError && (
+                      <p className="mt-1.5 text-xs text-red-600">{docUploadError}</p>
+                    )}
+                    {uploadedDocName && !docUploadError && (
+                      <div className="mt-2 flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                        <div>
+                          <p className="text-xs font-medium text-green-800">
+                            ✓ {DOC_TYPES.find(d => d.id === docType)?.label} loaded
+                          </p>
+                          <p className="text-xs text-green-600 mt-0.5">{uploadedDocName} · {documentContext.length.toLocaleString()} characters</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={clearDocUpload}
+                          className="text-xs text-green-700 hover:text-red-600 transition-colors shrink-0"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                 </div>
               )}
             </div>
@@ -599,7 +725,7 @@ export default function GenerationForm({
           {isAudit && (
             <>
               <button
-                onClick={() => handleGenerate(clientContext.trim() || undefined)}
+                onClick={() => handleGenerate(clientContext.trim() || undefined, documentContext || undefined, documentContext ? docType : undefined)}
                 disabled={!canGenerate || isGenerating}
                 className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                   canGenerate && !isGenerating

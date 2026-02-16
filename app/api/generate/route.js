@@ -20,10 +20,10 @@ NON-NEGOTIABLE OUTPUT RULES:
 
 export async function POST(request) {
   try {
-    const { sectorContext, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction } = await request.json();
+    const { sectorContext, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction, documentContext, docType } = await request.json();
     const regs = getRegulations(process, jurisdiction);
     const regulationsContext = formatRegulationsForPrompt(regs);
-    const prompt = buildPrompt(sectorContext, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext);
+    const prompt = buildPrompt(sectorContext, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext, documentContext, docType);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -78,7 +78,7 @@ export async function POST(request) {
   }
 }
 
-function buildPrompt(sectorContext, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '') {
+function buildPrompt(sectorContext, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '', documentContext = null, docType = null) {
   const processLabel = getProcessLabel(process);
   const controlFramework = process === 'it' || process === 'itgc' ? 'COBIT 2019' : 'COSO 2013';
   const frameworkGuidance = process === 'it'
@@ -215,7 +215,29 @@ ADJUSTMENT RULES — apply these when client context is provided:
    Absence of evidence is not absence of risk — keep them at baseline rating.
 
 5. clientEvidence, source, gapFlag, and gapNote are OPTIONAL — only add them when the notes provide specific evidence.
-   Do not fabricate evidence. If the notes are vague, do not add these fields.` : ''}${regulationsContext ? `
+   Do not fabricate evidence. If the notes are vague, do not add these fields.` : ''}${documentContext ? (() => {
+  const docLabels = {
+    'pp': 'POLICIES & PROCEDURES DOCUMENT',
+    'prior-report': 'PRIOR AUDIT REPORT',
+    'rmga': 'RMGA ASSESSMENT',
+    'walkthrough': 'WALKTHROUGH WORKING PAPER',
+  };
+  const label = docLabels[docType] || 'REFERENCE DOCUMENT';
+  const instructions = {
+    'pp': 'Use this to identify what controls are formally documented. Flag any gaps between documented procedures and standard best-practice controls. Where a control is well-documented, note it as a design strength.',
+    'prior-report': 'Elevate risk ratings for issues that appear to be repeat findings. Where prior findings are referenced, add clientEvidence quoting the prior finding. Flag any unresolved recommendations as high-priority risks.',
+    'rmga': 'Use entity-level observations to inform process-level risk ratings and control design assessments. Where governance weaknesses are noted (e.g. weak tone at the top, poor segregation), elevate related process risks.',
+    'walkthrough': 'Use observations to adjust risk ratings, flag control gaps (gapFlag: true), and add client-specific evidence (clientEvidence). Identify controls that are actually operating vs those that are documented only.',
+  };
+  return `
+
+${label}:
+---
+${documentContext}
+---
+
+${instructions[docType] || 'Use this document as additional context to improve risk identification and control design.'}`;
+})() : ''}${regulationsContext ? `
 
 ${regulationsContext}
 DISCLAIMER: These references are provided as guidance. Verify applicability before use in a formal engagement.` : ''}`;
