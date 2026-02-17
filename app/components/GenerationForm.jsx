@@ -80,6 +80,8 @@ export default function GenerationForm({
     { id: 'prior-report', label: 'Prior Audit Report' },
     { id: 'rmga',         label: 'RMGA Assessment' },
     { id: 'walkthrough',  label: 'Walkthrough Working Paper' },
+    { id: 'laws',         label: 'Laws & Regulations' },
+    { id: 'guidelines',   label: 'Industry Guidelines / Circulars' },
   ];
 
   const MAX_DOC_CHARS = 8000;

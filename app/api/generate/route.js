@@ -224,6 +224,8 @@ ADJUSTMENT RULES — apply these when client context is provided:
     'prior-report': 'PRIOR AUDIT REPORT',
     'rmga': 'RMGA ASSESSMENT',
     'walkthrough': 'WALKTHROUGH WORKING PAPER',
+    'laws': 'APPLICABLE LAWS & REGULATIONS',
+    'guidelines': 'INDUSTRY GUIDELINES / REGULATORY CIRCULARS',
   };
   const label = docLabels[docType] || 'REFERENCE DOCUMENT';
   const instructions = {
@@ -231,6 +233,8 @@ ADJUSTMENT RULES — apply these when client context is provided:
     'prior-report': 'Elevate risk ratings for issues that appear to be repeat findings. Where prior findings are referenced, add clientEvidence quoting the prior finding. Flag any unresolved recommendations as high-priority risks.',
     'rmga': 'Use entity-level observations to inform process-level risk ratings and control design assessments. Where governance weaknesses are noted (e.g. weak tone at the top, poor segregation), elevate related process risks.',
     'walkthrough': 'Use observations to adjust risk ratings, flag control gaps (gapFlag: true), and add client-specific evidence (clientEvidence). Identify controls that are actually operating vs those that are documented only.',
+    'laws': 'Use these laws and regulations to identify compliance risks specific to this jurisdiction and process. Add regulatory references to relevant controls and procedures. Flag areas where the process or controls may not meet statutory requirements. Treat these as authoritative — elevate any compliance risk to High rating.',
+    'guidelines': 'Use these industry guidelines or regulatory circulars to identify sector-specific risks and control expectations. Add references to controls where the guideline sets a specific standard. Flag deviations from guideline requirements as compliance risks.',
   };
   return `
 
