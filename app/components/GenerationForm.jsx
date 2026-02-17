@@ -665,9 +665,16 @@ export default function GenerationForm({
                     rows={6}
                   />
                   {clientContext.trim().length > 0 && (
-                    <p className="text-xs text-green-600 font-medium">
-                      ✓ Context provided — AI will use this to adjust risks and flag control gaps
-                    </p>
+                    walkthroughClientContext && clientContext === walkthroughClientContext ? (
+                      <div className="bg-teal-50 border border-teal-200 rounded-lg px-3 py-2">
+                        <p className="text-xs font-semibold text-teal-800">Walkthrough observations loaded from your in-session working paper</p>
+                        <p className="text-xs text-teal-600 mt-0.5">AI will use these to adjust risk ratings and flag control gaps. You do not need to upload a walkthrough document below.</p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-green-600 font-medium">
+                        ✓ Context provided — AI will use this to adjust risks and flag control gaps
+                      </p>
+                    )
                   )}
 
                   {/* Document upload */}

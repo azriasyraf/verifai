@@ -78,6 +78,7 @@ export default function WalkthroughView({
   const [checkpointResponses, setCheckpointResponses] = useState({});
   const [freeformNotes, setFreeformNotes] = useState('');
   const [overallConclusion, setOverallConclusion] = useState('');
+  const [showObsWarning, setShowObsWarning] = useState(false);
 
   // Collapsible state for suggested questions per checkpoint
   const [questionsOpen, setQuestionsOpen] = useState({});
@@ -210,6 +211,17 @@ export default function WalkthroughView({
   // -------------------------------------------------------------------------
   const handleGenerateAuditProgram = () => {
     if (!onGenerateAuditProgram) return;
+
+    const assessedCount = (editedWalkthrough.checkpoints || []).filter((_, idx) => {
+      const resp = checkpointResponses[idx] || {};
+      return resp.designAdequacy && resp.designAdequacy !== 'Not Assessed';
+    }).length;
+
+    if (assessedCount === 0) {
+      setShowObsWarning(true);
+      return;
+    }
+    setShowObsWarning(false);
 
     const processLabel = editedWalkthrough.walkthroughTitle || 'Process';
     const lines = [`Process Walkthrough Observations — ${processLabel}`, '', 'CONTROL CHECKPOINT FINDINGS:'];
@@ -602,7 +614,37 @@ export default function WalkthroughView({
               </div>
             )}
 
-            {/* Primary actions */}
+            {/* Proceed to Audit Program — workflow continuation, sits above exports */}
+            {onGenerateAuditProgram && (() => {
+              const assessedCount = (editedWalkthrough.checkpoints || []).filter((_, idx) => {
+                const resp = checkpointResponses[idx] || {};
+                return resp.designAdequacy && resp.designAdequacy !== 'Not Assessed';
+              }).length;
+              const total = (editedWalkthrough.checkpoints || []).length;
+              return (
+                <div className="pb-2 border-b border-gray-100 space-y-1.5">
+                  <button
+                    onClick={handleGenerateAuditProgram}
+                    className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Proceed to Audit Program
+                  </button>
+                  <p className="text-xs text-center text-gray-400">
+                    {assessedCount} of {total} checkpoint{total !== 1 ? 's' : ''} assessed
+                  </p>
+                  {showObsWarning && (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5 leading-snug">
+                      No checkpoints assessed yet — record at least one Design Adequacy rating before proceeding.
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* Export + edit actions */}
             <button
               onClick={handleExportWord}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-3 py-2 text-sm transition-colors"
@@ -630,19 +672,6 @@ export default function WalkthroughView({
                 className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
               >
                 Done Editing
-              </button>
-            )}
-
-            {/* Generate Audit Program */}
-            {onGenerateAuditProgram && (
-              <button
-                onClick={handleGenerateAuditProgram}
-                className="w-full bg-white hover:bg-teal-50 text-teal-700 border border-teal-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors flex items-center justify-center gap-1.5"
-              >
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Generate Audit Program
               </button>
             )}
 
