@@ -613,8 +613,8 @@ export default function GenerationForm({
               >
                 <div className="flex items-center gap-2">
                   <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                  <span className="font-medium text-gray-700">Enrich with client context</span>
-                  <span className="text-xs text-gray-500">optional — paste walkthrough notes or interview observations</span>
+                  <span className="font-medium text-gray-700">Make it specific</span>
+                  <span className="text-xs text-gray-500">optional — upload P&P, prior reports, or paste walkthrough notes</span>
                 </div>
                 <span className="text-gray-500 text-xs">{showContextPanel ? '▲' : '▼'}</span>
               </button>
@@ -624,10 +624,6 @@ export default function GenerationForm({
                   <p className="text-xs text-gray-500 leading-relaxed">
                     Paste walkthrough notes, interview summaries, or process observations below. Verifai will use these to adjust risk ratings, flag control gaps, and add client-specific evidence to the audit program.
                   </p>
-                  <div className="bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2">
-                    <p className="text-xs text-indigo-700 font-medium">Best practice: provide both walkthrough notes and a P&P document for gap analysis.</p>
-                    <p className="text-xs text-indigo-500 mt-0.5">Paste walkthrough notes or interview summaries above, or upload a document below (P&P, prior report, RMGA, walkthrough) — AI will adjust risks and flag control gaps accordingly.</p>
-                  </div>
                   {governanceAssessment && (
                     <div className="flex items-start justify-between gap-3 bg-indigo-50 border border-indigo-200 rounded-lg px-3 py-2.5">
                       <div>
@@ -759,6 +755,9 @@ export default function GenerationForm({
               </button>
               {!canGenerate && !isGenerating && (
                 <p className="text-center text-xs text-gray-500 mt-2">Select a process to continue</p>
+              )}
+              {canGenerate && !isGenerating && !showContextPanel && !clientContext.trim() && !documentContext && (
+                <p className="text-center text-xs text-gray-400 mt-2">Output will be generic. Open <span className="text-indigo-500 cursor-pointer" onClick={() => setShowContextPanel(true)}>"Make it specific"</span> above to upload P&P or prior reports for a tailored program.</p>
               )}
             </>
           )}
