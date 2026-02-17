@@ -757,7 +757,7 @@ export default function GenerationForm({
                 <p className="text-center text-xs text-gray-500 mt-2">Select a process to continue</p>
               )}
               {canGenerate && !isGenerating && !showContextPanel && !clientContext.trim() && !documentContext && (
-                <p className="text-center text-xs text-gray-400 mt-2">Output will be generic. Open <span className="text-indigo-500 cursor-pointer" onClick={() => setShowContextPanel(true)}>"Make it specific"</span> above to upload P&P or prior reports for a tailored program.</p>
+                <p className="text-center text-xs text-gray-400 mt-2">Output will be generic. Open <span className="text-indigo-500 cursor-pointer" onClick={() => setShowContextPanel(true)}>"Make it specific"</span> above to upload reference documents or add context for a tailored program.</p>
               )}
             </>
           )}
