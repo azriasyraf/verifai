@@ -32,7 +32,7 @@ export async function POST(request) {
       ],
       model: 'llama-3.3-70b-versatile',
       temperature: 0.3,
-      max_tokens: 4000,
+      max_tokens: 6000,
       response_format: { type: 'json_object' },
     });
 
@@ -157,6 +157,9 @@ REQUIREMENTS — in priority order:
    - Bidirectionality: if R001 lists C001, then C001 must list R001
 
 2. COVERAGE:
+   - Generate a MINIMUM of 8 risks, ideally 10–12. A real audit program must be comprehensive — 3 risks is not acceptable for any process.
+   - Generate a MINIMUM of 8 controls, ideally 10–12. Every major risk must be covered by at least one control.
+   - Generate a MINIMUM of 10 audit procedures, ideally 12–15. Every control must have at least one test procedure.
    - Cover all financial statement assertions: Completeness, Existence, Accuracy, Valuation, Rights, Presentation${process === 'it' ? '\n   - Cover key IT objectives: Availability, Confidentiality, Integrity' : ''}
    - Include all major risk categories: Financial, Operational, Compliance${process === 'it' ? ', IT' : ''}
    - Mix of Preventive, Detective, and Corrective controls
