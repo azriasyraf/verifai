@@ -98,6 +98,13 @@ export default function GenerationForm({
 
       if (ext === 'txt') {
         text = await file.text();
+      } else if (ext === 'pdf') {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/api/parse-doc', { method: 'POST', body: fd });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || 'PDF parse failed');
+        text = json.text;
       } else if (ext === 'docx') {
         const arrayBuffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
@@ -110,7 +117,7 @@ export default function GenerationForm({
           return `[Sheet: ${name}]\n${XLSX.utils.sheet_to_csv(ws)}`;
         }).join('\n\n');
       } else {
-        setDocUploadError('Unsupported file type. Please upload .txt, .docx, or .xlsx.');
+        setDocUploadError('Unsupported file type. Please upload .pdf, .txt, .docx, or .xlsx.');
         setIsParsingDoc(false);
         return;
       }
@@ -685,12 +692,12 @@ export default function GenerationForm({
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                         {isParsingDoc ? 'Parsing…' : 'Choose file'}
                       </button>
-                      <span className="text-xs text-gray-400">.txt · .docx · .xlsx</span>
+                      <span className="text-xs text-gray-400">.pdf · .docx · .txt · .xlsx</span>
                     </div>
                     <input
                       ref={docInputRef}
                       type="file"
-                      accept=".txt,.docx,.xlsx,.xls"
+                      accept=".pdf,.txt,.docx,.xlsx,.xls"
                       onChange={handleDocUpload}
                       className="hidden"
                     />
