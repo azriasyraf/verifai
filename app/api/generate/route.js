@@ -20,10 +20,10 @@ NON-NEGOTIABLE OUTPUT RULES:
 
 export async function POST(request) {
   try {
-    const { sectorContext, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction, documentContext, docType } = await request.json();
+    const { sectorContext, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction, uploadedDocs } = await request.json();
     const regs = getRegulations(process, jurisdiction);
     const regulationsContext = formatRegulationsForPrompt(regs);
-    const prompt = buildPrompt(sectorContext, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext, documentContext, docType);
+    const prompt = buildPrompt(sectorContext, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext, uploadedDocs);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -78,7 +78,7 @@ export async function POST(request) {
   }
 }
 
-function buildPrompt(sectorContext, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '', documentContext = null, docType = null) {
+function buildPrompt(sectorContext, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '', uploadedDocs = null) {
   const processLabel = getProcessLabel(process);
   const controlFramework = process === 'it' || process === 'itgc' ? 'COBIT 2019' : 'COSO 2013';
   const frameworkGuidance = process === 'it'
@@ -218,7 +218,7 @@ ADJUSTMENT RULES — apply these when client context is provided:
    Absence of evidence is not absence of risk — keep them at baseline rating.
 
 5. clientEvidence, source, gapFlag, and gapNote are OPTIONAL — only add them when the notes provide specific evidence.
-   Do not fabricate evidence. If the notes are vague, do not add these fields.` : ''}${documentContext ? (() => {
+   Do not fabricate evidence. If the notes are vague, do not add these fields.` : ''}${uploadedDocs?.length ? (() => {
   const docLabels = {
     'pp': 'POLICIES & PROCEDURES DOCUMENT',
     'prior-report': 'PRIOR AUDIT REPORT',
@@ -227,7 +227,6 @@ ADJUSTMENT RULES — apply these when client context is provided:
     'laws': 'APPLICABLE LAWS & REGULATIONS',
     'guidelines': 'INDUSTRY GUIDELINES / REGULATORY CIRCULARS',
   };
-  const label = docLabels[docType] || 'REFERENCE DOCUMENT';
   const instructions = {
     'pp': 'Use this to identify what controls are formally documented. Flag any gaps between documented procedures and standard best-practice controls. Where a control is well-documented, note it as a design strength.',
     'prior-report': 'Elevate risk ratings for issues that appear to be repeat findings. Where prior findings are referenced, add clientEvidence quoting the prior finding. Flag any unresolved recommendations as high-priority risks.',
@@ -236,14 +235,14 @@ ADJUSTMENT RULES — apply these when client context is provided:
     'laws': 'Use these laws and regulations to identify compliance risks specific to this jurisdiction and process. Add regulatory references to relevant controls and procedures. Flag areas where the process or controls may not meet statutory requirements. Treat these as authoritative — elevate any compliance risk to High rating.',
     'guidelines': 'Use these industry guidelines or regulatory circulars to identify sector-specific risks and control expectations. Add references to controls where the guideline sets a specific standard. Flag deviations from guideline requirements as compliance risks.',
   };
-  return `
-
-${label}:
----
-${documentContext}
----
-
-${instructions[docType] || 'Use this document as additional context to improve risk identification and control design.'}`;
+  const hasGapPair = uploadedDocs.some(d => d.docType === 'pp') && uploadedDocs.some(d => d.docType === 'walkthrough');
+  const docBlocks = uploadedDocs.map(doc => {
+    const label = docLabels[doc.docType] || 'REFERENCE DOCUMENT';
+    const instruction = instructions[doc.docType] || 'Use this document as additional context to improve risk identification and control design.';
+    return `\n\n${label}:\n---\n${doc.text}\n---\n\n${instruction}`;
+  }).join('');
+  const gapInstruction = hasGapPair ? `\n\nGAP ANALYSIS REQUIRED: Both a Policies & Procedures document and a Walkthrough Working Paper have been provided. Cross-reference them explicitly: identify controls that are documented in P&P but were NOT observed during the walkthrough (design-operating gaps, set gapFlag: true), and note any controls observed in practice that are not formally documented (undocumented practices).` : '';
+  return docBlocks + gapInstruction;
 })() : ''}${regulationsContext ? `
 
 ${regulationsContext}

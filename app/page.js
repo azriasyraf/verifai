@@ -133,7 +133,7 @@ export default function Verifai() {
   // -------------------------------------------------------------------------
   // Audit Program handlers (existing — unchanged)
   // -------------------------------------------------------------------------
-  const handleGenerate = async (extraContext, documentContext, docType) => {
+  const handleGenerate = async (extraContext, uploadedDocs) => {
     setIsGenerating(true);
     setError(null);
 
@@ -146,8 +146,7 @@ export default function Verifai() {
           process: selectedProcess,
           clientContext: extraContext || undefined,
           jurisdiction,
-          documentContext: documentContext || undefined,
-          docType: docType || undefined,
+          uploadedDocs: uploadedDocs?.length ? uploadedDocs : undefined,
         })
       });
 

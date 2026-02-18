@@ -68,9 +68,8 @@ export default function GenerationForm({
   const [showContextPanel, setShowContextPanel] = useState(!!(walkthroughClientContext));
 
   // Document upload state (audit mode only)
-  const [docType, setDocType] = useState('pp');
-  const [uploadedDocName, setUploadedDocName] = useState('');
-  const [documentContext, setDocumentContext] = useState('');
+  const [uploadedDocs, setUploadedDocs] = useState([]);
+  const [currentDocType, setCurrentDocType] = useState('pp');
   const [docUploadError, setDocUploadError] = useState('');
   const [isParsingDoc, setIsParsingDoc] = useState(false);
   const docInputRef = useRef(null);
@@ -90,8 +89,6 @@ export default function GenerationForm({
     const file = e.target.files[0];
     if (!file) return;
     setDocUploadError('');
-    setDocumentContext('');
-    setUploadedDocName('');
     setIsParsingDoc(true);
 
     try {
@@ -101,12 +98,18 @@ export default function GenerationForm({
       if (ext === 'txt') {
         text = await file.text();
       } else if (ext === 'pdf') {
-        const fd = new FormData();
-        fd.append('file', file);
-        const res = await fetch('/api/parse-doc', { method: 'POST', body: fd });
-        const json = await res.json();
-        if (!json.success) throw new Error(json.error || 'PDF parse failed');
-        text = json.text;
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+        const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+        const pdfDoc = await loadingTask.promise;
+        const pages = [];
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+          const page = await pdfDoc.getPage(i);
+          const content = await page.getTextContent();
+          pages.push(content.items.map(item => item.str).join(' '));
+        }
+        text = pages.join('\n');
       } else if (ext === 'docx') {
         const arrayBuffer = await file.arrayBuffer();
         const result = await mammoth.extractRawText({ arrayBuffer });
@@ -132,20 +135,17 @@ export default function GenerationForm({
       }
 
       const truncated = text.length > MAX_DOC_CHARS ? text.slice(0, MAX_DOC_CHARS) + '\n\n[Document truncated for prompt length]' : text;
-      setDocumentContext(truncated);
-      setUploadedDocName(file.name);
+      setUploadedDocs(prev => [...prev, { fileName: file.name, docType: currentDocType, text: truncated }]);
     } catch (err) {
-      setDocUploadError('Failed to parse file. Check the file is not password-protected.');
+      setDocUploadError(err.message || 'Failed to parse file. Check the file is not password-protected.');
     } finally {
       setIsParsingDoc(false);
       if (docInputRef.current) docInputRef.current.value = '';
     }
   };
 
-  const clearDocUpload = () => {
-    setDocumentContext('');
-    setUploadedDocName('');
-    setDocUploadError('');
+  const removeDoc = (index) => {
+    setUploadedDocs(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleFileUpload = (e) => {
@@ -680,8 +680,8 @@ export default function GenerationForm({
                     <p className="text-xs font-medium text-gray-700 mb-2">Upload a reference document</p>
                     <div className="flex gap-2 items-center flex-wrap">
                       <select
-                        value={docType}
-                        onChange={e => setDocType(e.target.value)}
+                        value={currentDocType}
+                        onChange={e => setCurrentDocType(e.target.value)}
                         className="border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                       >
                         {DOC_TYPES.map(d => (
@@ -695,7 +695,7 @@ export default function GenerationForm({
                         className="flex items-center gap-1.5 text-xs font-medium text-indigo-700 bg-white border border-indigo-200 rounded-lg px-3 py-1.5 hover:bg-indigo-50 transition-colors disabled:opacity-50"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                        {isParsingDoc ? 'Parsing…' : 'Choose file'}
+                        {isParsingDoc ? 'Parsing…' : uploadedDocs.length > 0 ? 'Add another' : 'Choose file'}
                       </button>
                       <span className="text-xs text-gray-400">.pdf · .docx · .txt · .xlsx</span>
                     </div>
@@ -709,21 +709,25 @@ export default function GenerationForm({
                     {docUploadError && (
                       <p className="mt-1.5 text-xs text-red-600">{docUploadError}</p>
                     )}
-                    {uploadedDocName && !docUploadError && (
-                      <div className="mt-2 flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                        <div>
-                          <p className="text-xs font-medium text-green-800">
-                            ✓ {DOC_TYPES.find(d => d.id === docType)?.label} loaded
-                          </p>
-                          <p className="text-xs text-green-600 mt-0.5">{uploadedDocName} · {documentContext.length.toLocaleString()} characters</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={clearDocUpload}
-                          className="text-xs text-green-700 hover:text-red-600 transition-colors shrink-0"
-                        >
-                          Remove
-                        </button>
+                    {uploadedDocs.length > 0 && (
+                      <div className="mt-2 flex flex-col gap-1.5">
+                        {uploadedDocs.map((doc, i) => (
+                          <div key={i} className="flex items-center justify-between gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium text-green-800 truncate">
+                                ✓ {DOC_TYPES.find(d => d.id === doc.docType)?.label}
+                              </p>
+                              <p className="text-xs text-green-600 mt-0.5 truncate">{doc.fileName} · {doc.text.length.toLocaleString()} chars</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeDoc(i)}
+                              className="text-xs text-green-700 hover:text-red-600 transition-colors shrink-0"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -737,7 +741,7 @@ export default function GenerationForm({
           {isAudit && (
             <>
               <button
-                onClick={() => handleGenerate(clientContext.trim() || undefined, documentContext || undefined, documentContext ? docType : undefined)}
+                onClick={() => handleGenerate(clientContext.trim() || undefined, uploadedDocs.length ? uploadedDocs : undefined)}
                 disabled={!canGenerate || isGenerating}
                 className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all ${
                   canGenerate && !isGenerating
@@ -758,7 +762,7 @@ export default function GenerationForm({
               {!canGenerate && !isGenerating && (
                 <p className="text-center text-xs text-gray-500 mt-2">Select a process to continue</p>
               )}
-              {canGenerate && !isGenerating && !showContextPanel && !clientContext.trim() && !documentContext && (
+              {canGenerate && !isGenerating && !showContextPanel && !clientContext.trim() && !uploadedDocs.length && (
                 <p className="text-center text-xs text-gray-400 mt-2">Output will be generic. Open <span className="text-indigo-500 cursor-pointer" onClick={() => setShowContextPanel(true)}>"Make it specific"</span> above to upload reference documents or add context for a tailored program.</p>
               )}
             </>
