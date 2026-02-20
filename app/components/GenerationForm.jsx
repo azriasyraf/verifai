@@ -6,6 +6,74 @@ import mammoth from 'mammoth';
 
 import { PROCESSES as processes } from '../lib/processNames.js';
 
+// Keywords used to score paragraph relevance during smart extraction
+const PROCESS_KEYWORDS = {
+  hr:          ['employee', 'employment', 'salary', 'wages', 'leave', 'termination', 'contract', 'payroll', 'overtime', 'benefit', 'hire', 'dismiss', 'conduct', 'grievance', 'notice', 'redundancy', 'maternity', 'annual leave', 'sick leave', 'public holiday', 'allowance', 'deduction', 'epf', 'socso', 'pcb'],
+  procurement: ['purchase', 'procurement', 'vendor', 'supplier', 'tender', 'contract', 'approval', 'order', 'bid', 'quotation', 'rfq', 'rfp', 'competitive', 'sourcing', 'evaluation', 'invoice', 'payment term'],
+  revenue:     ['invoice', 'customer', 'sales', 'revenue', 'collection', 'receipt', 'credit', 'payment', 'billing', 'receivable', 'credit limit', 'discount', 'return', 'order'],
+  r2r:         ['journal', 'reconciliation', 'ledger', 'financial statement', 'closing', 'accrual', 'report', 'trial balance', 'period end', 'variance', 'chart of accounts'],
+  inventory:   ['inventory', 'stock', 'warehouse', 'goods', 'receipt', 'issue', 'count', 'valuation', 'obsolete', 'reorder', 'physical count', 'spoilage'],
+  c2r:         ['asset', 'capital', 'depreciation', 'disposal', 'acquisition', 'fixed asset', 'useful life', 'impairment', 'capex', 'register'],
+  treasury:    ['cash', 'bank', 'payment', 'transfer', 'investment', 'treasury', 'liquidity', 'cheque', 'petty cash', 'reconciliation', 'forex'],
+  it:          ['access', 'user', 'password', 'backup', 'change management', 'incident', 'security', 'data', 'system', 'privileged', 'patch', 'disaster recovery', 'log', 'access control'],
+};
+
+function smartExtract(text, process, maxChars) {
+  if (text.length <= maxChars) return text;
+
+  const keywords = PROCESS_KEYWORDS[process] || [];
+
+  // Split into paragraphs; fall back to ~600-char chunks if formatting is dense
+  let segments = text.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 40);
+  if (segments.length < 15) {
+    const words = text.split(/\s+/);
+    const chunks = [];
+    let cur = '';
+    for (const word of words) {
+      cur += word + ' ';
+      if (cur.length >= 600) { chunks.push(cur.trim()); cur = ''; }
+    }
+    if (cur.trim()) chunks.push(cur.trim());
+    segments = chunks;
+  }
+
+  const scored = segments.map((para, index) => {
+    const lower = para.toLowerCase();
+    const score = keywords.reduce((s, kw) => s + (lower.includes(kw) ? 1 : 0), 0);
+    return { para, score, index };
+  });
+
+  const selected = new Set();
+  let total = 0;
+
+  // Pass 1: highly relevant (score >= 2)
+  for (const { para, score, index } of scored) {
+    if (score < 2) continue;
+    if (total + para.length + 2 > maxChars) continue;
+    selected.add(index); total += para.length + 2;
+  }
+  // Pass 2: somewhat relevant (score >= 1)
+  for (const { para, score, index } of scored) {
+    if (score < 1 || selected.has(index)) continue;
+    if (total + para.length + 2 > maxChars) continue;
+    selected.add(index); total += para.length + 2;
+  }
+  // Pass 3: fill from beginning (definitions, scope, intro)
+  for (const { para, index } of scored) {
+    if (selected.has(index)) continue;
+    if (total + para.length + 2 > maxChars) break;
+    selected.add(index); total += para.length + 2;
+  }
+
+  const extracted = scored
+    .filter(({ index }) => selected.has(index))
+    .sort((a, b) => a.index - b.index)
+    .map(({ para }) => para)
+    .join('\n\n');
+
+  return extracted + '\n\n[Relevant sections extracted — some content omitted for length]';
+}
+
 const companyTypes = [
   { id: 'public', name: 'Public Company' },
   { id: 'private', name: 'Private Company' },
@@ -83,7 +151,7 @@ export default function GenerationForm({
     { id: 'guidelines',   label: 'Industry Guidelines / Circulars' },
   ];
 
-  const MAX_DOC_CHARS = 8000;
+  const MAX_DOC_CHARS = 30000;
 
   const handleDocUpload = async (e) => {
     const file = e.target.files[0];
@@ -134,8 +202,8 @@ export default function GenerationForm({
         return;
       }
 
-      const truncated = text.length > MAX_DOC_CHARS ? text.slice(0, MAX_DOC_CHARS) + '\n\n[Document truncated for prompt length]' : text;
-      setUploadedDocs(prev => [...prev, { fileName: file.name, docType: currentDocType, text: truncated }]);
+      const extracted = smartExtract(text, selectedProcess, MAX_DOC_CHARS);
+      setUploadedDocs(prev => [...prev, { fileName: file.name, docType: currentDocType, text: extracted }]);
     } catch (err) {
       setDocUploadError(err.message || 'Failed to parse file. Check the file is not password-protected.');
     } finally {
