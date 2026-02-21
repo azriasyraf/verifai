@@ -1,5 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 import { exportToWord } from '../lib/exportToWord';
 
 const RATING_STYLES = {
@@ -532,6 +534,14 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
+        {/* Nav */}
+        <div className="flex justify-between items-center mb-4">
+          <span className="font-semibold text-gray-900 text-sm">Verifai</span>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">My Engagements</Link>
+            <UserButton afterSignOutUrl="/sign-in" />
+          </div>
+        </div>
         <div className="grid grid-cols-[1fr_192px] gap-6 items-start">
         <div>{/* left column */}
 
@@ -753,7 +763,7 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
                   onClick={() => setIsEditMode(false)}
                   className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
                 >
-                  Close editor
+                  Done Editing
                 </button>
                 <button
                   onClick={handleDiscard}
@@ -792,7 +802,7 @@ export default function ReportView({ report, sourceFindings = [], onReset }) {
                 onClick={handleReset}
                 className="w-full bg-white hover:bg-gray-50 text-gray-500 border border-gray-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors"
               >
-                New report
+                Start Over
               </button>
             </div>
 

@@ -1,11 +1,14 @@
 import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '../../lib/rateLimit.js';
 
 export const maxDuration = 30;
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(request) {
+  const limited = await checkRateLimit();
+  if (limited) return limited;
   try {
     const { findings, engagementContext } = await request.json();
 
@@ -62,6 +65,6 @@ Return JSON exactly:
     return NextResponse.json({ success: true, data: result.recommendations });
   } catch (error) {
     console.error('Error generating recommendations:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Generation failed. Please try again.' }, { status: 500 });
   }
 }

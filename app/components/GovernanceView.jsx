@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 
 // Document icon used for "Documents to Obtain" lists
 function DocIcon() {
@@ -314,6 +316,14 @@ export default function GovernanceView({
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
+        {/* Nav */}
+        <div className="flex justify-between items-center mb-4">
+          <span className="font-semibold text-gray-900 text-sm">Verifai</span>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">My Engagements</Link>
+            <UserButton afterSignOutUrl="/sign-in" />
+          </div>
+        </div>
         <div className="grid grid-cols-[1fr_192px] gap-6 items-start">
         <div> {/* left column */}
 
@@ -881,7 +891,7 @@ export default function GovernanceView({
                 onClick={() => setIsEditMode(true)}
                 className="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 font-medium rounded-lg px-3 py-2 text-sm transition-colors"
               >
-                Edit
+                Edit Working Paper
               </button>
             ) : (
               <button

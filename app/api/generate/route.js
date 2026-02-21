@@ -2,6 +2,8 @@ import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
 import { getRegulations, formatRegulationsForPrompt } from '../../lib/regulations/index.js';
 import { getProcessLabel } from '../../lib/processNames.js';
+import { checkRateLimit } from '../../lib/rateLimit.js';
+import { wrapDocForPrompt } from '../../lib/sanitize.js';
 
 export const maxDuration = 60;
 
@@ -11,14 +13,18 @@ const SYSTEM_PROMPT = `You are an expert internal auditor generating structured 
 
 NON-NEGOTIABLE OUTPUT RULES:
 1. Return only valid JSON matching the exact schema. No markdown, no commentary, no explanation outside the JSON.
-2. Every risk MUST have at least one entry in relatedControls.
+2. Every risk MUST have at least one entry in relatedControls using ONLY control IDs that exist in the controls array.
    INVALID: { "id": "R001", "relatedControls": [] }
-   VALID:   { "id": "R001", "relatedControls": ["C001"] }
+   INVALID: { "id": "R001", "relatedControls": ["C099"] }  ← C099 does not exist
+   VALID:   { "id": "R001", "relatedControls": ["C001", "C004"] }
 3. Every control MUST have at least one entry in mitigatesRisks AND at least one procedure with a matching controlId.
-4. Cross-references must be bidirectional: if R001 lists C001, then C001 must list R001.
-5. Verify all cross-references before returning. Remove broken references rather than leaving them empty.`;
+4. Controls are designed to cover multiple risks — each control should appear in 2–4 different risks' relatedControls arrays.
+5. Cross-references must be bidirectional: if R001 lists C001, then C001 must list R001. Check both directions before returning.
+6. BEFORE RETURNING: scan every risk. If any risk has an empty relatedControls after checking, extend the nearest matching control to cover it.`;
 
 export async function POST(request) {
+  const limited = await checkRateLimit();
+  if (limited) return limited;
   try {
     const { sectorContext, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction, uploadedDocs } = await request.json();
     const regs = getRegulations(process, jurisdiction);
@@ -43,6 +49,7 @@ export async function POST(request) {
       const controlIds = new Set(auditProgram.controls.map(c => c.id));
       const riskIds = new Set(auditProgram.risks.map(r => r.id));
 
+      // Strip broken references
       for (const risk of auditProgram.risks) {
         risk.relatedControls = (risk.relatedControls || []).filter(id => controlIds.has(id));
       }
@@ -51,6 +58,25 @@ export async function POST(request) {
       }
       if (auditProgram.auditProcedures) {
         auditProgram.auditProcedures = auditProgram.auditProcedures.filter(p => controlIds.has(p.controlId));
+      }
+
+      // Fallback: any risk still with no controls gets assigned the broadest existing control
+      if (auditProgram.controls.length > 0) {
+        const orphanRisks = auditProgram.risks.filter(r => r.relatedControls.length === 0);
+        if (orphanRisks.length > 0) {
+          // Pick the control with the most mitigatesRisks entries as the broadest coverage
+          const broadestControl = auditProgram.controls.reduce((best, c) =>
+            (c.mitigatesRisks || []).length >= (best.mitigatesRisks || []).length ? c : best,
+            auditProgram.controls[0]
+          );
+          for (const risk of orphanRisks) {
+            risk.relatedControls = [broadestControl.id];
+            if (!broadestControl.mitigatesRisks) broadestControl.mitigatesRisks = [];
+            if (!broadestControl.mitigatesRisks.includes(risk.id)) {
+              broadestControl.mitigatesRisks.push(risk.id);
+            }
+          }
+        }
       }
     }
 
@@ -74,7 +100,7 @@ export async function POST(request) {
     return NextResponse.json({ success: true, data: auditProgram });
   } catch (error) {
     console.error('Error generating audit program:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Generation failed. Please try again.' }, { status: 500 });
   }
 }
 
@@ -101,9 +127,9 @@ SCHEMA — return exactly this structure:
   },
   "processOverview": "2-3 paragraphs describing the ${processLabel} process — typical workflow, key characteristics, and audit relevance${sectorContext ? `. Tailor to: ${sectorContext}` : ''}",
   "auditObjectives": [
-    "Objective 1 — link to a financial statement assertion or IT objective",
-    "Objective 2",
-    "Objective 3"
+    "To evaluate the effectiveness of controls over [assertion] in the [process] process",
+    "To assess compliance with [regulation or framework requirement]",
+    "To determine whether [specific risk area] is adequately mitigated"
   ],
   "risks": [
     {
@@ -112,7 +138,7 @@ SCHEMA — return exactly this structure:
       "description": "Specific, detailed risk description",
       "rating": "High | Medium | Low",
       "assertion": "Completeness | Existence | Accuracy | Valuation | Rights | Presentation | IT objective",
-      "relatedControls": ["C001"],
+      "relatedControls": ["C001", "C003"],
       "frameworkReference": "Specific ${controlFramework} component — e.g. 'COSO - Risk Assessment Component' or 'COBIT APO12.01'",
       "regulatoryRefs": [{ "regulation": "Employment Act 1955 (Act 265)", "clause": "Section 14" }]
     }
@@ -124,7 +150,7 @@ SCHEMA — return exactly this structure:
       "type": "Preventive | Detective | Corrective",
       "frequency": "Continuous | Daily | Weekly | Monthly | Quarterly | Annual",
       "owner": "Typical role responsible for operating this control",
-      "mitigatesRisks": ["R001"],
+      "mitigatesRisks": ["R001", "R002", "R005"],
       "frameworkReference": "Specific ${controlFramework} principle — e.g. 'COSO - Control Activities: Segregation of Duties'",
       "regulatoryRefs": [{ "regulation": "EPF Act 1991 (Act 452)", "clause": "Section 44" }]
     }
@@ -151,12 +177,19 @@ PHASE SEPARATION — this is non-negotiable:
 REQUIREMENTS — in priority order:
 
 1. CROSS-REFERENCES (highest priority — verify before returning):
-   - Every risk: relatedControls must contain at least one real control ID from the controls array
-   - Every control: mitigatesRisks must contain at least one real risk ID from the risks array
-   - Every control: must have at least one procedure in auditProcedures with a matching controlId
-   - Bidirectionality: if R001 lists C001, then C001 must list R001
+   - Every risk: relatedControls must contain at least one real control ID from the controls array. Only reference IDs you have defined — never invent IDs like C011 if you only defined C001–C010.
+   - Every control: mitigatesRisks must list ALL risk IDs this control covers (typically 2–4 risks per control).
+   - Every control: must have at least one procedure in auditProcedures with a matching controlId.
+   - Bidirectionality: if R001 lists C001, then C001 must list R001. Check both directions.
+   - FINAL CHECK: After building the full output, scan every risk. If any risk has relatedControls: [], find the most relevant existing control and add that risk to its mitigatesRisks, and add that control ID to the risk's relatedControls.
+
+MANY-TO-MANY MAPPING (this is how real audit programs work):
+   - One control often covers multiple risks. Example: a three-way matching control prevents both duplicate payments (R003) and unauthorised procurement (R007) and vendor master fraud (R009).
+   - One risk often needs multiple control layers — a preventive control AND a detective control is best practice.
+   - Do NOT create a separate control for every single risk. Design broad controls first, then map which risks each control addresses.
 
 2. COVERAGE:
+   - auditObjectives: write 3–4 concise "To [verb]..." statements. Do NOT prefix with "Objective 1", "Objective 2" etc — the numbering is applied automatically in the UI.
    - Generate a MINIMUM of 8 risks, ideally 10–12. A real audit program must be comprehensive — 3 risks is not acceptable for any process.
    - Generate a MINIMUM of 8 controls, ideally 10–12. Every major risk must be covered by at least one control.
    - Generate a MINIMUM of 10 audit procedures, ideally 12–15. Every control must have at least one test procedure.
@@ -239,7 +272,7 @@ ADJUSTMENT RULES — apply these when client context is provided:
   const docBlocks = uploadedDocs.map(doc => {
     const label = docLabels[doc.docType] || 'REFERENCE DOCUMENT';
     const instruction = instructions[doc.docType] || 'Use this document as additional context to improve risk identification and control design.';
-    return `\n\n${label}:\n---\n${doc.text}\n---\n\n${instruction}`;
+    return `\n\n${label}:\n${wrapDocForPrompt(doc.text, doc.docType, doc.fileName || 'document')}\n\n${instruction}`;
   }).join('');
   const gapInstruction = hasGapPair ? `\n\nGAP ANALYSIS REQUIRED: Both a Policies & Procedures document and a Walkthrough Working Paper have been provided. Cross-reference them explicitly: identify controls that are documented in P&P but were NOT observed during the walkthrough (design-operating gaps, set gapFlag: true), and note any controls observed in practice that are not formally documented (undocumented practices).` : '';
   return docBlocks + gapInstruction;

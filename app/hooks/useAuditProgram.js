@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { analyticsLibrary } from '../lib/analyticsLibrary';
 import { getProcessLabel } from '../lib/processNames';
 import { exportToExcel as exportToExcelLib } from '../lib/exportToExcel';
@@ -31,7 +31,7 @@ function mapAnalyticsToRisks(program, process) {
   });
 }
 
-export function useAuditProgram({ sectorContext, selectedProcess, auditeeDetails, jurisdiction, setGenerationMode, setShowResults, setError }) {
+export function useAuditProgram({ sectorContext, selectedProcess, auditeeDetails, jurisdiction, setGenerationMode, setShowResults, setError, engagementId, setEngagementId }) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [auditProgram, setAuditProgram] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -67,10 +67,51 @@ export function useAuditProgram({ sectorContext, selectedProcess, auditeeDetails
       const result = await response.json();
       if (result.success) {
         const cleanData = sanitizeProgram(result.data);
+        const mappedTests = mapAnalyticsToRisks(cleanData, selectedProcess);
+
+        // Persist to DB — create engagement on first generate, then save artifact
+        let currentEngagementId = engagementId;
+        try {
+          if (!currentEngagementId) {
+            const engRes = await fetch('/api/engagements', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                clientName: auditeeDetails.clientName,
+                department: auditeeDetails.department,
+                periodFrom: auditeeDetails.periodFrom,
+                periodTo: auditeeDetails.periodTo,
+                engagementRef: auditeeDetails.engagementRef,
+                auditorName: auditeeDetails.auditorName,
+                primaryContactName: auditeeDetails.primaryContactName,
+                primaryContactTitle: auditeeDetails.primaryContactTitle,
+                process: selectedProcess,
+                sectorContext: sectorContext || null,
+                jurisdiction,
+              }),
+            });
+            const engData = await engRes.json();
+            if (engData.success) {
+              currentEngagementId = engData.data.id;
+              setEngagementId(currentEngagementId);
+            }
+          }
+          if (currentEngagementId) {
+            await fetch(`/api/engagements/${currentEngagementId}/audit-program`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ auditProgram: cleanData, analyticsTests: mappedTests }),
+            });
+          }
+        } catch (persistErr) {
+          console.error('Failed to persist audit program:', persistErr);
+          // Non-blocking — user can still work
+        }
+
         setAuditProgram(cleanData);
         setOriginalProgram(JSON.parse(JSON.stringify(cleanData)));
         setEditedProgram(JSON.parse(JSON.stringify(cleanData)));
-        setAnalyticsTests(mapAnalyticsToRisks(cleanData, selectedProcess));
+        setAnalyticsTests(mappedTests);
         setGenerationMode('audit');
         setShowResults(true);
         setIsEditMode(false);
@@ -344,6 +385,34 @@ export function useAuditProgram({ sectorContext, selectedProcess, auditeeDetails
     // raisedFindings intentionally NOT reset — persists across generates in same session
   };
 
+  // Auto-save: debounced 2s PATCH on any state change after initial generate
+  useEffect(() => {
+    if (!engagementId || !auditProgram) return;
+    const timer = setTimeout(() => {
+      fetch(`/api/engagements/${engagementId}/audit-program`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          current_version: auditProgram,
+          analytics_tests: analyticsTests,
+          raised_findings: raisedFindings,
+          exit_meeting: exitMeeting,
+        }),
+      }).catch(err => console.error('Auto-save failed:', err));
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [auditProgram, analyticsTests, raisedFindings, exitMeeting, engagementId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadSavedProgram = (savedData, savedAnalyticsTests) => {
+    const cleanData = sanitizeProgram(savedData);
+    const mappedTests = savedAnalyticsTests || mapAnalyticsToRisks(cleanData, selectedProcess);
+    setAuditProgram(cleanData);
+    setOriginalProgram(JSON.parse(JSON.stringify(cleanData)));
+    setEditedProgram(JSON.parse(JSON.stringify(cleanData)));
+    setAnalyticsTests(mappedTests);
+    setIsEditMode(false);
+  };
+
   return {
     canGenerate,
     isGenerating,
@@ -388,5 +457,6 @@ export function useAuditProgram({ sectorContext, selectedProcess, auditeeDetails
     handleRaiseFinding,
     handleGenerateExitMeeting,
     resetAuditProgram,
+    loadSavedProgram,
   };
 }

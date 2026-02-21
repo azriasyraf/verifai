@@ -1,6 +1,7 @@
 import { Catamaran } from "next/font/google";
 import "./globals.css";
 import UserGuide from "./components/UserGuide";
+import { ClerkProvider } from "@clerk/nextjs";
 
 const catamaran = Catamaran({
   variable: "--font-catamaran",
@@ -15,13 +16,15 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body
-        className={`${catamaran.variable} antialiased`}
-      >
-        <UserGuide />
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${catamaran.variable} antialiased`}
+        >
+          <UserGuide />
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

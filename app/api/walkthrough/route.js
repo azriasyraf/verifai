@@ -2,6 +2,7 @@ import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
 import { getRegulations, formatRegulationsForPrompt } from '../../lib/regulations/index.js';
 import { getProcessLabel } from '../../lib/processNames.js';
+import { checkRateLimit } from '../../lib/rateLimit.js';
 
 export const maxDuration = 60;
 
@@ -16,6 +17,8 @@ NON-NEGOTIABLE OUTPUT RULES:
 4. Leave all auditor-fillable fields absent from the JSON — the working paper UI manages those.`;
 
 export async function POST(request) {
+  const limited = await checkRateLimit();
+  if (limited) return limited;
   try {
     const { sectorContext, process, auditeeDetails, jurisdiction } = await request.json();
 
@@ -55,7 +58,7 @@ export async function POST(request) {
     return NextResponse.json({ success: true, data: walkthrough });
   } catch (error) {
     console.error('Error generating walkthrough working paper:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Generation failed. Please try again.' }, { status: 500 });
   }
 }
 

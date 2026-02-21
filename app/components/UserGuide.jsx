@@ -53,6 +53,7 @@ export default function UserGuide() {
         onClick={openGuide}
         className="fixed bottom-6 right-6 z-40 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg transition-colors"
         title="User Guide"
+        suppressHydrationWarning
       >
         ⓘ Guide
       </button>
@@ -109,6 +110,7 @@ export default function UserGuide() {
                   {/* Section jump nav */}
                   <div className="flex flex-wrap gap-2 pb-1">
                     {[
+                      { id: 'guide-engagements', label: 'My Engagements', color: 'text-gray-600 bg-gray-100 hover:bg-gray-200' },
                       { id: 'guide-audit', label: 'Audit Program', color: 'text-indigo-600 bg-indigo-50 hover:bg-indigo-100' },
                       { id: 'guide-walkthrough', label: 'Walkthrough', color: 'text-teal-600 bg-teal-50 hover:bg-teal-100' },
                       { id: 'guide-rmga', label: 'RMGA', color: 'text-purple-600 bg-purple-50 hover:bg-purple-100' },
@@ -124,6 +126,48 @@ export default function UserGuide() {
                     ))}
                   </div>
 
+                  {/* My Engagements */}
+                  <div id="guide-engagements">
+                    <h3 className="font-semibold text-gray-900 mb-1">My Engagements</h3>
+                    <p className="text-xs text-gray-500 mb-3">
+                      Working papers are saved automatically to your account. You never need to export to preserve your work.
+                    </p>
+                    <ol className="space-y-3">
+                      {[
+                        {
+                          step: 'Saving is automatic',
+                          desc: 'Verifai saves every time you generate. Edits are debounced — two seconds after you stop typing, your changes are saved. No save button.',
+                        },
+                        {
+                          step: 'Access past engagements',
+                          desc: 'Click My Engagements in the top nav at any time to go to your dashboard. All your engagements are listed there, sorted by last updated.',
+                        },
+                        {
+                          step: 'Open a saved working paper',
+                          desc: 'Click an engagement card to see its documents. Click Open on any working paper to load it exactly where you left it.',
+                        },
+                        {
+                          step: 'Generate a missing document from the engagement view',
+                          desc: 'If a working paper has not been generated yet, its card shows a Generate button. Click it and the form opens with your engagement details pre-filled — just select your mode and generate.',
+                        },
+                        {
+                          step: 'Delete an engagement',
+                          desc: 'Open the engagement page and scroll to the bottom. Click Delete this engagement. This permanently removes all working papers for that engagement.',
+                        },
+                      ].map((item, i) => (
+                        <li key={i} className="flex gap-3">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold flex items-center justify-center mt-0.5">{i + 1}</span>
+                          <div>
+                            <p className="font-medium text-gray-900">{item.step}</p>
+                            <p className="text-gray-500 text-xs mt-0.5">{item.desc}</p>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <div className="border-t border-gray-100" />
+
                   {/* Audit Program */}
                   <div id="guide-audit">
                     <h3 className="font-semibold text-gray-900 mb-3">Audit Program Generator</h3>
@@ -135,15 +179,15 @@ export default function UserGuide() {
                         },
                         {
                           step: 'Select your industry and process',
-                          desc: 'Choose the industry and the process you are auditing — Revenue to Cash, Procurement to Payment, HR, Inventory, or IT. More will be added over time.',
+                          desc: 'Choose the industry and the process you are auditing: Procure-to-Pay, Order-to-Cash, Record-to-Report, Hire-to-Retire, Inventory-to-Manufacture, Capital-to-Retire, Treasury & Cash Management, or IT General Controls.',
                         },
                         {
                           step: 'Select your jurisdiction (optional)',
                           desc: 'Choose International for COSO 2013 and IIA IPPF references, or Malaysia to layer in process-specific statutory requirements (Employment Act, EPF, SOCSO, MACC, ITA, PDPA). Citation chips appear on each risk and control in the output.',
                         },
                         {
-                          step: 'Add context about the client (optional)',
-                          desc: 'Paste in walkthrough notes or interview observations to personalise the output. Verifai will surface risks with supporting evidence, flag control gaps, and add client-specific commentary. If you have a completed RMGA, you can import its findings directly.',
+                          step: 'Enrich with client documents (optional)',
+                          desc: 'Upload client documents using the Enrich with client context panel. Supported types: Policies & Procedures, Prior Audit Report, RMGA Assessment, or Walkthrough Working Paper. Verifai reads each file in context for its document type. Upload both a P&P and Walkthrough Working Paper and Verifai automatically cross-references them for gaps. Supports PDF, Word (.docx), Excel, and plain text. 8,000 character cap per document.',
                         },
                         {
                           step: 'Generate',

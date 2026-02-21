@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '../../lib/rateLimit.js';
 
 export const maxDuration = 60;
 
@@ -17,6 +18,8 @@ NON-NEGOTIABLE OUTPUT RULES:
 7. Write in formal, professional audit report language throughout.`;
 
 export async function POST(request) {
+  const limited = await checkRateLimit();
+  if (limited) return limited;
   try {
     const { engagementDetails, findings } = await request.json();
 
@@ -45,7 +48,7 @@ export async function POST(request) {
     return NextResponse.json({ success: true, data: report });
   } catch (error) {
     console.error('Error generating report:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Generation failed. Please try again.' }, { status: 500 });
   }
 }
 

@@ -13,6 +13,7 @@ const auditFeatures = [
   { label: 'Engagement details', desc: 'Capture client name, department, period, reference, and auditor. All stamped on every export.' },
   { label: 'Full inline edit mode', desc: 'Edit any AI-generated content: add, remove, or rewrite risks, controls, and procedures.' },
   { label: 'Jurisdiction-specific regulation library', desc: 'Select International (COSO 2013 + IIA IPPF) or Malaysia (adds Employment Act, EPF, SOCSO, MACC, ITA, PDPA per process). Every risk and control is tagged with citation chips.' },
+  { label: 'Document enrichment', desc: 'Upload client documents — Policies & Procedures, Prior Audit Report, RMGA Assessment, or Walkthrough Working Paper — to personalise generation. Upload both P&P and walkthrough notes and Verifai cross-references them for gaps automatically.' },
   { label: 'Kick-off meeting agenda', desc: 'Generate a structured agenda from your audit program in one click, with guidance notes. Copy to clipboard.' },
   { label: 'Excel export', desc: 'Multi-tab workbook: Summary tab plus one tab per control, each pre-populated with a fieldwork sample table.' },
 ];
@@ -62,12 +63,17 @@ const reportFeatures = [
   { label: 'Word export (.docx)', desc: 'Formatted report ready to share, with AI disclosure footer and page break per finding.' },
 ];
 
+const engagementFeatures = [
+  { label: 'Auto-save on every change', desc: 'Verifai saves automatically when you generate and debounces edits with a 2-second delay. You never think about saving.' },
+  { label: 'My Engagements dashboard', desc: 'All your engagements in one place, sorted by last updated. Client name, process, department, period, and status at a glance.' },
+  { label: 'Open where you left off', desc: 'Click Open on any working paper card to load it exactly as you left it — edits, field values, and all.' },
+  { label: 'Generate missing documents from the engagement view', desc: 'If a working paper has not been generated yet, click Generate on its card. The form opens with all engagement details pre-filled.' },
+  { label: 'Organisation-scoped storage', desc: 'All data is scoped to your organisation. Other organisations cannot see your engagements.' },
+];
+
 const comingSoon = [
   { label: 'See what changed from the AI draft', desc: 'Verifai will track every edit you make and include a change summary on export. Your supervisor can see that you engaged with the output, not just downloaded it.', status: 'Next up' },
   { label: 'More analytics tests', desc: 'Date thresholds, round-number clusters, split purchases, and cross-file joins like terminated employees cross-referenced against payroll.', status: 'Planned' },
-  { label: 'Document enrichment layer', desc: 'Label-tagged file uploads (walkthrough notes, P&P, prior report, RMGA) to enrich generation. Verifai reads each document in context for its document type.', status: 'Planned' },
-  { label: 'Policy & procedure gap detection', desc: 'Upload a P&P alongside your walkthrough notes. Verifai compares what is written against what was described and pre-populates a finding where they diverge.', status: 'Planned' },
-  { label: 'Saved engagements', desc: 'Save and reload your working papers across sessions. Right now everything lives in the browser tab.', status: 'Planned' },
   { label: 'Team collaboration', desc: 'Share workpapers with your team, assign sections, and track review status without bouncing Excel files around.', status: 'Future' },
 ];
 
@@ -104,9 +110,9 @@ export default function AboutPage() {
               href="/"
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
             >
-              Generate your first program
+              Open Verifai
             </Link>
-            <span className="text-sm text-gray-400">Free to use · No sign-up required</span>
+            <span className="text-sm text-gray-400">Invite-only beta</span>
           </div>
         </div>
 
@@ -228,6 +234,28 @@ export default function AboutPage() {
             {reportFeatures.map((f, i) => (
               <div key={i} className="flex gap-3 px-5 py-3">
                 <span className="text-rose-500 shrink-0 mt-0.5 text-sm">✓</span>
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900">{f.label}</p>
+                  <p className="text-gray-500 text-xs">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Feature 6: Saved Engagements */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-sm">6</div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Saved Engagements</h2>
+              <p className="text-sm text-gray-500">Working papers save automatically to your account. Pick up where you left off, across sessions and devices.</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+            {engagementFeatures.map((f, i) => (
+              <div key={i} className="flex gap-3 px-5 py-3">
+                <span className="text-gray-400 shrink-0 mt-0.5 text-sm">✓</span>
                 <div className="text-sm">
                   <p className="font-medium text-gray-900">{f.label}</p>
                   <p className="text-gray-500 text-xs">{f.desc}</p>

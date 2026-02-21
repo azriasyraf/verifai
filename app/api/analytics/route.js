@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '../../lib/rateLimit.js';
 
 // Pure JS analytics logic — no AI involved.
 // Receives: testId, columns (mapping of required field → column index), rows (array of arrays)
@@ -93,6 +94,8 @@ function testPrivilegedAccess(columns, rows) {
 }
 
 export async function POST(req) {
+  const limited = await checkRateLimit();
+  if (limited) return limited;
   try {
     const { testId, columns, rows, headers } = await req.json();
 
@@ -115,6 +118,6 @@ export async function POST(req) {
     });
   } catch (err) {
     console.error('Analytics route error:', err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Analytics failed. Please try again.' }, { status: 500 });
   }
 }

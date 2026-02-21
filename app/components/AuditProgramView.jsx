@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 import * as XLSX from 'xlsx';
 import ColumnMapper from './ColumnMapper';
 import { exportAnalyticsToExcel } from '../lib/exportAnalyticsToExcel';
@@ -156,6 +158,14 @@ export default function AuditProgramView({
         />
       )}
       <div className="max-w-5xl mx-auto">
+        {/* Nav */}
+        <div className="flex justify-between items-center mb-4">
+          <span className="font-semibold text-gray-900 text-sm">Verifai</span>
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">My Engagements</Link>
+            <UserButton afterSignOutUrl="/sign-in" />
+          </div>
+        </div>
         <div className="grid grid-cols-[1fr_192px] gap-6 items-start">
         <div>
         {/* Sticky phase indicator */}
@@ -238,7 +248,7 @@ export default function AuditProgramView({
                     onClick={exportToExcel}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-4 py-2 text-sm transition-colors"
                   >
-                    Export
+                    Export to Excel
                   </button>
                 </>
               )}
@@ -246,7 +256,7 @@ export default function AuditProgramView({
                 onClick={resetForm}
                 className="bg-white hover:bg-gray-50 text-gray-500 border border-gray-200 font-medium rounded-lg px-4 py-2 text-sm transition-colors"
               >
-                New Program
+                Start Over
               </button>
             </div>
           </div>
@@ -419,7 +429,7 @@ export default function AuditProgramView({
                     </button>
                   </>
                 ) : (
-                  <span className="text-gray-700 text-sm leading-relaxed">{obj}</span>
+                  <span className="text-gray-700 text-sm leading-relaxed">{obj.replace(/^Objective\s+\d+\s*[–\-—:]\s*/i, '')}</span>
                 )}
               </li>
             ))}
@@ -592,9 +602,9 @@ export default function AuditProgramView({
                     {risk.frameworkReference}
                   </div>
                 )}
-                {risk.regulatoryRefs && risk.regulatoryRefs.length > 0 && (
+                {risk.regulatoryRefs?.filter(ref => !/coso/i.test(ref.regulation)).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {risk.regulatoryRefs.map((ref, i) => (
+                    {risk.regulatoryRefs.filter(ref => !/coso/i.test(ref.regulation)).map((ref, i) => (
                       <span key={i} className="inline-flex flex-col bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-1 text-xs leading-tight">
                         <span className="text-blue-400" style={{fontSize:'10px'}}>{ref.regulation}</span>
                         <span className="font-semibold">{ref.clause}</span>
@@ -805,9 +815,9 @@ export default function AuditProgramView({
                     {control.frameworkReference}
                   </div>
                 )}
-                {control.regulatoryRefs && control.regulatoryRefs.length > 0 && (
+                {control.regulatoryRefs?.filter(ref => !/coso/i.test(ref.regulation)).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {control.regulatoryRefs.map((ref, i) => (
+                    {control.regulatoryRefs.filter(ref => !/coso/i.test(ref.regulation)).map((ref, i) => (
                       <span key={i} className="inline-flex flex-col bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-1 text-xs leading-tight">
                         <span className="text-blue-400" style={{fontSize:'10px'}}>{ref.regulation}</span>
                         <span className="font-semibold">{ref.clause}</span>
@@ -904,9 +914,9 @@ export default function AuditProgramView({
                     {proc.frameworkReference}
                   </div>
                 )}
-                {proc.regulatoryRefs && proc.regulatoryRefs.length > 0 && (
+                {proc.regulatoryRefs?.filter(ref => !/coso/i.test(ref.regulation)).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
-                    {proc.regulatoryRefs.map((ref, i) => (
+                    {proc.regulatoryRefs.filter(ref => !/coso/i.test(ref.regulation)).map((ref, i) => (
                       <span key={i} className="inline-flex flex-col bg-blue-50 text-blue-700 border border-blue-200 rounded px-2 py-1 text-xs leading-tight">
                         <span className="text-blue-400" style={{fontSize:'10px'}}>{ref.regulation}</span>
                         <span className="font-semibold">{ref.clause}</span>
@@ -1291,7 +1301,7 @@ export default function AuditProgramView({
                 onClick={resetForm}
                 className="w-full bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors"
               >
-                New Program
+                Start Over
               </button>
             </div>
 

@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
 import GenerationForm from './components/GenerationForm';
 import AuditProgramView from './components/AuditProgramView';
 import GovernanceView from './components/GovernanceView';
@@ -14,10 +16,15 @@ export default function Verifai() {
   // -------------------------------------------------------------------------
   // Shared state
   // -------------------------------------------------------------------------
+  const [engagementId, setEngagementId] = useState(null);
   const [generationMode, setGenerationMode] = useState('audit');
   const [sectorContext, setSectorContext] = useState('');
   const [jurisdiction, setJurisdiction] = useState('International');
   const [showResults, setShowResults] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !!sessionStorage.getItem('verifai_prefill');
+  });
   const [error, setError] = useState(null);
   const [selectedProcess, setSelectedProcess] = useState('');
   const [auditeeDetails, setAuditeeDetails] = useState({
@@ -47,17 +54,86 @@ export default function Verifai() {
   const audit = useAuditProgram({
     sectorContext, selectedProcess, auditeeDetails, jurisdiction,
     setGenerationMode, setShowResults, setError,
+    engagementId, setEngagementId,
   });
 
   const governance = useGovernance({
     sectorContext, auditeeDetails, setGenerationMode, setShowResults, setError,
     onGenerateAuditProgram: audit.handleGenerate,
+    engagementId, setEngagementId,
   });
 
   const walkthrough = useWalkthrough({
     sectorContext, selectedProcess, auditeeDetails, jurisdiction,
     setGenerationMode, setShowResults, setError,
+    engagementId, setEngagementId,
   });
+
+  // -------------------------------------------------------------------------
+  // Restore saved engagement from sessionStorage (set by /engagements/[id] Open flow)
+  // -------------------------------------------------------------------------
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const raw = sessionStorage.getItem('verifai_prefill');
+    if (!raw) return;
+    setIsRestoring(true);
+    sessionStorage.removeItem('verifai_prefill');
+    let prefill;
+    try { prefill = JSON.parse(raw); } catch { setIsRestoring(false); return; }
+
+    const { engagementId: prefillId, mode, process: prefillProcess,
+            sectorContext: prefillSector, jurisdiction: prefillJurisdiction,
+            clientName, department, periodFrom, periodTo,
+            engagementRef, auditorName, primaryContactName, primaryContactTitle } = prefill;
+
+    // Restore form fields
+    setAuditeeDetails({
+      clientName: clientName || '',
+      department: department || '',
+      periodFrom: periodFrom || '',
+      periodTo: periodTo || '',
+      engagementRef: engagementRef || '',
+      auditorName: auditorName || '',
+      primaryContactName: primaryContactName || '',
+      primaryContactTitle: primaryContactTitle || '',
+    });
+    if (prefillProcess) setSelectedProcess(prefillProcess);
+    if (prefillSector) setSectorContext(prefillSector);
+    if (prefillJurisdiction) setJurisdiction(prefillJurisdiction);
+    if (prefillId) setEngagementId(prefillId);
+
+    if (!prefillId || !mode) { setIsRestoring(false); return; }
+
+    const pathMap = { audit: 'audit-program', walkthrough: 'walkthrough', governance: 'governance', report: 'report' };
+    const path = pathMap[mode];
+    if (!path) { setIsRestoring(false); return; }
+
+    fetch(`/api/engagements/${prefillId}/${path}`)
+      .then(r => r.json())
+      .then(result => {
+        if (!result.success || !result.data) { setGenerationMode(mode); return; }
+        const data = result.data.current_version;
+        if (mode === 'audit') {
+          audit.loadSavedProgram(data, result.data.analytics_tests);
+          setGenerationMode('audit');
+          setShowResults(true);
+        } else if (mode === 'walkthrough') {
+          walkthrough.loadSavedWalkthrough(data);
+          setGenerationMode('walkthrough');
+          setShowResults(true);
+        } else if (mode === 'governance') {
+          governance.loadSavedAssessment(data);
+          setGenerationMode('governance');
+          setShowResults(true);
+        } else if (mode === 'report') {
+          setAuditReport(data);
+          setGenerationMode('report');
+          setShowResults(true);
+        }
+      })
+      .catch(err => console.error('Failed to restore saved engagement:', err))
+      .finally(() => setIsRestoring(false));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // -------------------------------------------------------------------------
   // Report handler
@@ -74,6 +150,42 @@ export default function Verifai() {
       });
       const result = await response.json();
       if (result.success) {
+        // Persist to DB
+        let currentEngagementId = engagementId;
+        try {
+          if (!currentEngagementId) {
+            const engRes = await fetch('/api/engagements', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                clientName: auditeeDetails.clientName,
+                department: auditeeDetails.department,
+                periodFrom: auditeeDetails.periodFrom,
+                periodTo: auditeeDetails.periodTo,
+                engagementRef: auditeeDetails.engagementRef,
+                auditorName: auditeeDetails.auditorName,
+                primaryContactName: auditeeDetails.primaryContactName,
+                primaryContactTitle: auditeeDetails.primaryContactTitle,
+                sectorContext: sectorContext || null,
+                jurisdiction,
+              }),
+            });
+            const engData = await engRes.json();
+            if (engData.success) {
+              currentEngagementId = engData.data.id;
+              setEngagementId(currentEngagementId);
+            }
+          }
+          if (currentEngagementId) {
+            fetch(`/api/engagements/${currentEngagementId}/report`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ report: result.data, sourceFindings: findings }),
+            }).catch(err => console.error('Failed to persist report:', err));
+          }
+        } catch (persistErr) {
+          console.error('Failed to persist report:', persistErr);
+        }
         setAuditReport(result.data);
         setGenerationMode('report');
         setShowResults(true);
@@ -97,6 +209,7 @@ export default function Verifai() {
     setJurisdiction('International');
     setShowResults(false);
     setError(null);
+    setEngagementId(null);
     audit.resetAuditProgram();
     governance.resetGovernance();
     walkthrough.resetWalkthrough();
@@ -111,6 +224,14 @@ export default function Verifai() {
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
+
+  if (isRestoring) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-400">Loading…</p>
+      </div>
+    );
+  }
 
   if (showResults && generationMode === 'report' && auditReport) {
     return (
@@ -196,9 +317,19 @@ export default function Verifai() {
   }
 
   return (
-    <GenerationForm
-      // shared
-      generationMode={generationMode}
+    <div>
+      <div className="flex justify-between items-center px-6 pt-4">
+        <span className="font-semibold text-gray-900 text-sm">Verifai</span>
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard" className="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+            My Engagements
+          </Link>
+          <UserButton afterSignOutUrl="/sign-in" />
+        </div>
+      </div>
+      <GenerationForm
+        // shared
+        generationMode={generationMode}
       setGenerationMode={setGenerationMode}
       sectorContext={sectorContext}
       setSectorContext={setSectorContext}
@@ -232,5 +363,6 @@ export default function Verifai() {
       jurisdiction={jurisdiction}
       setJurisdiction={setJurisdiction}
     />
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '../../../lib/rateLimit.js';
 
 export const maxDuration = 60;
 
@@ -13,6 +14,8 @@ NON-NEGOTIABLE OUTPUT RULES:
 3. All observations and recommendations must be drawn directly from the working paper evidence provided.`;
 
 export async function POST(request) {
+  const limited = await checkRateLimit();
+  if (limited) return limited;
   try {
     const { assessmentTitle, scope, areas, auditeeDetails } = await request.json();
 
@@ -41,7 +44,7 @@ export async function POST(request) {
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     console.error('Error generating overall assessment conclusion:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Generation failed. Please try again.' }, { status: 500 });
   }
 }
 

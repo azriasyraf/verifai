@@ -1,11 +1,14 @@
 import Groq from 'groq-sdk';
 import { NextResponse } from 'next/server';
+import { checkRateLimit } from '../../lib/rateLimit.js';
 
 export const maxDuration = 60;
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 export async function POST(request) {
+  const limited = await checkRateLimit();
+  if (limited) return limited;
   try {
     const { auditProgram, auditeeDetails, processName, sectorContext } = await request.json();
 
@@ -101,6 +104,6 @@ REQUIREMENTS:
 
   } catch (error) {
     console.error('Error generating exit meeting:', error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Generation failed. Please try again.' }, { status: 500 });
   }
 }
