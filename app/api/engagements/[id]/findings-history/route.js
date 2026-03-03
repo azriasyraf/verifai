@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { getServerSupabase } from '../../../../../lib/supabase.js';
+import { getServerSupabase } from '../../../../lib/supabase.js';
 import { NextResponse } from 'next/server';
 
 export async function GET(request, { params }) {

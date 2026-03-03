@@ -130,4 +130,3 @@ MANDATORY ADJUSTMENTS based on this cross-process history:
 4. GA004 (Risk Reporting & Oversight): include a question about whether these cross-process patterns have been escalated to the board or audit committee.
 5. Do NOT fabricate findings — reference only the control categories listed above. Use language like "prior audit engagements identified [category] weaknesses across [N] processes" in relevant inquiry questions and red flags.` : ''}`;
 }
-}
