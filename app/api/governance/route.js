@@ -18,7 +18,7 @@ export async function POST(request) {
   const limited = await checkRateLimit();
   if (limited) return limited;
   try {
-    const { sectorContext, companyType, auditeeDetails } = await request.json();
+    const { sectorContext, companyType, auditeeDetails, findingsHistory } = await request.json();
 
     if (!companyType) {
       return NextResponse.json(
@@ -27,7 +27,7 @@ export async function POST(request) {
       );
     }
 
-    const prompt = buildGovernancePrompt(sectorContext, companyType, auditeeDetails);
+    const prompt = buildGovernancePrompt(sectorContext, companyType, auditeeDetails, findingsHistory);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -49,7 +49,7 @@ export async function POST(request) {
   }
 }
 
-function buildGovernancePrompt(sectorContext, companyType, auditeeDetails) {
+function buildGovernancePrompt(sectorContext, companyType, auditeeDetails, findingsHistory = null) {
   const engagementContext = auditeeDetails
     ? [
         auditeeDetails.clientName ? `Client: ${auditeeDetails.clientName}` : '',
@@ -113,5 +113,21 @@ REQUIREMENTS per area:
 - conclusion: always an empty string ""
 
 Make all content highly specific to a ${companyType}.${sectorContext ? ` Sector context: ${sectorContext} — apply sector-specific governance risks and regulatory considerations.` : ''}
-Reference IIA IPPF and COSO ERM throughout.`;
+Reference IIA IPPF and COSO ERM throughout.${findingsHistory?.length ? `
+
+CROSS-PROCESS FINDINGS HISTORY — CLIENT ENTITY TRACK RECORD:
+The following control weaknesses have been identified across audit engagements for this entity. Cross-process patterns at this scale indicate systemic governance failures rather than isolated process issues:
+
+${findingsHistory.map(h => {
+  const crossProcess = h.processes?.length > 1;
+  return `- ${h.control_category}: ${h.finding_count} finding${h.finding_count !== 1 ? 's' : ''} across ${h.engagement_count} engagement${h.engagement_count !== 1 ? 's' : ''}${crossProcess ? ` spanning ${h.processes.length} processes (${h.processes.join(', ')}) — CROSS-PROCESS PATTERN` : ''}`;
+}).join('\n')}
+
+MANDATORY ADJUSTMENTS based on this cross-process history:
+1. GA002 (Control Environment & Risk Culture): include specific inquiry questions and red flags directly addressing the repeat control categories above. A weakness found across multiple processes indicates a tone-at-the-top, policy design, or training failure at entity level — not a process-specific issue.
+2. GA001 (Risk Management Framework): include a red flag and inquiry question about whether the risk framework is identifying and tracking these recurring weaknesses, and whether management is remediating them.
+3. GA003 (Training & Awareness): where Authorization & Approval, Segregation of Duties, or Documentation categories appear in the history, include targeted questions about whether training adequately covers these control areas.
+4. GA004 (Risk Reporting & Oversight): include a question about whether these cross-process patterns have been escalated to the board or audit committee.
+5. Do NOT fabricate findings — reference only the control categories listed above. Use language like "prior audit engagements identified [category] weaknesses across [N] processes" in relevant inquiry questions and red flags.` : ''}`;
+}
 }

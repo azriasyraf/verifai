@@ -49,7 +49,7 @@ export function useAuditProgram({ sectorContext, selectedProcess, auditeeDetails
 
   const canGenerate = !!selectedProcess;
 
-  const handleGenerate = async (extraContext, uploadedDocs) => {
+  const handleGenerate = async (extraContext, uploadedDocs, findingsHistory) => {
     setIsGenerating(true);
     setError(null);
     try {
@@ -62,6 +62,7 @@ export function useAuditProgram({ sectorContext, selectedProcess, auditeeDetails
           clientContext: extraContext || undefined,
           jurisdiction,
           uploadedDocs: uploadedDocs?.length ? uploadedDocs : undefined,
+          findingsHistory: findingsHistory?.length ? findingsHistory : undefined,
         }),
       });
       const result = await response.json();
@@ -402,6 +403,42 @@ export function useAuditProgram({ sectorContext, selectedProcess, auditeeDetails
     }, 2000);
     return () => clearTimeout(timer);
   }, [auditProgram, analyticsTests, raisedFindings, exitMeeting, engagementId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sprint 4: classify analytics-raised findings and write to findings table (fire-and-forget)
+  useEffect(() => {
+    if (!engagementId || !raisedFindings.length) return;
+    const timer = setTimeout(async () => {
+      try {
+        const classifyRes = await fetch('/api/findings/classify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ findings: raisedFindings, process: selectedProcess }),
+        });
+        const classifyData = await classifyRes.json();
+        if (!classifyData.success) return;
+
+        const classMap = {};
+        for (const c of classifyData.data) { classMap[c.ref] = c; }
+
+        const classified = raisedFindings.map(f => ({
+          ...f,
+          process: selectedProcess || null,
+          source: 'analytics_raised',
+          control_category: classMap[f.ref]?.control_category || null,
+          regulatory_refs: classMap[f.ref]?.regulatory_refs || [],
+        }));
+
+        await fetch(`/api/engagements/${engagementId}/findings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'analytics_raised', findings: classified }),
+        });
+      } catch (err) {
+        console.error('Failed to classify/persist analytics findings:', err);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [raisedFindings, engagementId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadSavedProgram = (savedData, savedAnalyticsTests) => {
     const cleanData = sanitizeProgram(savedData);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 import { exportWalkthroughToWord } from '../lib/exportWalkthroughToWord';
@@ -69,6 +69,8 @@ export default function WalkthroughView({
   onExportExcel,
   onGenerateAuditProgram,
   onStartOver,
+  engagementId,
+  savedFills,
 }) {
   // Editable copy of AI-generated structure (gated by edit mode)
   const [editedWalkthrough, setEditedWalkthrough] = useState(() =>
@@ -77,9 +79,28 @@ export default function WalkthroughView({
   const [isEditMode, setIsEditMode] = useState(false);
 
   // Auditor-fillable fields — always editable, keyed by checkpoint index
-  const [checkpointResponses, setCheckpointResponses] = useState({});
-  const [freeformNotes, setFreeformNotes] = useState('');
-  const [overallConclusion, setOverallConclusion] = useState('');
+  const [checkpointResponses, setCheckpointResponses] = useState(savedFills?.checkpointResponses || {});
+  const [freeformNotes, setFreeformNotes] = useState(savedFills?.freeformNotes || '');
+  const [overallConclusion, setOverallConclusion] = useState(savedFills?.overallConclusion || '');
+
+  // Auto-save auditor fills (debounced 2s)
+  const fillSaveTimer = useRef(null);
+  useEffect(() => {
+    if (!engagementId) return;
+    if (fillSaveTimer.current) clearTimeout(fillSaveTimer.current);
+    fillSaveTimer.current = setTimeout(() => {
+      fetch(`/api/engagements/${engagementId}/walkthrough`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          checkpoint_responses: checkpointResponses,
+          freeform_notes: freeformNotes,
+          overall_conclusion: overallConclusion,
+        }),
+      }).catch(err => console.error('Walkthrough fills auto-save failed:', err));
+    }, 2000);
+    return () => clearTimeout(fillSaveTimer.current);
+  }, [checkpointResponses, freeformNotes, overallConclusion, engagementId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [showObsWarning, setShowObsWarning] = useState(false);
 
   // Collapsible state for suggested questions per checkpoint

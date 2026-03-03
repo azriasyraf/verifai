@@ -54,12 +54,29 @@ export default function AuditProgramView({
   exitMeeting,
   isGeneratingExitMeeting,
   onGenerateExitMeeting,
+  engagementId,
 }) {
   const [columnMapperTest, setColumnMapperTest] = useState(null); // test object being mapped
   const [runningTestId, setRunningTestId] = useState(null);
   const [activePhase, setActivePhase] = useState(null);
   const [showExitMeeting, setShowExitMeeting] = useState(false);
   const fileInputRef = useRef(null);
+  const [findingsByControlId, setFindingsByControlId] = useState({});
+
+  useEffect(() => {
+    if (!engagementId) return;
+    fetch(`/api/engagements/${engagementId}/findings`)
+      .then(r => r.json())
+      .then(result => {
+        if (!result.success) return;
+        const map = {};
+        for (const f of result.data) {
+          if (f.control_id) map[f.control_id] = (map[f.control_id] || 0) + 1;
+        }
+        setFindingsByControlId(map);
+      })
+      .catch(() => {});
+  }, [engagementId]);
 
   useEffect(() => {
     const phases = [
@@ -657,6 +674,11 @@ export default function AuditProgramView({
               <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span className="font-mono text-xs bg-gray-100 text-gray-500 border border-gray-200 rounded px-1.5 py-0.5">{control.id}</span>
+                  {findingsByControlId[control.id] > 0 && (
+                    <span className="text-xs bg-amber-50 text-amber-600 border border-amber-200 rounded-full px-2 py-0.5 shrink-0">
+                      {findingsByControlId[control.id]} finding{findingsByControlId[control.id] !== 1 ? 's' : ''}
+                    </span>
+                  )}
                   {isEditMode ? (
                     <select
                       value={control.type}

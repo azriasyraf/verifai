@@ -42,3 +42,11 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# local dev artefacts
+error_screenshots/
+test-findings-*.xlsx
+test-workbook-*.xlsx
+analytics-design-brief.md
+verifai-project-snapshot.md
+nul

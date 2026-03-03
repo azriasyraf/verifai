@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 import { getProcessLabel } from '../../lib/processNames';
+import ImportPriorFindingsPanel from '../../components/ImportPriorFindingsPanel';
 
 function formatDate(iso) {
   if (!iso) return null;
@@ -53,6 +54,8 @@ export default function EngagementDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const [importedCount, setImportedCount] = useState(null);
 
   useEffect(() => {
     if (!id) return;
@@ -192,6 +195,49 @@ export default function EngagementDetail() {
             onOpen={() => handleGenerate('report')}
             onGenerate={() => handleGenerate('report')}
           />
+        </div>
+
+        {/* Prior Findings History */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Prior Findings History</h2>
+            {!showImport && (
+              <button
+                onClick={() => { setShowImport(true); setImportedCount(null); }}
+                className="text-xs font-medium text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-400 px-3 py-1.5 rounded-lg transition-colors"
+              >
+                Import from Excel
+              </button>
+            )}
+          </div>
+
+          {importedCount !== null && !showImport && (
+            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center gap-2">
+              <svg className="w-4 h-4 text-green-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <p className="text-sm text-green-700">
+                <span className="font-medium">{importedCount} finding{importedCount !== 1 ? 's' : ''} imported</span> — these will inform repeat detection for future audits on {engagement?.client_name}.
+              </p>
+            </div>
+          )}
+
+          {!showImport && importedCount === null && (
+            <p className="text-sm text-gray-400">
+              Import findings from prior audit workbooks to enable repeat pattern detection for {engagement?.client_name || 'this client'}.
+            </p>
+          )}
+
+          {showImport && (
+            <ImportPriorFindingsPanel
+              engagementId={id}
+              clientName={engagement?.client_name}
+              clientGroup={engagement?.client_group}
+              process={engagement?.process}
+              onComplete={(count) => { setImportedCount(count); setShowImport(false); }}
+              onCancel={() => setShowImport(false)}
+            />
+          )}
         </div>
 
         {/* Danger zone */}

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 import { exportToWord } from '../lib/exportToWord';
@@ -243,6 +243,22 @@ function FindingCard({
         )}
       </div>
 
+      {/* Traceability chips — control_category + regulatory_refs */}
+      {(sourceFinding?.control_category || sourceFinding?.regulatory_refs?.length > 0) && (
+        <div className="px-5 py-2 border-b border-gray-100 flex flex-wrap items-center gap-1.5">
+          {sourceFinding?.control_category && (
+            <span className="text-xs bg-indigo-50 text-indigo-600 border border-indigo-200 rounded-full px-2 py-0.5">
+              {sourceFinding.control_category}
+            </span>
+          )}
+          {(sourceFinding?.regulatory_refs || []).map((r, i) => (
+            <span key={i} className="text-xs bg-gray-50 text-gray-500 border border-gray-200 rounded-full px-2 py-0.5">
+              {r}
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className="px-5 py-3">
         {/* Condition — sourced from findingDescription */}
         <SourceField
@@ -332,9 +348,24 @@ function FindingCard({
   );
 }
 
-export default function ReportView({ report, sourceFindings = [], onReset }) {
+export default function ReportView({ report, sourceFindings = [], onReset, engagementId }) {
   const originalReport = JSON.parse(JSON.stringify(report));
   const [editedReport, setEditedReport] = useState(() => JSON.parse(JSON.stringify(report)));
+
+  // Auto-save edited report (debounced 2s)
+  const reportSaveTimer = useRef(null);
+  useEffect(() => {
+    if (!engagementId) return;
+    if (reportSaveTimer.current) clearTimeout(reportSaveTimer.current);
+    reportSaveTimer.current = setTimeout(() => {
+      fetch(`/api/engagements/${engagementId}/report`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_version: editedReport }),
+      }).catch(err => console.error('Report auto-save failed:', err));
+    }, 2000);
+    return () => clearTimeout(reportSaveTimer.current);
+  }, [editedReport, engagementId]); // eslint-disable-line react-hooks/exhaustive-deps
   const [isEditMode, setIsEditMode] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [activeSection, setActiveSection] = useState('cover');

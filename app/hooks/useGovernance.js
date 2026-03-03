@@ -11,14 +11,19 @@ export function useGovernance({ sectorContext, auditeeDetails, setGenerationMode
 
   const canGenerateGovernance = !!companyType;
 
-  const handleGenerateGovernance = async () => {
+  const handleGenerateGovernance = async (findingsHistory) => {
     setIsGeneratingGovernance(true);
     setError(null);
     try {
       const response = await fetch('/api/governance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sectorContext: sectorContext || undefined, companyType, auditeeDetails }),
+        body: JSON.stringify({
+          sectorContext: sectorContext || undefined,
+          companyType,
+          auditeeDetails,
+          findingsHistory: findingsHistory?.length ? findingsHistory : undefined,
+        }),
       });
       const result = await response.json();
       if (result.success) {

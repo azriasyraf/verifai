@@ -26,10 +26,10 @@ export async function POST(request) {
   const limited = await checkRateLimit();
   if (limited) return limited;
   try {
-    const { sectorContext, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction, uploadedDocs } = await request.json();
+    const { sectorContext, process, assessmentType, clientContext, walkthroughNarrative, jurisdiction, uploadedDocs, findingsHistory } = await request.json();
     const regs = getRegulations(process, jurisdiction);
     const regulationsContext = formatRegulationsForPrompt(regs);
-    const prompt = buildPrompt(sectorContext, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext, uploadedDocs);
+    const prompt = buildPrompt(sectorContext, process, assessmentType, clientContext, walkthroughNarrative, regulationsContext, uploadedDocs, findingsHistory);
 
     const completion = await groq.chat.completions.create({
       messages: [
@@ -104,7 +104,7 @@ export async function POST(request) {
   }
 }
 
-function buildPrompt(sectorContext, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '', uploadedDocs = null) {
+function buildPrompt(sectorContext, process, assessmentType = 'program-only', clientContext = null, walkthroughNarrative = null, regulationsContext = '', uploadedDocs = null, findingsHistory = null) {
   const processLabel = getProcessLabel(process);
   const controlFramework = process === 'it' || process === 'itgc' ? 'COBIT 2019' : 'COSO 2013';
   const frameworkGuidance = process === 'it'
@@ -276,7 +276,21 @@ ADJUSTMENT RULES — apply these when client context is provided:
   }).join('');
   const gapInstruction = hasGapPair ? `\n\nGAP ANALYSIS REQUIRED: Both a Policies & Procedures document and a Walkthrough Working Paper have been provided. Cross-reference them explicitly: identify controls that are documented in P&P but were NOT observed during the walkthrough (design-operating gaps, set gapFlag: true), and note any controls observed in practice that are not formally documented (undocumented practices).` : '';
   return docBlocks + gapInstruction;
-})() : ''}${regulationsContext ? `
+})() : ''}${findingsHistory?.length ? `
+
+PRIOR FINDINGS HISTORY — CLIENT AUDIT TRACK RECORD:
+The following control weaknesses have been identified for this client in prior audit engagements. These represent CONFIRMED REPEAT RISK AREAS that must be treated with elevated priority:
+
+${findingsHistory.map(h =>
+  `- ${h.control_category}: ${h.finding_count} finding${h.finding_count !== 1 ? 's' : ''} across ${h.engagement_count} prior engagement${h.engagement_count !== 1 ? 's' : ''}${h.processes?.length ? ` (processes: ${h.processes.join(', ')})` : ''}`
+).join('\n')}
+
+MANDATORY ADJUSTMENTS for all repeat risk areas listed above:
+1. Set risk "rating" to "High" for any risk that falls within a listed control category — override Medium or Low to High.
+2. Add "clientEvidence": "Repeat finding — identified in [X] prior engagement(s)" to each affected risk, using the actual engagement count.
+3. For controls covering repeat categories: add 1–2 additional test procedures with expanded sample sizes (e.g. increase from 15 to 25 items).
+4. Reference the repeat pattern in the risk description (e.g. "This risk has been identified in X prior engagement(s) and represents a persistent control weakness requiring elevated scrutiny").
+5. Do NOT remove or downgrade these risk areas — they are confirmed weaknesses from actual audit history.` : ''}${regulationsContext ? `
 
 ${regulationsContext}
 DISCLAIMER: These references are provided as guidance. Verify applicability before use in a formal engagement.` : ''}`;

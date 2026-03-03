@@ -48,6 +48,10 @@ export default function Verifai() {
   const [auditReport, setAuditReport] = useState(null);
   const [reportSourceFindings, setReportSourceFindings] = useState(null);
 
+  // Auditor fills restored from DB when opening saved engagements
+  const [walkthroughSavedFills, setWalkthroughSavedFills] = useState(null);
+  const [governanceSavedFills, setGovernanceSavedFills] = useState(null);
+
   // -------------------------------------------------------------------------
   // Domain hooks
   // -------------------------------------------------------------------------
@@ -119,10 +123,16 @@ export default function Verifai() {
           setShowResults(true);
         } else if (mode === 'walkthrough') {
           walkthrough.loadSavedWalkthrough(data);
+          setWalkthroughSavedFills({
+            checkpointResponses: result.data.checkpoint_responses || {},
+            freeformNotes: result.data.freeform_notes || '',
+            overallConclusion: result.data.overall_conclusion || '',
+          });
           setGenerationMode('walkthrough');
           setShowResults(true);
         } else if (mode === 'governance') {
           governance.loadSavedAssessment(data);
+          setGovernanceSavedFills(result.data.auditor_fills || null);
           setGenerationMode('governance');
           setShowResults(true);
         } else if (mode === 'report') {
@@ -177,6 +187,15 @@ export default function Verifai() {
             }
           }
           if (currentEngagementId) {
+            // Write classified findings to findings table
+            fetch(`/api/engagements/${currentEngagementId}/findings`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                findings: findings.map(f => ({ ...f, process: f.process || selectedProcess || null })),
+              }),
+            }).catch(err => console.error('Failed to persist findings:', err));
+            // Write report
             fetch(`/api/engagements/${currentEngagementId}/report`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -239,6 +258,7 @@ export default function Verifai() {
         report={auditReport}
         sourceFindings={reportSourceFindings}
         onReset={() => { setAuditReport(null); setReportSourceFindings(null); setShowResults(false); setGenerationMode('report'); }}
+        engagementId={engagementId}
       />
     );
   }
@@ -251,6 +271,8 @@ export default function Verifai() {
         onExportExcel={walkthrough.handleExportWalkthrough}
         onGenerateAuditProgram={walkthrough.handleGenerateFromWalkthrough}
         onStartOver={handleStartOver}
+        engagementId={engagementId}
+        savedFills={walkthroughSavedFills}
       />
     );
   }
@@ -264,6 +286,8 @@ export default function Verifai() {
         onGenerateAuditProgram={governance.handleGenerateFromAssessment}
         onStartOver={handleStartOver}
         isGeneratingAudit={audit.isGenerating}
+        engagementId={engagementId}
+        savedFills={governanceSavedFills}
       />
     );
   }
@@ -309,6 +333,7 @@ export default function Verifai() {
         onRaiseFinding={audit.handleRaiseFinding}
         raisedFindings={audit.raisedFindings}
         auditeeDetails={auditeeDetails}
+        engagementId={engagementId}
         exitMeeting={audit.exitMeeting}
         isGeneratingExitMeeting={audit.isGeneratingExitMeeting}
         onGenerateExitMeeting={audit.handleGenerateExitMeeting}
@@ -362,6 +387,9 @@ export default function Verifai() {
       // jurisdiction
       jurisdiction={jurisdiction}
       setJurisdiction={setJurisdiction}
+      // persistence
+      engagementId={engagementId}
+      clientGroup={null}
     />
     </div>
   );

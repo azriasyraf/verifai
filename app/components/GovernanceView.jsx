@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 
@@ -72,6 +72,8 @@ export default function GovernanceView({
   onGenerateAuditProgram,
   onStartOver,
   isGeneratingAudit,
+  engagementId,
+  savedFills,
 }) {
   // Editable copy of AI-generated structure
   const [editedAssessment, setEditedAssessment] = useState(() =>
@@ -89,20 +91,37 @@ export default function GovernanceView({
   };
 
   // Per-question management response and auditor assessment — keyed by "areaIndex-questionIndex"
-  const [responses, setResponses] = useState({});
+  const [responses, setResponses] = useState(savedFills?.responses || {});
   // Per-area conclusion
-  const [conclusions, setConclusions] = useState({});
+  const [conclusions, setConclusions] = useState(savedFills?.conclusions || {});
 
   // Overall assessment — completed after working paper, not pre-generated
-  const [overallMode, setOverallMode] = useState(null); // null | 'ai' | 'manual'
+  const [overallMode, setOverallMode] = useState(savedFills?.overallData?.maturityRating ? 'manual' : null); // null | 'ai' | 'manual'
   const [isGeneratingOverall, setIsGeneratingOverall] = useState(false);
   const [overallGenerateError, setOverallGenerateError] = useState(null);
-  const [overallData, setOverallData] = useState({
+  const [overallData, setOverallData] = useState(savedFills?.overallData || {
     maturityRating: '',
     rationale: '',
     keyObservations: [''],
     recommendations: [''],
   });
+
+  // Auto-save auditor fills (debounced 2s)
+  const fillSaveTimer = useRef(null);
+  useEffect(() => {
+    if (!engagementId) return;
+    if (fillSaveTimer.current) clearTimeout(fillSaveTimer.current);
+    fillSaveTimer.current = setTimeout(() => {
+      fetch(`/api/engagements/${engagementId}/governance`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auditor_fills: { responses, conclusions, overallData },
+        }),
+      }).catch(err => console.error('Governance fills auto-save failed:', err));
+    }, 2000);
+    return () => clearTimeout(fillSaveTimer.current);
+  }, [responses, conclusions, overallData, engagementId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // -------------------------------------------------------------------------
   // Response / conclusion handlers (always editable regardless of edit mode)

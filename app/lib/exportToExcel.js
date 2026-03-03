@@ -307,6 +307,19 @@ export function exportToExcel(auditProgram, analyticsTests, auditeeDetails, {
   findingsSheet['!freeze'] = { xSplit: 0, ySplit: 4 };
   XLSX.utils.book_append_sheet(workbook, findingsSheet, 'Findings Summary');
 
+  // Hidden metadata sheet — enables schema-safe re-import and findings mapping
+  const metaSheet = XLSX.utils.aoa_to_sheet([
+    ['schema_version', '1'],
+    ['process_id', selectedProcess || ''],
+    ['client_name', auditeeDetails.clientName || ''],
+    ['exported_at', new Date().toISOString()],
+  ]);
+  XLSX.utils.book_append_sheet(workbook, metaSheet, '_verifai_data');
+  if (!workbook.Workbook) workbook.Workbook = {};
+  if (!workbook.Workbook.Sheets) workbook.Workbook.Sheets = [];
+  while (workbook.Workbook.Sheets.length < workbook.SheetNames.length) workbook.Workbook.Sheets.push({});
+  workbook.Workbook.Sheets[workbook.SheetNames.indexOf('_verifai_data')].Hidden = 1;
+
   // Generate filename and download
   const clientSlug = auditeeDetails.clientName ? `${auditeeDetails.clientName}_` : '';
   const filename = `AuditProgram_${clientSlug}${processName}_${date}.xlsx`.replace(/[^a-zA-Z0-9_.-]/g, '_');

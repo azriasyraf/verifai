@@ -18,13 +18,16 @@ const auditFeatures = [
   { label: 'Excel export', desc: 'Multi-tab workbook: Summary tab plus one tab per control, each pre-populated with a fieldwork sample table.' },
 ];
 
-const analyticsFeatures = [
-  { label: 'Run analytics tests directly in the app', desc: 'Upload your client data file and run tests in Phase 3 of the audit program. Results appear inline. No Excel formulas, no switching between tools.' },
-  { label: 'Smart column matching', desc: 'Verifai reads your file headers and pre-fills the column mapping. Confirm or adjust before running.' },
-  { label: 'Document your work against the results', desc: 'Write up what you did, who you spoke to, and what you concluded — directly alongside the exception rows.' },
-  { label: 'Raise exceptions as findings in one click', desc: 'If the results warrant a finding, one click sends it to the Report tab with the details already filled in.' },
-  { label: 'Working paper export per test', desc: 'Each test produces a 3-tab Excel file: the raw data, the exceptions, and a working paper with the methodology documented for manual reperformance.' },
-  { label: 'More tests coming', desc: 'The current set covers the most common single-file tests. Multi-file joins, date thresholds, and statistical tests are on the roadmap.' },
+const walkthroughFeatures = [
+  { label: 'AI-generated checkpoint template', desc: 'Generates process-specific checkpoints — each with expected control state, design considerations, and suggested interview questions.' },
+  { label: 'Design adequacy rating per checkpoint', desc: 'Rate each checkpoint as Adequate, Partially Adequate, Inadequate, or Not Assessed. Colour-coded badge updates instantly.' },
+  { label: 'Interview guidance (collapsible)', desc: 'Suggested questions per checkpoint expand on demand — guidance only, not a rigid script.' },
+  { label: 'What was described — auditor fill-in', desc: 'Free-text field per checkpoint to capture exactly what management or staff described during the interview.' },
+  { label: 'Freeform notes section', desc: 'One open notes area for anything that doesn\'t fit a specific checkpoint.' },
+  { label: 'Best practice reminder', desc: 'Prompt to share the notes with the auditee for confirmation before testing.' },
+  { label: 'Overall conclusion', desc: 'Summarise design adequacy across the whole process before proceeding to testing.' },
+  { label: 'Excel export — 3 tabs', desc: 'Summary, Walkthrough (per-checkpoint grid), and Freeform Notes.' },
+  { label: 'Generate audit program from walkthrough', desc: 'One click formats your observations as structured client context and pre-populates the audit program form — Verifai elevates risks where controls were rated Inadequate or Partially Adequate.' },
 ];
 
 const rmgaFeatures = [
@@ -39,18 +42,6 @@ const rmgaFeatures = [
   { label: 'Excel export', desc: '3-tab workbook: Summary, Working Paper, and Inquiry Responses.' },
 ];
 
-const walkthroughFeatures = [
-  { label: 'AI-generated checkpoint template', desc: 'Generates process-specific checkpoints — each with expected control state, design considerations, and suggested interview questions.' },
-  { label: 'Design adequacy rating per checkpoint', desc: 'Rate each checkpoint as Adequate, Partially Adequate, Inadequate, or Not Assessed. Colour-coded badge updates instantly.' },
-  { label: 'Interview guidance (collapsible)', desc: 'Suggested questions per checkpoint expand on demand — guidance only, not a rigid script.' },
-  { label: 'What was described — auditor fill-in', desc: 'Free-text field per checkpoint to capture exactly what management or staff described during the interview.' },
-  { label: 'Freeform notes section', desc: 'One open notes area for anything that doesn\'t fit a specific checkpoint.' },
-  { label: 'Best practice reminder', desc: 'Prompt to share the notes with the auditee for confirmation before testing.' },
-  { label: 'Overall conclusion', desc: 'Summarise design adequacy across the whole process before proceeding to testing.' },
-  { label: 'Excel export — 3 tabs', desc: 'Summary, Walkthrough (per-checkpoint grid), and Freeform Notes.' },
-  { label: 'Generate audit program from walkthrough', desc: 'One click formats your observations as structured client context and pre-populates the audit program form — Verifai elevates risks where controls were rated Inadequate or Partially Adequate.' },
-];
-
 const reportFeatures = [
   { label: 'Excel findings upload', desc: 'Upload your fieldwork findings file. Verifai parses finding descriptions, risk ratings, root causes, management responses, and due dates.' },
   { label: 'Finding quality hints', desc: 'Weak or incomplete findings are flagged before generation so you can fix them first.' },
@@ -63,6 +54,14 @@ const reportFeatures = [
   { label: 'Word export (.docx)', desc: 'Formatted report ready to share, with AI disclosure footer and page break per finding.' },
 ];
 
+const findingsFeatures = [
+  { label: 'Cross-engagement repeat detection', desc: 'Findings are checked against your full audit history before you generate. REPEAT badges flag issues that appeared in 2+ prior engagements — so you know before you write what is a pattern, not a one-off.' },
+  { label: 'CROSS-PROCESS and GROUP PATTERN detection', desc: 'Findings that cut across multiple processes or multiple subsidiaries are automatically identified — a signal for governance-level attention, not just process-level remediation.' },
+  { label: 'Control category and regulatory traceability', desc: 'Every finding is tagged with the control category it belongs to and the regulatory references it implicates. Visible in the report and traceable back to the audit program.' },
+  { label: 'Prior findings import', desc: 'Upload a prior audit findings Excel to seed your history. Verifai classifies, matches, and tags each row — giving repeat detection context from day one, not just after a year of use.' },
+  { label: 'Findings count per control', desc: 'The audit program shows how many findings have been raised against each control across prior engagements — so you know which controls deserve more attention before fieldwork starts.' },
+];
+
 const engagementFeatures = [
   { label: 'Auto-save on every change', desc: 'Verifai saves automatically when you generate and debounces edits with a 2-second delay. You never think about saving.' },
   { label: 'My Engagements dashboard', desc: 'All your engagements in one place, sorted by last updated. Client name, process, department, period, and status at a glance.' },
@@ -72,9 +71,10 @@ const engagementFeatures = [
 ];
 
 const comingSoon = [
-  { label: 'See what changed from the AI draft', desc: 'Verifai will track every edit you make and include a change summary on export. Your supervisor can see that you engaged with the output, not just downloaded it.', status: 'Next up' },
-  { label: 'More analytics tests', desc: 'Date thresholds, round-number clusters, split purchases, and cross-file joins like terminated employees cross-referenced against payroll.', status: 'Planned' },
-  { label: 'Team collaboration', desc: 'Share workpapers with your team, assign sections, and track review status without bouncing Excel files around.', status: 'Future' },
+  { label: 'In-app data analytics execution', desc: 'Upload client data and run tests directly in the app — gap tests, duplicate detection, round-number clustering, statistical outliers. Results inline, working paper ready to export.', status: 'In design' },
+  { label: 'Audit trail — see what the auditor changed', desc: 'Managers will see exactly what changed between the AI draft and the final output: which findings were modified, which recommendations were rewritten, which risks were re-rated. Answers "did you think, or did you just click Export?"', status: 'Planned' },
+  { label: 'Team collaboration', desc: 'Share engagements with your team, assign sections, and track review status without bouncing Excel files around.', status: 'Planned' },
+  { label: 'Management action tracking', desc: 'Track agreed actions from audit findings — owner, due date, closure status. Follow-up audits pre-populated with open prior actions.', status: 'Planned' },
 ];
 
 export default function AboutPage() {
@@ -86,10 +86,10 @@ export default function AboutPage() {
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <span className="font-bold text-gray-900 text-lg">Verifai</span>
           <Link
-            href="/"
+            href="/dashboard"
             className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
           >
-            Try it now →
+            Sign in →
           </Link>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function AboutPage() {
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link
-              href="/"
+              href="/dashboard"
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
             >
               Open Verifai
@@ -199,32 +199,10 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Feature 4: Analytics Execution */}
+        {/* Feature 4: Audit Report */}
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-sm">4</div>
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">Data Analytics Execution</h2>
-              <p className="text-sm text-gray-500">Upload client data and run tests directly in the app. No Excel formulas. Results inline, working paper ready to export.</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
-            {analyticsFeatures.map((f, i) => (
-              <div key={i} className="flex gap-3 px-5 py-3">
-                <span className="text-emerald-500 shrink-0 mt-0.5 text-sm">✓</span>
-                <div className="text-sm">
-                  <p className="font-medium text-gray-900">{f.label}</p>
-                  <p className="text-gray-500 text-xs">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Feature 5: Audit Report */}
-        <div>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-sm">5</div>
+            <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-600 font-bold text-sm">4</div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">Audit Report Generator</h2>
               <p className="text-sm text-gray-500">Upload your completed findings workbook. Verifai drafts a full audit report in CCCE format, ready to export to Word.</p>
@@ -234,6 +212,28 @@ export default function AboutPage() {
             {reportFeatures.map((f, i) => (
               <div key={i} className="flex gap-3 px-5 py-3">
                 <span className="text-rose-500 shrink-0 mt-0.5 text-sm">✓</span>
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900">{f.label}</p>
+                  <p className="text-gray-500 text-xs">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Feature 5: Finding Intelligence */}
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-sm">5</div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Finding Intelligence</h2>
+              <p className="text-sm text-gray-500">Findings are stored as structured records — not just text. Verifai cross-references them across engagements, flags patterns, and feeds them back into planning.</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+            {findingsFeatures.map((f, i) => (
+              <div key={i} className="flex gap-3 px-5 py-3">
+                <span className="text-amber-500 shrink-0 mt-0.5 text-sm">✓</span>
                 <div className="text-sm">
                   <p className="font-medium text-gray-900">{f.label}</p>
                   <p className="text-gray-500 text-xs">{f.desc}</p>
@@ -275,8 +275,8 @@ export default function AboutPage() {
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <span className="font-medium text-gray-900 text-sm">{item.label}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 font-medium ${
-                    item.status === 'Next up' ? 'bg-amber-50 text-amber-700' :
-                    item.status === 'In design' ? 'bg-blue-50 text-blue-700' :
+                    item.status === 'In design' ? 'bg-amber-50 text-amber-700' :
+                    item.status === 'Planned' ? 'bg-blue-50 text-blue-700' :
                     item.status === 'Future' ? 'bg-gray-100 text-gray-400' :
                     'bg-gray-100 text-gray-600'
                   }`}>{item.status}</span>
@@ -292,7 +292,7 @@ export default function AboutPage() {
           <h2 className="text-base font-bold text-gray-900 mb-1">What powers Verifai?</h2>
           <p className="text-sm text-gray-500 mb-4">
             Verifai runs on <span className="font-medium text-gray-700">Groq</span> with <span className="font-medium text-gray-700">Llama 3.3 70B</span>, optimised for fast, structured output.
-            More powerful models (GPT-4o, Claude Sonnet) exist but cost significantly more per generation. Llama 3.3 70B is fit for purpose and currently free.
+            More powerful models (GPT-4o, Claude Sonnet) exist but cost significantly more per generation. Llama 3.3 70B is fit for purpose and fast.
           </p>
           <p className="text-xs text-gray-400">
             The engine will be upgraded as usage grows. All AI-generated content should be reviewed by a qualified auditor before use.
