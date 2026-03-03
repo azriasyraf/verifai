@@ -85,12 +85,20 @@ export default function AboutPage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <span className="font-bold text-gray-900 text-lg">Verifai</span>
-          <Link
-            href="/dashboard"
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
-          >
-            Sign in →
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/sign-in"
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/sign-up"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-1.5 rounded-lg transition-colors text-sm"
+            >
+              Get started
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -107,12 +115,17 @@ export default function AboutPage() {
           </p>
           <div className="flex items-center justify-center gap-3 pt-2">
             <Link
-              href="/dashboard"
+              href="/sign-up"
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors text-sm"
             >
-              Open Verifai
+              Get started — it&apos;s free
             </Link>
-            <span className="text-sm text-gray-400">Invite-only beta</span>
+            <Link
+              href="/sign-in"
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Sign in
+            </Link>
           </div>
         </div>
 
