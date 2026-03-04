@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
 import { exportToWord } from '../lib/exportToWord';
+import ManagementActionsTracker from './ManagementActionsTracker';
 
 const RATING_STYLES = {
   High: 'bg-red-100 text-red-700 border border-red-200',
@@ -186,6 +187,7 @@ function FindingCard({
   aiSuggestions,
   onGetSuggestion,
   loadingSuggestionFor,
+  engagementId,
 }) {
   const ref = finding.ref || `F${String(index + 1).padStart(3, '0')}`;
   const ratingStyle = RATING_STYLES[finding.riskRating] || RATING_STYLES.Medium;
@@ -343,6 +345,11 @@ function FindingCard({
             ))}
           </div>
         </div>
+
+        <ManagementActionsTracker
+          findingId={sourceFinding?.id}
+          engagementId={engagementId}
+        />
       </div>
     </div>
   );
@@ -730,6 +737,7 @@ export default function ReportView({ report, sourceFindings = [], onReset, engag
                   aiSuggestions={aiSuggestions}
                   onGetSuggestion={handleGetSuggestion}
                   loadingSuggestionFor={loadingSuggestionFor}
+                  engagementId={engagementId}
                 />
               );
             })
