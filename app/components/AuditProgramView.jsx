@@ -6,6 +6,7 @@ import { UserButton } from '@clerk/nextjs';
 import * as XLSX from 'xlsx';
 import ColumnMapper from './ColumnMapper';
 import { exportAnalyticsToExcel } from '../lib/exportAnalyticsToExcel';
+import DocumentRequestStaging from './DocumentRequestStaging';
 
 // Tests that have executable Phase 1 logic (single-file, simple filter)
 const EXECUTABLE_TESTS = new Set(['RC-001', 'PP-002', 'HR-002', 'INV-001', 'IT-003']);
@@ -62,6 +63,10 @@ export default function AuditProgramView({
   const [showExitMeeting, setShowExitMeeting] = useState(false);
   const fileInputRef = useRef(null);
   const [findingsByControlId, setFindingsByControlId] = useState({});
+  const [hasDocuments, setHasDocuments] = useState(null); // null=unchecked, false=none, true=exists
+  const [generatingDocs, setGeneratingDocs] = useState(false);
+  const [docSuggestions, setDocSuggestions] = useState([]);
+  const [showDocStaging, setShowDocStaging] = useState(false);
 
   useEffect(() => {
     if (!engagementId) return;
@@ -77,6 +82,24 @@ export default function AuditProgramView({
       })
       .catch(() => {});
   }, [engagementId]);
+
+  useEffect(() => {
+    if (!engagementId) return;
+    fetch(`/api/engagements/${engagementId}/documents`)
+      .then(r => r.json())
+      .then(result => { if (result.success) setHasDocuments(result.data.length > 0); })
+      .catch(() => {});
+  }, [engagementId]);
+
+  const handleGenerateDocs = async () => {
+    setGeneratingDocs(true);
+    try {
+      const res = await fetch(`/api/engagements/${engagementId}/documents/generate`, { method: 'POST' });
+      const json = await res.json();
+      if (json.success) { setDocSuggestions(json.data); setShowDocStaging(true); }
+    } catch { /* silent */ }
+    setGeneratingDocs(false);
+  };
 
   useEffect(() => {
     const phases = [
@@ -1319,6 +1342,25 @@ export default function AuditProgramView({
               >
                 {isGeneratingExitMeeting ? 'Generating...' : 'Kick-off Meeting Agenda'}
               </button>
+              {engagementId && (
+                hasDocuments ? (
+                  <Link
+                    href={`/engagements/${engagementId}/documents`}
+                    className="w-full bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors text-center block"
+                  >
+                    View Document Request List
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleGenerateDocs}
+                    disabled={generatingDocs}
+                    className="w-full bg-white hover:bg-indigo-50 text-indigo-600 border border-indigo-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors disabled:opacity-50"
+                  >
+                    {generatingDocs ? 'Generating…' : 'Document Request List'}
+                  </button>
+                )
+              )}
+
               <button
                 onClick={resetForm}
                 className="w-full bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 font-medium rounded-lg px-3 py-2 text-xs transition-colors"
@@ -1437,6 +1479,15 @@ export default function AuditProgramView({
             )}
           </div>
         </div>
+      )}
+
+      {showDocStaging && docSuggestions.length > 0 && (
+        <DocumentRequestStaging
+          suggestions={docSuggestions}
+          engagementId={engagementId}
+          onConfirm={() => { setHasDocuments(true); setShowDocStaging(false); }}
+          onCancel={() => setShowDocStaging(false)}
+        />
       )}
     </div>
   );

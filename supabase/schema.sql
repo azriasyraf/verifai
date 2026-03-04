@@ -183,6 +183,32 @@ CREATE POLICY "management_actions_user" ON management_actions
   );
 
 -- ============================================================
+-- DOCUMENT REQUESTS (PBC List)
+-- ============================================================
+CREATE TABLE document_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  engagement_id uuid REFERENCES engagements(id) ON DELETE CASCADE,
+  user_id text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  document_name text NOT NULL,
+  purpose text,
+  related_control text,
+  requested_by text,
+  requested_date date,
+  auditee_owner text,
+  received_date date,
+  status text DEFAULT 'Pending',
+  notes text,
+  source text DEFAULT 'manual'
+);
+
+ALTER TABLE document_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "document_requests_user" ON document_requests
+  USING ((auth.jwt() ->> 'user_id') = user_id);
+
+-- ============================================================
 -- MIGRATIONS (run these if upgrading an existing T2 database)
 -- Safe to skip on fresh installs — columns already in CREATE TABLE above.
 -- ============================================================
@@ -196,3 +222,8 @@ CREATE POLICY "management_actions_user" ON management_actions
 -- CREATE INDEX IF NOT EXISTS ON findings (user_id, process, control_category);
 -- CREATE INDEX IF NOT EXISTS ON findings (user_id, control_category);
 -- CREATE INDEX IF NOT EXISTS ON findings (user_id, control_category) WHERE source != 'historical_import';
+
+-- Document Requests / PBC List (Mar 2026)
+-- CREATE TABLE document_requests ( id uuid PRIMARY KEY DEFAULT gen_random_uuid(), engagement_id uuid REFERENCES engagements(id) ON DELETE CASCADE, user_id text NOT NULL, created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now(), document_name text NOT NULL, purpose text, related_control text, requested_by text, requested_date date, auditee_owner text, received_date date, status text DEFAULT 'Pending', notes text, source text DEFAULT 'manual' );
+-- ALTER TABLE document_requests ENABLE ROW LEVEL SECURITY;
+-- CREATE POLICY "document_requests_user" ON document_requests USING ((auth.jwt() ->> 'user_id') = user_id);
