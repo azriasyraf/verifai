@@ -51,6 +51,7 @@ export default function EngagementDetail() {
 
   const [engagement, setEngagement] = useState(null);
   const [artifacts, setArtifacts] = useState({ ap: null, walkthrough: null, governance: null, report: null });
+  const [docCount, setDocCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -65,8 +66,9 @@ export default function EngagementDetail() {
       fetch(`/api/engagements/${id}/walkthrough`).then(r => r.json()),
       fetch(`/api/engagements/${id}/governance`).then(r => r.json()),
       fetch(`/api/engagements/${id}/report`).then(r => r.json()),
+      fetch(`/api/engagements/${id}/documents`).then(r => r.json()),
     ])
-      .then(([eng, ap, wt, gov, rep]) => {
+      .then(([eng, ap, wt, gov, rep, docs]) => {
         if (!eng.success) { setError('Engagement not found or access denied'); return; }
         setEngagement(eng.data);
         setArtifacts({
@@ -75,6 +77,7 @@ export default function EngagementDetail() {
           governance: gov.success ? gov.data : null,
           report: rep.success ? rep.data : null,
         });
+        if (docs.success) setDocCount(docs.data.length);
       })
       .catch(() => setError('Failed to load engagement'))
       .finally(() => setLoading(false));
@@ -195,6 +198,24 @@ export default function EngagementDetail() {
             onOpen={() => handleGenerate('report')}
             onGenerate={() => handleGenerate('report')}
           />
+
+          {/* Document Request List — only shown once generated from AP sidebar */}
+          {docCount > 0 && (
+            <div className="bg-white border border-gray-200 rounded-lg p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-900">Document Request List</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">{docCount} document{docCount !== 1 ? 's' : ''} requested</p>
+                </div>
+                <Link
+                  href={`/engagements/${id}/documents`}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-800 border border-indigo-200 hover:border-indigo-400 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Open
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Prior Findings History */}
