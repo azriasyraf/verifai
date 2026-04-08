@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UserButton } from '@clerk/nextjs';
-import { getProcessLabel, PROCESSES } from '../lib/processNames';
+import { getProcessLabel } from '../lib/processNames';
 
 function formatDate(iso) {
   if (!iso) return '—';
@@ -62,42 +62,11 @@ function EngagementCard({ engagement, onClick }) {
   );
 }
 
-const EMPTY_FORM = { clientName: '', department: '', process: '', periodFrom: '', periodTo: '', engagementRef: '', auditorName: '', sectorContext: '', jurisdiction: 'International' };
-
 export default function Dashboard() {
   const router = useRouter();
   const [engagements, setEngagements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showNewForm, setShowNewForm] = useState(false);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState(null);
-
-  const handleCreate = async () => {
-    if (!form.clientName.trim()) return;
-    setCreating(true);
-    setCreateError(null);
-    try {
-      const res = await fetch('/api/engagements', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const json = await res.json();
-      if (json.success) {
-        router.push(`/engagements/${json.data.id}`);
-      } else {
-        setCreateError('Failed to create engagement. Please try again.');
-        setCreating(false);
-      }
-    } catch {
-      setCreateError('Network error. Please try again.');
-      setCreating(false);
-    }
-  };
-
-  const setField = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   useEffect(() => {
     fetch('/api/engagements')
@@ -114,11 +83,11 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-4xl mx-auto px-6 py-10">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-gray-900">My Engagements</h1>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { setShowNewForm(v => !v); setCreateError(null); setForm(EMPTY_FORM); }}
+              onClick={() => router.push('/')}
               className="bg-indigo-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               + New Engagement
@@ -126,59 +95,6 @@ export default function Dashboard() {
             <UserButton afterSignOutUrl="/sign-in" />
           </div>
         </div>
-
-        {/* New engagement form */}
-        {showNewForm && (
-          <div className="bg-white border border-indigo-100 rounded-xl p-5 mb-6 space-y-4">
-            <h2 className="text-sm font-semibold text-gray-700">New Engagement</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Client name <span className="text-red-400">*</span></label>
-                <input className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400" placeholder="e.g. Acme Sdn Bhd" value={form.clientName} onChange={e => setField('clientName', e.target.value)} autoFocus />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Process</label>
-                <select className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400 bg-white" value={form.process} onChange={e => setField('process', e.target.value)}>
-                  <option value="">Select process…</option>
-                  {PROCESSES.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Department</label>
-                <input className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400" placeholder="e.g. Finance" value={form.department} onChange={e => setField('department', e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Engagement ref</label>
-                <input className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400" placeholder="e.g. AUD-2026-001" value={form.engagementRef} onChange={e => setField('engagementRef', e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Period from</label>
-                <input type="date" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400" value={form.periodFrom} onChange={e => setField('periodFrom', e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Period to</label>
-                <input type="date" className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400" value={form.periodTo} onChange={e => setField('periodTo', e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Auditor name</label>
-                <input className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400" placeholder="e.g. Ahmad Razif" value={form.auditorName} onChange={e => setField('auditorName', e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Sector context</label>
-                <input className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-400" placeholder="e.g. Manufacturing, Financial Services" value={form.sectorContext} onChange={e => setField('sectorContext', e.target.value)} />
-              </div>
-            </div>
-            {createError && <p className="text-xs text-red-600">{createError}</p>}
-            <div className="flex gap-2 pt-1">
-              <button onClick={handleCreate} disabled={creating || !form.clientName.trim()} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50">
-                {creating ? 'Creating…' : 'Create engagement'}
-              </button>
-              <button onClick={() => { setShowNewForm(false); setForm(EMPTY_FORM); }} className="text-sm text-gray-500 hover:text-gray-700 px-3 py-2">
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Content */}
         {loading && (
@@ -191,11 +107,11 @@ export default function Dashboard() {
           </div>
         )}
 
-        {!loading && !error && engagements.length === 0 && !showNewForm && (
+        {!loading && !error && engagements.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-gray-500 mb-4">No engagements yet.</p>
+            <p className="text-gray-500 mb-4">No engagements yet. Start by generating an audit working paper.</p>
             <button
-              onClick={() => setShowNewForm(true)}
+              onClick={() => router.push('/')}
               className="bg-indigo-600 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               + New Engagement
