@@ -11,7 +11,12 @@ const ratelimit = new Ratelimit({
 export async function checkRateLimit() {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-  const { success } = await ratelimit.limit(userId);
-  if (!success) return NextResponse.json({ success: false, error: 'Too many requests. Please wait a moment.' }, { status: 429 });
+  try {
+    const { success } = await ratelimit.limit(userId);
+    if (!success) return NextResponse.json({ success: false, error: 'Too many requests. Please wait a moment.' }, { status: 429 });
+  } catch (err) {
+    // Upstash unavailable — degrade gracefully, allow request through
+    console.warn('Rate limit check failed (Upstash unavailable):', err?.message);
+  }
   return null; // null = allowed
 }
